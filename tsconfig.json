@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": [
+      "ES2019",
+      "DOM"
+    ],
+    "module": "commonjs",
+    "outDir": "script",
+    // "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "suppressImplicitAnyIndexErrors": false,
+    // "noUnusedLocals": true,
+    "declaration": true,
+    "allowUmdGlobalAccess": true
+  },
+  "files": [
+    "node_modules/@akashic/akashic-engine/index.runtime.d.ts",
+  ],
+  "include": [
+    "src/**/*.ts",
+    "typings/console.d.ts",
+    "packages/Shared/src/PlayerManager.ts"
+  ]
+}

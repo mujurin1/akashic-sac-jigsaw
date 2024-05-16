@@ -1,0 +1,62 @@
+root: true
+env:
+  browser: true
+  es2021: true
+
+extends:
+  - eslint:recommended
+  # - plugin:@typescript-eslint/recommended
+  - plugin:@typescript-eslint/recommended-type-checked
+
+plugins:
+  - "@typescript-eslint"
+
+parserOptions:
+  ecmaVersion: latest
+  sourceType: module
+  project: true
+
+rules:
+  semi: [error, always]
+  semi-spacing: [error, { after: true, before: false }]
+  semi-style: [error, last]
+  space-infix-ops: error
+  quotes: [error, double, { allowTemplateLiterals: true }]
+  prefer-const: warn
+  no-extra-semi: error
+  no-empty: off
+  no-constant-condition:
+    - error
+    - checkLoops: false
+  no-unexpected-multiline: error
+  no-unreachable: error
+  no-debugger: warn
+
+  "@typescript-eslint/no-explicit-any": warn
+  "@typescript-eslint/no-misused-promises": off
+  "@typescript-eslint/no-unsafe-assignment": warn
+  "@typescript-eslint/no-base-to-string": off
+  "@typescript-eslint/no-this-alias": off
+  "@typescript-eslint/no-unused-vars":
+    - warn
+    - argsIgnorePattern: ^_
+      varsIgnorePattern: ^_
+      caughtErrorsIgnorePattern: ^_
+  "@typescript-eslint/restrict-template-expressions": off
+
+
+ignorePatterns:
+  - "*.js"
+  - script/
+  - typings/
+  - node_modules/
+  - .vscode/
+
+overrides: [
+  {
+    files: [src/**/*],
+    parserOptions: {
+      parser: "@typescript-eslint/parser"
+    },
+  }
+]

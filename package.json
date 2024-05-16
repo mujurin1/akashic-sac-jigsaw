@@ -1,0 +1,37 @@
+{
+  "name": "new-jigsaw-v2",
+  "private": false,
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+    "nico": "npm run build && akashic serve -s nicolive",
+    "watch": "node build-script.js",
+    "usac": "akashic install ../akashic-sac/akashic-sac-0.2.3.tgz",
+    "export": "npm run build && akashic export zip -f -o ./game.zip --nicolive",
+    "build": "tsc && akashic-cli-scan asset script",
+    "scan": "akashic scan asset",
+    "eslint": "eslint src/**/*",
+    "export_html": "npm run build && rimraf game.zip && akashic export html -o ./game.zip",
+    "update": "akashic-cli-scan asset && akashic-cli-scan globalScripts",
+    "lint": "eslint -c .eslintrc.js \"src/**/*.ts\" --fix",
+    "start": "akashic-sandbox .",
+    "zip": "npm run build && npm run build && rimraf game.zip && akashic export zip -o ./game.zip -s"
+  },
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "@akashic-extension/akashic-label": "^3.1.0",
+    "@akashic-extension/resolve-player-info": "^1.2.0",
+    "@akashic/akashic-cli-export-html": "^1.4.3",
+    "@akashic/akashic-cli-export-zip": "^0.9.1",
+    "@akashic/akashic-cli-scan": "^0.16.27",
+    "@akashic/akashic-engine": "^3.16.5",
+    "@akashic/akashic-sandbox": "~0.28.5",
+    "@akashic/headless-akashic": "^4.4.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "akashic-sac": "file:../akashic-sac/akashic-sac-0.2.3.tgz",
+    "eslint": "^8.56.0",
+    "rimraf": "5.0.5",
+    "typescript": "^5.3.3"
+  }
+}
