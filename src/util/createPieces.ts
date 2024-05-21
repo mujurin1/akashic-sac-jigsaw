@@ -74,7 +74,7 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
     createImageDataFromSVGText(pieceDeko, wakuW, wakuH),
     createImageDataFromSVGText(pieceBoko, wakuW, wakuH),
     createImageDataFromSVGText(pieceLine, param.pieceSize.width, param.pieceSize.height),
-    // TODO: ピースサイズが縦横違う場合は縦横入れ替わるため２通り作る必要がある
+    // TODO: ピースの縦横比が1:1でない場合は更に倍の通り作る必要がある
     // createImageDataFromSVGText(pieceDeko, wakuH, wakuW),
     // createImageDataFromSVGText(pieceBoko, wakuH, wakuW),
     // createImageDataFromSVGText(pieceLine, param.pieceSize.height, param.pieceSize.width),
@@ -107,7 +107,7 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
   const stamp = (w: number, h: number, ...wakuTypes: [WakuType, WakuType, WakuType, WakuType]) => {
     preview.x = margineW - param.pieceSize.width * w;
     preview.y = margineH - param.pieceSize.height * h;
-    preview.modified();
+    // preview.modified();  // 無くても良いみたい
 
     const wakus: g.Sprite[] = [];
     for (const i of [0, 1, 2, 3]) {

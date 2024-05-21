@@ -1,18 +1,10 @@
-import { SacEvent, Trigger } from "akashic-sac";
+import { Trigger } from "akashic-sac";
 
 export interface Player {
   id: string;
   name: string;
   /** 生ユーザー名かどうか */
   realName: boolean;
-}
-
-export class JoinPlayer extends SacEvent {
-  constructor(
-    readonly name: string,
-    /** 生ユーザー名かどうか */
-    readonly realName: boolean,
-  ) { super(); }
 }
 
 export class PlayerManager {

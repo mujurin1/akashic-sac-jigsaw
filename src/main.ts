@@ -1,5 +1,4 @@
 import { Client, DragDrop, ShareBigText, binaryBase64ToImageData, createSpriteFromImageData, sacInitializedStart } from "akashic-sac";
-import { ChangeColor, TextMessage } from "./Events";
 import { serverStart } from "./server";
 import { clientStart } from "./page/share";
 import { Renderer, Camera } from "@akashic/akashic-engine/lib";
@@ -94,70 +93,70 @@ function clientSeart___(client: Client) {
 
 
 
-function _imageShareSample(client: Client) {
-  const scene = g.game.env.scene;
-  new g.FilledRect({
-    scene, parent: scene,
-    cssColor: "green",
-    width: g.game.width,
-    height: g.game.height,
-  });
+// function _imageShareSample(client: Client) {
+//   const scene = g.game.env.scene;
+//   new g.FilledRect({
+//     scene, parent: scene,
+//     cssColor: "green",
+//     width: g.game.width,
+//     height: g.game.height,
+//   });
 
-  const rect = new g.FilledRect({
-    scene, parent: scene,
-    x: 10, y: 10,
-    width: 100, height: 100,
-    cssColor: "red",
-    touchable: true,
-  });
+//   const rect = new g.FilledRect({
+//     scene, parent: scene,
+//     x: 10, y: 10,
+//     width: 100, height: 100,
+//     cssColor: "red",
+//     touchable: true,
+//   });
 
-  rect.onPointDown.add(() => {
-    client.sendEvent(new TextMessage("クリック"));
-  });
+//   rect.onPointDown.add(() => {
+//     client.sendEvent(new TextMessage("クリック"));
+//   });
 
-  ChangeColor.receive(client, data => {
-    rect.cssColor = data.color;
-    rect.modified();
-  });
+//   ChangeColor.receive(client, data => {
+//     rect.cssColor = data.color;
+//     rect.modified();
+//   });
 
 
 
-  ShareBigText.waitingFromSingleUser(
-    "IMAGE",
-    g.game.env.hostId,
-    (base64) => {
-      const unlockFn = client.lockEvent();
+//   ShareBigText.waitingFromSingleUser(
+//     "IMAGE",
+//     g.game.env.hostId,
+//     (base64) => {
+//       const unlockFn = client.lockEvent();
 
-      void binaryBase64ToImageData(base64)
-        .then(imageData => {
-          createSpriteFromImageData(
-            imageData,
-            {
-              scene, parent: g.game.env.scene,
-              x: 110,
-            });
+//       void binaryBase64ToImageData(base64)
+//         .then(imageData => {
+//           createSpriteFromImageData(
+//             imageData,
+//             {
+//               scene, parent: g.game.env.scene,
+//               x: 110,
+//             });
 
-          unlockFn();
-        });
-    });
+//           unlockFn();
+//         });
+//     });
 
-  if (g.game.env.isHost) {
-    DragDrop.dragDropedFile(e => {
-      const file = e.dataTransfer?.files[0];
-      if (file == null || file.type.match(/image.*/g) == null) return;
+//   if (g.game.env.isHost) {
+//     DragDrop.dragDropedFile(e => {
+//       const file = e.dataTransfer?.files[0];
+//       if (file == null || file.type.match(/image.*/g) == null) return;
 
-      DragDrop.unhookDragDropEvent();
+//       DragDrop.unhookDragDropEvent();
 
-      const fr = new FileReader();
-      fr.readAsDataURL(file);
-      fr.onload = e => {
-        let imageBase64 = e.target?.result;
-        if (typeof imageBase64 !== "string") return;
-        imageBase64 = imageBase64.substring(imageBase64.indexOf(",") + 1);
-        console.log(`size: ${imageBase64.length / 1000} KB`);
+//       const fr = new FileReader();
+//       fr.readAsDataURL(file);
+//       fr.onload = e => {
+//         let imageBase64 = e.target?.result;
+//         if (typeof imageBase64 !== "string") return;
+//         imageBase64 = imageBase64.substring(imageBase64.indexOf(",") + 1);
+//         console.log(`size: ${imageBase64.length / 1000} KB`);
 
-        ShareBigText.send("IMAGE", imageBase64);
-      };
-    });
-  }
-}
+//         ShareBigText.send("IMAGE", imageBase64);
+//       };
+//     });
+//   }
+// }

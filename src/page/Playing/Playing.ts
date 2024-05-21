@@ -4,33 +4,31 @@ import { lineupPiece } from "./lineupPiece";
 import { GameStart } from "../../event/TitleEvent";
 import { ForceReleasePiece, HoldPiece, MovePiece, ReleasePiece } from "../../event/PlayingEvent";
 import { Piece } from "./Piece";
-import { PlayerManager } from "../../event/Player";
 import { sendJoin } from "../share";
-import { InputSystem, inputSystemControl } from "./InputSystem";
+import { InputSystemControl, inputSystemControl } from "./InputSystem";
+import { PlayerManager } from "../../util/PlayerManager";
 
 export interface PlayingState {
   readonly client: Client;
   readonly gameStart: GameStart;
   readonly preview: g.Sprite;
   readonly frame: g.Sprite;
-  readonly pieces: Piece[];
+  /**
+   * 左上から順にインデックス付けられている. この順序を変えてはならない\
+   * ただし、piece.parent の中での順序やピースの存在は変化する可能性がある
+   */
+  readonly pieces: readonly Piece[];
   readonly playAreaSize: CommonSize;
-
   readonly layer: {
     readonly bg: g.FilledRect;
     readonly playArea: CamerableE;
     readonly ui: g.E;
   };
 
+  isJoined(): boolean;
+  pieceOperaterControl: InputSystemControl;
+
   holdPiece: Piece | undefined;
-
-  pieceOperaterControl: {
-    readonly currentInputSystem: InputSystem;
-    toggle: () => void;
-    destroy: () => void;
-  };
-
-  isJoined: boolean;
   finishTime: number | undefined;
 }
 
@@ -63,11 +61,13 @@ export async function Playing(client: Client, gameStart: GameStart) {
       playArea: new CamerableE({ scene, parent: scene }),
       ui: new g.E({ scene, parent: scene }),
     },
-    holdPiece: undefined,
+    isJoined() { return playerManager.has(g.game.selfId); },
     pieceOperaterControl: null!,
-    isJoined: playerManager.has(g.game.selfId),
+    holdPiece: undefined,
     finishTime: undefined,
   };
+  Piece.pieceParentSetting(state.layer.playArea);
+  state.pieceOperaterControl = inputSystemControl(state);
 
   // TODO: client.removeEventSet(...eventKeys);
   const eventKeys = [
@@ -102,7 +102,6 @@ export async function Playing(client: Client, gameStart: GameStart) {
     }),
   ];
 
-  state.pieceOperaterControl = inputSystemControl(state);
   createUi(state);
 
 
@@ -115,7 +114,7 @@ export async function Playing(client: Client, gameStart: GameStart) {
  * @param state 
  */
 function createUi(state: PlayingState) {
-  const { client, gameStart, preview, layer: { playArea, ui, bg }, frame, pieces } = state;
+  const { client, gameStart, preview, layer: { playArea, ui }, frame, pieces } = state;
   const { scene } = client.env;
 
   const font = createFont({ size: 50 });
@@ -131,12 +130,6 @@ function createUi(state: PlayingState) {
   preview.modified();
   board.append(preview);
   board.append(frame);
-
-
-  // bg.onPointMove.add(e => {
-  //   playArea.moveBy(-e.prevDelta.x * playArea.scaleX, -e.prevDelta.y * playArea.scaleX);
-  //   playArea.modified();
-  // });
 
   // 仮UI
   {
@@ -165,7 +158,11 @@ function createUi(state: PlayingState) {
       playArea.modified();
     });
     join.onPointDown.add(sendJoin);
-    change.onPointDown.add(state.pieceOperaterControl.toggle);
+    change.onPointDown.add(() => {
+      state.pieceOperaterControl.toggle(
+        state.pieceOperaterControl.currentType === "mobile" ? "pc" : "mobile"
+      );
+    });
   }
 
   const positions = lineupPiece(gameStart.seed, pieces.length, gameStart.pieceSize, board);
@@ -173,7 +170,6 @@ function createUi(state: PlayingState) {
     const piece = pieces[i];
     const position = positions[i];
     playArea.append(piece);
-    piece.touchable = true;
     piece.moveTo(position.x, position.y);
     piece.modified();
   }

@@ -97,19 +97,24 @@
 			"width": 380,
 			"height": 80
 		},
-		"Events": {
+		"__Events": {
 			"type": "script",
-			"path": "script/Events.js",
+			"path": "script/__Events.js",
 			"global": true
 		},
-		"Player": {
+		"Events": {
 			"type": "script",
-			"path": "script/event/Player.js",
+			"path": "script/event/Events.js",
 			"global": true
 		},
 		"lineupPiece": {
 			"type": "script",
 			"path": "script/page/Playing/lineupPiece.js",
+			"global": true
+		},
+		"PlayerManager": {
+			"type": "script",
+			"path": "script/util/PlayerManager.js",
 			"global": true
 		},
 		"PlayingEvent": {
@@ -122,39 +127,14 @@
 			"path": "script/event/TitleEvent.js",
 			"global": true
 		},
-		"server": {
-			"type": "script",
-			"path": "script/server.js",
-			"global": true
-		},
-		"main": {
-			"type": "script",
-			"path": "script/main.js",
-			"global": true
-		},
-		"InputSystem": {
-			"type": "script",
-			"path": "script/page/Playing/InputSystem.js",
-			"global": true
-		},
 		"Piece": {
 			"type": "script",
 			"path": "script/page/Playing/Piece.js",
 			"global": true
 		},
-		"Playing": {
+		"server": {
 			"type": "script",
-			"path": "script/page/Playing/Playing.js",
-			"global": true
-		},
-		"share": {
-			"type": "script",
-			"path": "script/page/share.js",
-			"global": true
-		},
-		"Title": {
-			"type": "script",
-			"path": "script/page/Title.js",
+			"path": "script/server.js",
 			"global": true
 		},
 		"createButton": {
@@ -172,14 +152,39 @@
 			"path": "script/util/CustomSprite.js",
 			"global": true
 		},
-		"MouseWheel": {
-			"type": "script",
-			"path": "script/util/MouseWheel.js",
-			"global": true
-		},
 		"Pad": {
 			"type": "script",
 			"path": "script/util/Pad.js",
+			"global": true
+		},
+		"main": {
+			"type": "script",
+			"path": "script/main.js",
+			"global": true
+		},
+		"InputSystem": {
+			"type": "script",
+			"path": "script/page/Playing/InputSystem.js",
+			"global": true
+		},
+		"Playing": {
+			"type": "script",
+			"path": "script/page/Playing/Playing.js",
+			"global": true
+		},
+		"share": {
+			"type": "script",
+			"path": "script/page/share.js",
+			"global": true
+		},
+		"Title": {
+			"type": "script",
+			"path": "script/page/Title/Title.js",
+			"global": true
+		},
+		"MouseWheel": {
+			"type": "script",
+			"path": "script/util/MouseWheel.js",
 			"global": true
 		}
 	}

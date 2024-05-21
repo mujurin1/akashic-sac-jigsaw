@@ -4,12 +4,23 @@ import { Piece } from "./Piece";
 import { HoldPiece, MovePiece, ReleasePiece, ForceReleasePiece } from "../../event/PlayingEvent";
 import { createPad } from "../../util/Pad";
 
+/** 入力方式の種類 */
+export const InputSystemType = ["pc", "mobile"] as const;
+export type InputSystemType = typeof InputSystemType[number];
+
+export interface InputSystemControl {
+  readonly currentType: InputSystemType;
+  readonly current: InputSystem;
+  toggle: (type: InputSystemType) => void;
+  destroy: () => void;
+}
 
 /**
  * デバイス毎の操作方法の管理を行う
  */
-export function inputSystemControl(playingState: PlayingState) {
-  const { client } = playingState;
+export function inputSystemControl(playingState: PlayingState): InputSystemControl {
+  const { client, layer } = playingState;
+  const { playArea } = layer;
 
   const sendMoveCount = 5;
   let sendMoveCounter = 0;
@@ -20,9 +31,10 @@ export function inputSystemControl(playingState: PlayingState) {
   const state: InputSystemState = {
     playingState,
     onHold(piece) {
-      if (!Piece.canHold(piece)) return false;
+      if (!playingState.isJoined() || !Piece.canHold(piece)) return false;
       playingState.holdPiece = piece;
       sendMoveCounter = 0;
+      piece.parent!.append(piece);
       client.sendEvent(new HoldPiece(piece.tag.index));
       return true;
     },
@@ -33,7 +45,7 @@ export function inputSystemControl(playingState: PlayingState) {
       piece.moveTo(point.x, point.y);
       piece.modified();
 
-      if (sendMoveCounter++ >= sendMoveCount) {
+      if (++sendMoveCounter > sendMoveCount) {
         sendMoveCounter = 0;
         client.sendEvent(new MovePiece(piece.tag.index, point));
       }
@@ -57,11 +69,6 @@ export function inputSystemControl(playingState: PlayingState) {
     },
   };
 
-  const inputSystems = [
-    PcInputSystem(state),
-    MobileInputSystem(state),
-  ] as const;
-
   const clientEventKeys = [
     // 自分が持っているピースを他人が操作した
     HoldPiece.receive(client, ({ pieceIndex, playerId }) => {
@@ -76,35 +83,35 @@ export function inputSystemControl(playingState: PlayingState) {
       if (playingState.holdPiece?.tag.index !== pieceIndex) return;
 
       playingState.holdPiece = undefined;
-      playingState.pieceOperaterControl.currentInputSystem.forceReleace();
+      playingState.pieceOperaterControl.current.forceReleace();
     }),
   ];
 
-  let currentOperaterIndex = 1;
+  const inputSystems = {
+    "pc": PcInputSystem(state),
+    "mobile": MobileInputSystem(state),
+  } as const satisfies Record<InputSystemType, InputSystem>;
 
   const control = {
-    get currentInputSystem() {
-      return inputSystems[currentOperaterIndex];
-    },
-    toggle() {
+    currentType: "pc" as InputSystemType,
+    get current() { return inputSystems[control.currentType]; },
+    toggle(type: InputSystemType) {
+      if (type === control.currentType) return;
       state.onRelease();
+      inputSystems[control.currentType].toggleFeature(false);
 
-      inputSystems[currentOperaterIndex].toggleFeature(false);
-      currentOperaterIndex += 1;
-      if (currentOperaterIndex >= inputSystems.length) {
-        currentOperaterIndex = 0;
-      }
-      inputSystems[currentOperaterIndex].toggleFeature(true);
+      control.currentType = type;
+      inputSystems[type].toggleFeature(true);
     },
     destroy() {
       client.removeEventSet(...clientEventKeys);
-      for (const operater of inputSystems) {
-        operater.destroy();
+      for (const type of InputSystemType) {
+        inputSystems[type].destroy();
       }
     },
   };
 
-  control.currentInputSystem.toggleFeature(true);
+  control.current.toggleFeature(true);
 
   return control;
 }
@@ -112,11 +119,10 @@ export function inputSystemControl(playingState: PlayingState) {
 
 export interface InputSystem {
   /**
-   * タッチイベントや操作UIの有効/無効を切り替える
+   * この操作モードの有効/無効を切り替える
    * @param enable 
    */
   toggleFeature: (enable: boolean) => void;
-
   /**
    * 今持っているピースを強制的に放す
    */
@@ -136,71 +142,71 @@ interface InputSystemState {
    * @returns ピースを持つことが出来たか
    */
   onHold: (piece: Piece) => boolean;
-
   /**
    * ピースを動かす
    * @param point 移動先
    * @returns ピースを動かす事が出来たか
    */
   onMove: (point: CommonOffset) => boolean;
-
   /**
    * ピースを放す
    * @returns ピースを放したか (持っている状態から持っていない状態に遷移したか)
    */
-  onRelease: (point?: CommonOffset) => void;
+  onRelease: (point?: CommonOffset) => boolean;
 }
 
 function PcInputSystem(state: InputSystemState): InputSystem {
-  const { playingState, onHold, onMove, onRelease } = state;
+  const { playingState } = state;
   const { client, layer } = playingState;
   const { scene } = client.env;
-  let enabled = false;
 
-  layer.bg.onPointMove.add(e => {
-    if (!enabled) return;
+  let touchPoint: CommonOffset | undefined;
+
+  const moveCamera = (e: g.PointMoveEvent) => {
+    if (touchPoint != null || e.target !== layer.bg) return;
     const playArea = layer.playArea;
     playArea.moveBy(-e.prevDelta.x * playArea.scaleX, -e.prevDelta.y * playArea.scaleX);
     playArea.modified();
-  });
-
-  let touchPoint: CommonOffset = null!;
-
+  };
   const pieceTouch = (e: g.PointDownEvent) => {
-    const piece = e.target;
-    if (!Piece.isPiece(piece)) return;
-    touchPoint = { x: piece.x, y: piece.y };
-    onHold(piece);
+    const piece = Piece.getFromGlobalPoint(e.point);
+    if (piece == null) return;
+    if (state.onHold(piece)) touchPoint = { x: piece.x, y: piece.y };
   };
   const pieceMove = (e: g.PointMoveEvent) => {
-    if (touchPoint == null || e.target !== playingState.holdPiece) return;
+    if (touchPoint == null) return;
 
-    onMove({
+    state.onMove({
       x: touchPoint.x + e.startDelta.x * layer.playArea.scaleX,
       y: touchPoint.y + e.startDelta.y * layer.playArea.scaleX,
     });
   };
   const pieceRelease = (e: g.PointUpEvent) => {
-    if (touchPoint == null || e.target !== playingState.holdPiece) return;
+    if (touchPoint == null) return;
 
-    onRelease({
+    state.onRelease({
       x: touchPoint.x + e.startDelta.x * layer.playArea.scaleX,
       y: touchPoint.y + e.startDelta.y * layer.playArea.scaleX,
     });
+    touchPoint = undefined;
   };
 
+  let enabled = false;
   const result: InputSystem = {
     toggleFeature(enable) {
       if (enable === enabled) return;
       enabled = enable;
       if (enable) {
+        scene.onPointMoveCapture.add(moveCamera);
         scene.onPointDownCapture.add(pieceTouch);
         scene.onPointMoveCapture.add(pieceMove);
         scene.onPointUpCapture.add(pieceRelease);
       } else {
+        scene.onPointMoveCapture.remove(moveCamera);
         scene.onPointDownCapture.remove(pieceTouch);
         scene.onPointMoveCapture.remove(pieceMove);
         scene.onPointUpCapture.remove(pieceRelease);
+        touchPoint = undefined;
       }
     },
     forceReleace() { },
@@ -213,34 +219,32 @@ function PcInputSystem(state: InputSystemState): InputSystem {
 }
 
 function MobileInputSystem(state: InputSystemState): InputSystem {
-  const { playingState, onHold, onMove, onRelease } = state;
+  const { playingState } = state;
   const { client, layer } = playingState;
   const { scene } = client.env;
-  let enabled = false;
 
-  layer.bg.onPointMove.add(e => {
-    if (!enabled) return;
+  const moveCamera = (e: g.PointMoveEvent) => {
+    if (e.target !== layer.bg) return;
+
     const playArea = layer.playArea;
     playArea.moveBy(-e.prevDelta.x * playArea.scaleX, -e.prevDelta.y * playArea.scaleX);
     playArea.modified();
 
     if (playingState.holdPiece != null) {
-      onMove({
+      state.onMove({
         x: playingState.holdPiece.x - e.prevDelta.x * layer.playArea.scaleX,
         y: playingState.holdPiece.y - e.prevDelta.y * layer.playArea.scaleX,
       });
     }
-  });
-
+  };
   const getCursorPointPiece = (): {
-    relativePoint: CommonOffset, piece: Piece,
+    piece: Piece; globalPoint: CommonOffset;
   } | undefined => {
-    const relativePoint = cursorParent.localToGlobal({ x: pad.cursor.x, y: pad.cursor.y });
+    const globalPoint = cursorParent.localToGlobal({ x: pad.cursor.x, y: pad.cursor.y });
+    const piece = Piece.getFromGlobalPoint(globalPoint);
+    if (piece == null) return;
 
-    const piece = layer.playArea.findPointSourceByPoint(relativePoint, undefined, true)?.target;
-    if (!Piece.isPiece(piece)) return;
-
-    return { relativePoint, piece };
+    return { globalPoint, piece };
   };
 
   const holdPieceBtn = new g.FilledRect({
@@ -254,11 +258,16 @@ function MobileInputSystem(state: InputSystemState): InputSystem {
     if (playingState.holdPiece == null) {
       const result = getCursorPointPiece();
       if (result == null) return;
-      const { piece } = result;
 
-      onHold(piece);
+      if (state.onHold(result.piece)) {
+        pad.cursor.cssColor = "rgba(255,0,0,0.4)";
+        pad.cursor.modified();
+      }
     } else {
-      onRelease();
+      if (state.onRelease()) {
+        pad.cursor.cssColor = "red";
+        pad.cursor.modified();
+      }
     }
   });
 
@@ -282,31 +291,32 @@ function MobileInputSystem(state: InputSystemState): InputSystem {
     layer.playArea.moveBy(cursorRest.x * layer.playArea.scaleX, cursorRest.y * layer.playArea.scaleX);
     layer.playArea.modified();
 
-    // const q = getCursorPointPiece();
-    // pad.cursor.cssColor = "yellow";
-    // if (q != null) {
-    //   console.log(q.piece);
-    //   pad.cursor.cssColor = "red";
-    // }
-    // pad.cursor.modified();
-
     if (playingState.holdPiece != null) {
-      onMove({
+      state.onMove({
         x: playingState.holdPiece.x + moved.x * layer.playArea.scaleX,
         y: playingState.holdPiece.y + moved.y * layer.playArea.scaleX,
       });
     }
+
+    pad.cursor.cssColor =
+      playingState.holdPiece != null ? "rgba(255,0,0,0.4)" :
+        getCursorPointPiece() != null ? "red" : "yellow";
+
+    pad.cursor.modified();
   });
 
+  let enabled = false;
   const result: InputSystem = {
     toggleFeature(enable) {
       if (enable === enabled) return;
       enabled = enable;
       if (enable) {
+        scene.onPointMoveCapture.add(moveCamera);
         holdPieceBtn.show();
         cursorParent.show();
         pad.pad.show();
       } else {
+        scene.onPointMoveCapture.remove(moveCamera);
         holdPieceBtn.hide();
         cursorParent.hide();
         pad.pad.hide();
@@ -316,6 +326,7 @@ function MobileInputSystem(state: InputSystemState): InputSystem {
 
     },
     destroy() {
+      result.toggleFeature(false);
       holdPieceBtn.destroy();
       cursorParent.destroy();
       pad.pad.destroy();

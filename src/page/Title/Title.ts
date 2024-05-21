@@ -1,10 +1,10 @@
 import { Client, createFont } from "akashic-sac";
-import { PlayerManager } from "../event/Player";
-import { sendJoin } from "./share";
+import { sendJoin } from "../share";
 import { Label } from "@akashic-extension/akashic-label";
-import { createButton } from "../util/createButton";
-import { ChangeLevel, ChangePuzzle, GameStart } from "../event/TitleEvent";
-import { Playing } from "./Playing/Playing";
+import { createButton } from "../../util/createButton";
+import { ChangeLevel, ChangePuzzle, GameStart } from "../../event/TitleEvent";
+import { Playing } from "../Playing/Playing";
+import { PlayerManager } from "../../util/PlayerManager";
 
 interface TitleState {
   client: Client;

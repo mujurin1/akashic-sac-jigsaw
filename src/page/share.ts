@@ -1,7 +1,8 @@
 import { resolvePlayerInfo } from "@akashic-extension/resolve-player-info";
-import { JoinPlayer, PlayerManager } from "../event/Player";
+import { JoinPlayer } from "../event/Events";
 import { Client } from "akashic-sac";
-import { Title } from "./Title";
+import { Title } from "./Title/Title";
+import { PlayerManager } from "../util/PlayerManager";
 
 export function clientStart(client: Client) {
   const { clientDI } = client.env;

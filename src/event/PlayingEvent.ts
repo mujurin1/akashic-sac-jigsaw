@@ -1,7 +1,7 @@
 import { CommonOffset, SacEvent, Server } from "akashic-sac";
 import { GameStart } from "./TitleEvent";
 import { lineupPiece } from "../page/Playing/lineupPiece";
-import { PlayerManager } from "./Player";
+import { PlayerManager } from "../util/PlayerManager";
 
 export class HoldPiece extends SacEvent {
   constructor(readonly pieceIndex: number) { super(); }
