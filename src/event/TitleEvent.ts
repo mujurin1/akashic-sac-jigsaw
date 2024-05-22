@@ -21,7 +21,7 @@ export class GameStart extends SacEvent {
     readonly startTime: number,
     readonly puzzleIndex: number,
     /** 切り抜く原点（左上） */
-    readonly origine: CommonOffset,
+    readonly origin: CommonOffset,
     /** ピースのサイズ */
     readonly pieceSize: CommonSize,
     /** ピースの縦横枚数 */

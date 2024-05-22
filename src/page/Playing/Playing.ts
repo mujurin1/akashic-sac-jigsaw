@@ -42,7 +42,7 @@ export async function Playing(client: Client, gameStart: GameStart, previewsInfo
     scene,
     randomSeed: gameStart.seed,
     imageSrc: previewsInfo[gameStart.puzzleIndex].imageAsset,
-    origine: gameStart.origine,
+    origine: gameStart.origin,
     pieceSize: gameStart.pieceSize,
     pieceWH: gameStart.pieceWH,
   });

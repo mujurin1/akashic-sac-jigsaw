@@ -222,21 +222,6 @@
 			"path": "script/page/Playing/lineupPiece.js",
 			"global": true
 		},
-		"server": {
-			"type": "script",
-			"path": "script/server.js",
-			"global": true
-		},
-		"createButton": {
-			"type": "script",
-			"path": "script/util/createButton.js",
-			"global": true
-		},
-		"CustomSprite": {
-			"type": "script",
-			"path": "script/util/CustomSprite.js",
-			"global": true
-		},
 		"PlayerManager": {
 			"type": "script",
 			"path": "script/util/PlayerManager.js",
@@ -277,9 +262,24 @@
 			"path": "script/page/Title/Title.js",
 			"global": true
 		},
+		"server": {
+			"type": "script",
+			"path": "script/server.js",
+			"global": true
+		},
+		"createButton": {
+			"type": "script",
+			"path": "script/util/createButton.js",
+			"global": true
+		},
 		"createPieces": {
 			"type": "script",
 			"path": "script/util/createPieces.js",
+			"global": true
+		},
+		"CustomSprite": {
+			"type": "script",
+			"path": "script/util/CustomSprite.js",
 			"global": true
 		},
 		"MouseWheel": {

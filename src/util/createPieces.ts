@@ -149,21 +149,15 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
 
   for (let h = 0; h < param.pieceWH.height; h++) {
     for (let w = 0; w < param.pieceWH.width; w++) {
-      try {
-        const p = stamp(
-          w, h,
-          wakuReverse(wOXs[h][w]),
-          wakuReverse(hOXs[w][h]),
-          wOXs[h][w + 1],
-          hOXs[w][h + 1],
-        );
-        Piece.setTag(p, h * param.pieceWH.height + w);
-        pieces.push(p);
-      } catch (e) {
-        debugger;
-        console.log(hOXs[w][h]);
-        throw e;
-      }
+      const p = stamp(
+        w, h,
+        wakuReverse(wOXs[h][w]),
+        wakuReverse(hOXs[w][h]),
+        wOXs[h][w + 1],
+        hOXs[w][h + 1],
+      );
+      Piece.setTag(p, h * param.pieceWH.width + w);
+      pieces.push(p);
     }
   }
 
@@ -235,7 +229,7 @@ function createCustomSpriteFromE(scene: g.Scene, e: g.E, drawOffset: CommonRect)
   const surfaceW = e.width + drawOffset.left + drawOffset.right;
   const surfaceH = e.height + drawOffset.top + drawOffset.bottom;
 
-  const surface = scene.game.resourceFactory.createSurface(Math.ceil(surfaceW), Math.ceil(surfaceH));
+  const surface = scene.game.resourceFactory.createSurface(Math.floor(surfaceW), Math.floor(surfaceH));
   const renderer = surface.renderer();
   renderer.begin();
   e.render(renderer);
