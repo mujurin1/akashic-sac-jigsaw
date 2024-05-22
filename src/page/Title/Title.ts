@@ -152,14 +152,14 @@ function createUi(state: TitleState) {
   const levelNumText = new Label({
     scene, parent: levelTextBack,
     font: fontN,
-    text: "レベル XXX",
+    text: "レベル 50",
     width: 300,
   });
   const pieceNumText = new Label({
     scene, parent: levelTextBack,
     x: levelNumText.x + levelNumText.width + 200,
     font: fontN,
-    text: "XXXX 枚",
+    text: "0000 枚",
     width: 250,
   });
 
@@ -183,6 +183,28 @@ function createUi(state: TitleState) {
   }
   //#endregion ホスト専用UI
   //#endregion レベルUI
+
+  const setChangeLevel = (level: number) => {
+    const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
+    const pixel = (100 - state.level) + 40;
+
+    state.level = level;
+    state.pieceSize = { width: pixel, height: pixel };
+    state.pieceWH = {
+      width: Math.floor(imageAsset.width / pixel),
+      height: Math.floor(imageAsset.height / pixel),
+    };
+    state.origin = {
+      x: Math.floor((imageAsset.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
+      y: Math.floor((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
+    };
+
+    levelNumText.text = `レベル ${Math.round(state.level)}`;
+    levelNumText.invalidate();
+    pieceNumText.text = `${state.pieceWH.width * state.pieceWH.height} 枚`;
+    pieceNumText.invalidate();
+  };
+  setChangeLevel(50);
 
   const eventKeys = [
     ChangePuzzle.receive(client, data => {
@@ -208,32 +230,7 @@ function createUi(state: TitleState) {
         pieceNumText.invalidate();
       }
     }),
-    ChangeLevel.receive(client, data => {
-      const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
-      const pixel = (100 - state.level) + 40;
-
-      state.level = data.level;
-      state.pieceSize = { width: pixel, height: pixel };
-      state.pieceWH = {
-        width: Math.floor(imageAsset.width / pixel),
-        height: Math.floor(imageAsset.height / pixel),
-      };
-      state.origin = {
-        x: Math.floor((imageAsset.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
-        y: Math.floor((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
-      };
-      console.log("========================================================");
-      console.log("Image:", imageAsset.width, imageAsset.height);
-      console.log("pixel:", pixel);
-      console.log("nums :", state.pieceWH);
-      console.log("pixel * 枚数:", pixel * state.pieceWH.width, pixel * state.pieceWH.height);
-      console.log("origin:", state.origin);
-
-      levelNumText.text = `レベル ${Math.round(state.level)}`;
-      levelNumText.invalidate();
-      pieceNumText.text = `${state.pieceWH.width * state.pieceWH.height} 枚`;
-      pieceNumText.invalidate();
-    }),
+    ChangeLevel.receive(client, data => setChangeLevel(data.level)),
     GameStart.receive(client, data => {
       client.removeEventSet(...eventKeys);
       playerManager.onUpdate.remove(removePmKey);
