@@ -232,6 +232,11 @@
 			"path": "script/util/createButton.js",
 			"global": true
 		},
+		"CustomSprite": {
+			"type": "script",
+			"path": "script/util/CustomSprite.js",
+			"global": true
+		},
 		"PlayerManager": {
 			"type": "script",
 			"path": "script/util/PlayerManager.js",
@@ -275,11 +280,6 @@
 		"createPieces": {
 			"type": "script",
 			"path": "script/util/createPieces.js",
-			"global": true
-		},
-		"CustomSprite": {
-			"type": "script",
-			"path": "script/util/CustomSprite.js",
 			"global": true
 		},
 		"MouseWheel": {

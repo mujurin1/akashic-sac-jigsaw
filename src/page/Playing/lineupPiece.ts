@@ -13,7 +13,7 @@ export function lineupPiece(
   const int = { w: Math.floor(tmp.w), h: Math.floor(tmp.h) };
   const decimal = { w: tmp.w - int.w, h: tmp.h - int.h };
 
-  const lineup = { w: int.w + 2, h: int.w + 2 };
+  const lineup = { w: int.w + 2, h: int.h + 2 };
   const nextPos = {
     x: boardSize.width - (size.w * ((1 - decimal.w) / 2)) + margine.w,
     y: boardSize.height - (size.h * ((1 - decimal.h) / 2)) + margine.h - size.h,

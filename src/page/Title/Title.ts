@@ -217,17 +217,7 @@ function createUi(state: TitleState) {
       } else {
         preview.show();
         setSprite(preview, previewsInfo[state.puzzleIndex].imageAsset);
-
-        const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
-        state.origin = {
-          x: Math.round((imageAsset.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
-          y: Math.round((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
-        };
-
-        titleText.text = previewsInfo[state.puzzleIndex].title;
-        titleText.invalidate();
-        pieceNumText.text = `${state.pieceWH.width * state.pieceWH.height} 枚`;
-        pieceNumText.invalidate();
+        setChangeLevel(state.level);
       }
     }),
     ChangeLevel.receive(client, data => setChangeLevel(data.level)),
