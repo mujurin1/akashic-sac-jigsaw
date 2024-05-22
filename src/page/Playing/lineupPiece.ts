@@ -4,7 +4,7 @@ export function lineupPiece(
   seed: number,
   pieceCount: number,
   pieceSize: CommonSize,
-  boardSize: CommonSize
+  boardSize: CommonSize,
 ): CommonOffset[] {
   // 0.3 はピース枠の凸のサイズが0.25なので重ならないようにするマージン分
   const margine = { w: pieceSize.width * 0.3, h: pieceSize.height * 0.3 };

@@ -14,14 +14,14 @@ export function serverStart(server: Server) {
     server.broadcast(data);
   });
 
-  if (true) {
-    const data = {
-      eventName: JoinPlayer.name,
-      name: "pid1", playerId: "pid1", realName: true,
-    } satisfies JoinPlayer;
-    playerManager.upsert(data.playerId, data.name, data.realName);
-    server.broadcast(data);
-  }
+  // if (true) {
+  //   const data = {
+  //     eventName: JoinPlayer.name,
+  //     name: "pid1", playerId: "pid1", realName: true,
+  //   } satisfies JoinPlayer;
+  //   playerManager.upsert(data.playerId, data.name, data.realName);
+  //   server.broadcast(data);
+  // }
 
   serverTitle(server);
 }

@@ -1,11 +1,18 @@
 import { CommonOffset, CommonSize, SacEvent, Server } from "akashic-sac";
 import { serverPlaying } from "./PlayingEvent";
+import { readAssets } from "../util/readAssets";
 
 export class ChangePuzzle extends SacEvent {
-  constructor(readonly index: number) { super(); }
+  constructor(
+    /** 0 ~ パズルの枚数-1 OR -1 (ユーザー投稿) */
+    readonly index: number,
+  ) { super(); }
 }
 export class ChangeLevel extends SacEvent {
-  constructor(readonly level: number) { super(); }
+  constructor(
+    /** 0 ~ 100 */
+    readonly level: number,
+  ) { super(); }
 }
 export class GameStart extends SacEvent {
   constructor(
@@ -26,8 +33,8 @@ export class GameStart extends SacEvent {
 
 
 export function serverTitle(server: Server): void {
-  // TODO: 仮にパズルの枚数を10枚とする
-  const puzzleMaxIndex = 9;
+  const previewInfo = readAssets(server.env.scene);
+  const puzzleMaxIndex = previewInfo.length - 1;
 
 
   const eventKeys = [

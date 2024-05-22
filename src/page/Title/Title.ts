@@ -1,39 +1,35 @@
-import { Client, createFont } from "akashic-sac";
+import { Client, CommonOffset, CommonSize, createFont } from "akashic-sac";
 import { sendJoin } from "../share";
 import { Label } from "@akashic-extension/akashic-label";
 import { createButton } from "../../util/createButton";
 import { ChangeLevel, ChangePuzzle, GameStart } from "../../event/TitleEvent";
 import { Playing } from "../Playing/Playing";
 import { PlayerManager } from "../../util/PlayerManager";
+import { Slider } from "../../util/Slider";
+import { readAssets } from "../../util/readAssets";
 
 interface TitleState {
   client: Client;
+  /** 0~デフォルトの画像枚数-1枚, index:-1 はカスタム画像 */
   puzzleIndex: number;
+  /** 0~100 */
   level: number;
+  origin: CommonOffset;
+  pieceSize: CommonSize;
+  pieceWH: CommonSize;
 }
 
 export function Title(client: Client) {
-  const { scene, clientDI } = client.env;
-  const playerManager = clientDI.get(PlayerManager);
+  const { scene } = client.env;
 
   const state: TitleState = {
     client,
-    puzzleIndex: 0,   // -1 はカスタム画像
-    level: 1,         // 1,2,3
+    puzzleIndex: 0,
+    level: 50,
+    origin: { x: 0, y: 0 },
+    pieceSize: null!,
+    pieceWH: null!,
   };
-
-  const eventKeys = [
-    GameStart.receive(client, data => {
-      client.removeEventSet(...eventKeys);
-
-      const children = [...scene.children];
-      for (const child of children) {
-        child.destroy();
-      }
-
-      void Playing(client, data);
-    }),
-  ];
 
   createUi(state);
 }
@@ -43,55 +39,60 @@ function createUi(state: TitleState) {
   const { scene, clientDI } = client.env;
   const playerManager = clientDI.get(PlayerManager);
 
+  const previewsInfo = readAssets(scene);
   const fontN = createFont({ size: 50, fontWeight: "bold" });
-  const isHost = client.env.isHost;
 
+  //#region 画像プレビュー
   const previewPanel = new g.FilledRect({
     scene, parent: scene, cssColor: "black",
     x: 25, y: 35, width: 770, height: 460,
   });
+  const preview = new g.Sprite({
+    scene, parent: previewPanel,
+    // width: previewPanel.width, height: previewPanel.height,
+    src: previewsInfo[state.puzzleIndex].imageAsset,
+  });
+  setSprite(preview, previewsInfo[state.puzzleIndex].imageAsset);
+  //#endregion 画像プレビュー
+
+  //#region 右側のUI
   const titleBack = new g.Sprite({
     scene, parent: scene, src: scene.asset.getImageById("title_back"),
     x: 850, y: 35,
   });
-  const levels = [1, 2, 3].map(l => new g.Sprite({
-    scene, parent: scene, src: scene.asset.getImageById(`level${l}`),
-    x: titleBack.x, y: titleBack.y + 100 * l,
-    opacity: l === 1 ? 1 : 0.6, touchable: isHost,
-  }));
+  const titleText = new Label({
+    scene, parent: titleBack, lineBreak: false,
+    width: 360, widthAutoAdjust: true, font: fontN, text: previewsInfo[state.puzzleIndex].title,
+    anchorX: 0.5, anchorY: 0.5, x: titleBack.width * 0.5, y: titleBack.height * 0.5 - 5,
+  });
 
   const sankaNin = new g.Sprite({
     scene, parent: scene, src: scene.asset.getImageById("sanka_nin"),
-    x: titleBack.x, y: titleBack.y + 400,
+    x: titleBack.x, y: titleBack.y + 100,
   });
-  const titleText = new Label({
-    scene, parent: titleBack, lineBreak: false,
-    width: 360, widthAutoAdjust: true, font: fontN, text: "たいとる",
-    anchorX: 0.5, anchorY: 0.5, x: titleBack.width * 0.5, y: titleBack.height * 0.5 - 5,
-  });
-  const levelTexts = levels.map(level => new Label({
-    scene, parent: level, lineBreak: false,
-    width: 170, font: fontN, fontSize: 40, textAlign: "right", text: "100",
-    anchorY: 0.5, x: 150, y: level.height * 0.5 - 5,
-  }));
   const sankaNinText = new Label({
     scene, parent: sankaNin, lineBreak: false,
     width: 380, font: fontN, fontSize: 50, textAlign: "center", text: "0",
     anchorY: 0.5, y: sankaNin.height * 0.5 - 5,
   });
 
-  for (let level = 1; level < levels.length + 1; level++) {
-    const levelP = levels[level - 1];
-    levelP.onPointDown.add(() => {
-      if (state.level !== level) client.sendEvent(new ChangeLevel(level));
-    });
-  }
-
   const joinBtn = createButton({
     scene, parent: scene,
     text: " 参加 ",
-    x: 40, y: g.game.height - 100
+    // height: 200,
+    width: titleBack.width,
+    textAlign: "left",
+    x: titleBack.x, y: titleBack.y + 240,
   });
+  new Label({
+    scene, parent: joinBtn,
+    x: 200, y: 10,
+    font: createFont({ size: 35, fontColor: "white", fontWeight: "bold" }),
+    textAlign: "center",
+    text: "途中参加\n可能",
+    width: 170,
+  });
+
   joinBtn.onPointDown.add(sendJoin);
   const removePmKey = playerManager.onUpdate.add(({ id, realName }) => {
     if (id === g.game.selfId) {
@@ -107,21 +108,21 @@ function createUi(state: TitleState) {
     sankaNinText.invalidate();
   });
 
-
+  //#region ホスト専用UI
   if (client.env.isHost) {
     const left = createButton({
       scene, parent: scene,
-      x: 250, y: 540, text: "←",
-      width: 200, height: 100,
+      x: titleBack.x, y: 580, text: "←",
+      width: 180, height: 100,
     });
     const right = createButton({
       scene, parent: scene,
-      x: 500, y: 540, text: "→",
-      width: 200, height: 100,
+      x: left.x + 200, y: left.y, text: "→",
+      width: left.width, height: 100,
     });
     const start = createButton({
       scene, parent: scene,
-      x: 950, y: 540, text: " 開始 ",
+      x: 950, y: 400, text: " 開始 ",
     });
 
     left.onPointDown.add(() => client.sendEvent(new ChangePuzzle(state.puzzleIndex - 1)));
@@ -130,29 +131,144 @@ function createUi(state: TitleState) {
       Math.floor(Math.random() * 10000),
       g.game.getCurrentTime(),
       state.puzzleIndex,
-      { x: 350, y: 100 },
-      { width: 50, height: 50 },
-      { width: 10, height: 10 },
+      // { x: 350, y: 100 },
+      // { width: 50, height: 50 },
+      // { width: 10, height: 10 },
+      state.origin,
+      state.pieceSize,
+      state.pieceWH,
     )));
   }
+  //#endregion ホスト専用UI
+  //#endregion 右側のUI
+
+  //#region レベルUI
+  const levelTextBack = new g.FilledRect({
+    scene, parent: scene,
+    cssColor: "white",
+    x: 25, y: 510,
+    width: 770, height: 70,
+  });
+  const levelNumText = new Label({
+    scene, parent: levelTextBack,
+    font: fontN,
+    text: "レベル XXX",
+    width: 300,
+  });
+  const pieceNumText = new Label({
+    scene, parent: levelTextBack,
+    x: levelNumText.x + levelNumText.width + 200,
+    font: fontN,
+    text: "XXXX 枚",
+    width: 250,
+  });
+
+  //#region ホスト専用UI
+  if (g.game.env.isHost) {
+    const levelSlider = new Slider({
+      scene, parent: scene,
+      width: levelTextBack.width, height: 80,
+      x: levelTextBack.x, y: levelTextBack.y + 90,
+      per: 0.5,
+      min: 0, max: 100,
+    });
+    levelSlider.onValueChange.add(value => {
+      if (state.puzzleIndex === -1) return; // TODO
+
+      const newLevel = Math.round(value);
+      if (newLevel === state.level) return;
+
+      client.sendEvent(new ChangeLevel(newLevel));
+    });
+  }
+  //#endregion ホスト専用UI
+  //#endregion レベルUI
 
   const eventKeys = [
     ChangePuzzle.receive(client, data => {
       state.puzzleIndex = data.index;
-      // TODO:
-    }),
-    ChangeLevel.receive(client, data => {
-      state.level = data.level;
 
-      for (let level = 0; level < levels.length; level++) {
-        const levelP = levels[level];
-        levelP.opacity = state.level === (level + 1) ? 1 : 0.6;
-        levelP.modified();
+      if (state.puzzleIndex === -1) {
+        preview.hide();
+        titleText.text = "カスタム画像";
+        titleText.invalidate();
+      } else {
+        preview.show();
+        setSprite(preview, previewsInfo[state.puzzleIndex].imageAsset);
+
+        const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
+        state.origin = {
+          x: Math.round((imageAsset.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
+          y: Math.round((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
+        };
+
+        titleText.text = previewsInfo[state.puzzleIndex].title;
+        titleText.invalidate();
+        pieceNumText.text = `${state.pieceWH.width * state.pieceWH.height} 枚`;
+        pieceNumText.invalidate();
       }
     }),
-    GameStart.receive(client, () => {
+    ChangeLevel.receive(client, data => {
+      const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
+      const pixel = (100 - state.level) + 40;
+
+      state.level = data.level;
+      state.pieceSize = { width: pixel, height: pixel };
+      state.pieceWH = {
+        width: Math.floor(imageAsset.width / pixel),
+        height: Math.floor(imageAsset.height / pixel),
+      };
+      state.origin = {
+        x: Math.floor((imageAsset.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
+        y: Math.floor((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
+      };
+      console.log("========================================================");
+      console.log("Image:", imageAsset.width, imageAsset.height);
+      console.log("pixel:", pixel);
+      console.log("nums :", state.pieceWH);
+      console.log("pixel * 枚数:", pixel * state.pieceWH.width, pixel * state.pieceWH.height);
+      console.log("origin:", state.origin);
+
+      levelNumText.text = `レベル ${Math.round(state.level)}`;
+      levelNumText.invalidate();
+      pieceNumText.text = `${state.pieceWH.width * state.pieceWH.height} 枚`;
+      pieceNumText.invalidate();
+    }),
+    GameStart.receive(client, data => {
       client.removeEventSet(...eventKeys);
       playerManager.onUpdate.remove(removePmKey);
+
+      client.removeEventSet(...eventKeys);
+
+      const children = [...scene.children];
+      for (const child of children) {
+        child.destroy();
+      }
+
+      void Playing(client, data, previewsInfo);
     }),
   ];
+}
+
+
+function setSprite(sprite: g.Sprite, src: g.ImageAsset) {
+  sprite.src = src;
+  sprite.width = sprite.srcWidth = src.width;
+  sprite.height = sprite.srcHeight = src.height;
+  const width = (<g.E>sprite.parent).width;
+  const height = (<g.E>sprite.parent).height;
+  const widthPer = width / sprite.width;
+  const heightPer = height / sprite.height;
+
+  if (heightPer < widthPer) {
+    sprite.scale(heightPer);
+    sprite.x = (width - sprite.width * sprite.scaleX) / 2;
+    sprite.y = 0;
+  } else {
+    sprite.scale(widthPer);
+    sprite.x = 0;
+    sprite.y = (height - sprite.height * sprite.scaleY) / 2;
+  }
+
+  sprite.invalidate();
 }

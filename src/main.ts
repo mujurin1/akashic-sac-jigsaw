@@ -16,7 +16,7 @@ export = (gameMainParam: g.GameMainParameterObject) => {
     // clientStart: imageShareSample,
     options: {
       sceneParam: {
-        assetIds: ["default_frame", "fox", "title_back", "level1", "level2", "level3", "sanka_nin"],
+        assetIds: ["default_frame", "title_back", "sanka_nin"],
         assetPaths: ["/assets/**/*"]
       }
     }

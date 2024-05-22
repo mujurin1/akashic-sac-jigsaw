@@ -129,16 +129,16 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
   const wOXs: WakuType[][] = [];
   const hOXs: WakuType[][] = [];
 
-  for (let a = 0; a < param.pieceWH.width; a++) {
+  for (let a = 0; a < param.pieceWH.height; a++) {
     const ary: WakuType[] = ["_"];
-    for (let b = 0; b < param.pieceWH.height - 1; b++)
+    for (let b = 0; b < param.pieceWH.width - 1; b++)
       ary.push(randomBool(random) ? "O" : "X");
     ary.push("_");
     wOXs.push(ary);
   }
-  for (let a = 0; a < param.pieceWH.height; a++) {
+  for (let a = 0; a < param.pieceWH.width; a++) {
     const ary: WakuType[] = ["_"];
-    for (let b = 0; b < param.pieceWH.width - 1; b++)
+    for (let b = 0; b < param.pieceWH.height - 1; b++)
       ary.push(randomBool(random) ? "O" : "X");
     ary.push("_");
     hOXs.push(ary);
@@ -149,15 +149,21 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
 
   for (let h = 0; h < param.pieceWH.height; h++) {
     for (let w = 0; w < param.pieceWH.width; w++) {
-      const p = stamp(
-        w, h,
-        wakuReverse(wOXs[h][w]),
-        wakuReverse(hOXs[w][h]),
-        wOXs[h][w + 1],
-        hOXs[w][h + 1],
-      );
-      Piece.setTag(p, h * param.pieceWH.height + w);
-      pieces.push(p);
+      try {
+        const p = stamp(
+          w, h,
+          wakuReverse(wOXs[h][w]),
+          wakuReverse(hOXs[w][h]),
+          wOXs[h][w + 1],
+          hOXs[w][h + 1],
+        );
+        Piece.setTag(p, h * param.pieceWH.height + w);
+        pieces.push(p);
+      } catch (e) {
+        debugger;
+        console.log(hOXs[w][h]);
+        throw e;
+      }
     }
   }
 

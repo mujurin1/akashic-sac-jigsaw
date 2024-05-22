@@ -7,6 +7,7 @@ import { Piece } from "./Piece";
 import { sendJoin } from "../share";
 import { InputSystemControl, inputSystemControl } from "./InputSystem";
 import { PlayerManager } from "../../util/PlayerManager";
+import { PreviewInfo } from "../../util/readAssets";
 
 export interface PlayingState {
   readonly client: Client;
@@ -32,7 +33,7 @@ export interface PlayingState {
   finishTime: number | undefined;
 }
 
-export async function Playing(client: Client, gameStart: GameStart) {
+export async function Playing(client: Client, gameStart: GameStart, previewsInfo: PreviewInfo[]) {
   const { scene, clientDI } = client.env;
   const playerManager = clientDI.get(PlayerManager);
   const unlockEvent = client.lockEvent();
@@ -40,7 +41,7 @@ export async function Playing(client: Client, gameStart: GameStart) {
   const result = await createPieces({
     scene,
     randomSeed: gameStart.seed,
-    imageSrc: scene.asset.getImageById("fox"),
+    imageSrc: previewsInfo[gameStart.puzzleIndex].imageAsset,
     origine: gameStart.origine,
     pieceSize: gameStart.pieceSize,
     pieceWH: gameStart.pieceWH,

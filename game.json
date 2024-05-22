@@ -61,12 +61,6 @@
 			"width": 31,
 			"height": 31
 		},
-		"fox": {
-			"type": "image",
-			"path": "image/fox.jpg",
-			"width": 1280,
-			"height": 851
-		},
 		"sanka_nin": {
 			"type": "image",
 			"path": "image/sanka_nin.png",
@@ -79,42 +73,138 @@
 			"width": 380,
 			"height": 80
 		},
-		"level1": {
+		"assets/antelope.jpg": {
 			"type": "image",
-			"path": "image/level1.png",
-			"width": 380,
-			"height": 80
+			"path": "assets/antelope.jpg",
+			"width": 1280,
+			"height": 780
 		},
-		"level2": {
+		"assets/architecture.jpg": {
 			"type": "image",
-			"path": "image/level2.png",
-			"width": 380,
-			"height": 80
+			"path": "assets/architecture.jpg",
+			"width": 1920,
+			"height": 1439
 		},
-		"level3": {
+		"assets/audience.jpg": {
 			"type": "image",
-			"path": "image/level3.png",
-			"width": 380,
-			"height": 80
+			"path": "assets/audience.jpg",
+			"width": 1920,
+			"height": 884
 		},
-		"__Events": {
-			"type": "script",
-			"path": "script/__Events.js",
-			"global": true
+		"assets/beach.jpg": {
+			"type": "image",
+			"path": "assets/beach.jpg",
+			"width": 1280,
+			"height": 960
+		},
+		"assets/cake.jpg": {
+			"type": "image",
+			"path": "assets/cake.jpg",
+			"width": 1280,
+			"height": 720
+		},
+		"assets/cockpit.jpg": {
+			"type": "image",
+			"path": "assets/cockpit.jpg",
+			"width": 1920,
+			"height": 1209
+		},
+		"assets/color-fan.jpg": {
+			"type": "image",
+			"path": "assets/color-fan.jpg",
+			"width": 1920,
+			"height": 1280
+		},
+		"assets/duck.jpg": {
+			"type": "image",
+			"path": "assets/duck.jpg",
+			"width": 1280,
+			"height": 853
+		},
+		"assets/excavators.jpg": {
+			"type": "image",
+			"path": "assets/excavators.jpg",
+			"width": 1280,
+			"height": 416
+		},
+		"assets/firewood.jpg": {
+			"type": "image",
+			"path": "assets/firewood.jpg",
+			"width": 1280,
+			"height": 853
+		},
+		"assets/fox.jpg": {
+			"type": "image",
+			"path": "assets/fox.jpg",
+			"width": 1280,
+			"height": 851
+		},
+		"assets/frangipani.jpg": {
+			"type": "image",
+			"path": "assets/frangipani.jpg",
+			"width": 1280,
+			"height": 853
+		},
+		"assets/japan.jpg": {
+			"type": "image",
+			"path": "assets/japan.jpg",
+			"width": 1920,
+			"height": 1076
+		},
+		"assets/latte-art.jpg": {
+			"type": "image",
+			"path": "assets/latte-art.jpg",
+			"width": 1280,
+			"height": 853
+		},
+		"assets/living-room.jpg": {
+			"type": "image",
+			"path": "assets/living-room.jpg",
+			"width": 1920,
+			"height": 1280
+		},
+		"assets/noodle-soup.jpg": {
+			"type": "image",
+			"path": "assets/noodle-soup.jpg",
+			"width": 1280,
+			"height": 960
+		},
+		"assets/paraglider.jpg": {
+			"type": "image",
+			"path": "assets/paraglider.jpg",
+			"width": 1280,
+			"height": 855
+		},
+		"assets/skyscrapers.jpg": {
+			"type": "image",
+			"path": "assets/skyscrapers.jpg",
+			"width": 1280,
+			"height": 853
+		},
+		"assets/supreme.jpg": {
+			"type": "image",
+			"path": "assets/supreme.jpg",
+			"width": 1280,
+			"height": 852
+		},
+		"assets/watch.jpg": {
+			"type": "image",
+			"path": "assets/watch.jpg",
+			"width": 1920,
+			"height": 1280
+		},
+		"assets/!.txt": {
+			"type": "text",
+			"path": "assets/!.txt"
 		},
 		"Events": {
 			"type": "script",
 			"path": "script/event/Events.js",
 			"global": true
 		},
-		"lineupPiece": {
+		"__Events": {
 			"type": "script",
-			"path": "script/page/Playing/lineupPiece.js",
-			"global": true
-		},
-		"PlayerManager": {
-			"type": "script",
-			"path": "script/util/PlayerManager.js",
+			"path": "script/__Events.js",
 			"global": true
 		},
 		"PlayingEvent": {
@@ -127,9 +217,9 @@
 			"path": "script/event/TitleEvent.js",
 			"global": true
 		},
-		"Piece": {
+		"lineupPiece": {
 			"type": "script",
-			"path": "script/page/Playing/Piece.js",
+			"path": "script/page/Playing/lineupPiece.js",
 			"global": true
 		},
 		"server": {
@@ -142,19 +232,19 @@
 			"path": "script/util/createButton.js",
 			"global": true
 		},
-		"createPieces": {
-			"type": "script",
-			"path": "script/util/createPieces.js",
-			"global": true
-		},
 		"CustomSprite": {
 			"type": "script",
 			"path": "script/util/CustomSprite.js",
 			"global": true
 		},
-		"Pad": {
+		"PlayerManager": {
 			"type": "script",
-			"path": "script/util/Pad.js",
+			"path": "script/util/PlayerManager.js",
+			"global": true
+		},
+		"readAssets": {
+			"type": "script",
+			"path": "script/util/readAssets.js",
 			"global": true
 		},
 		"main": {
@@ -165,6 +255,11 @@
 		"InputSystem": {
 			"type": "script",
 			"path": "script/page/Playing/InputSystem.js",
+			"global": true
+		},
+		"Piece": {
+			"type": "script",
+			"path": "script/page/Playing/Piece.js",
 			"global": true
 		},
 		"Playing": {
@@ -182,9 +277,24 @@
 			"path": "script/page/Title/Title.js",
 			"global": true
 		},
+		"createPieces": {
+			"type": "script",
+			"path": "script/util/createPieces.js",
+			"global": true
+		},
 		"MouseWheel": {
 			"type": "script",
 			"path": "script/util/MouseWheel.js",
+			"global": true
+		},
+		"Pad": {
+			"type": "script",
+			"path": "script/util/Pad.js",
+			"global": true
+		},
+		"Slider": {
+			"type": "script",
+			"path": "script/util/Slider.js",
 			"global": true
 		}
 	}

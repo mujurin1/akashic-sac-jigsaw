@@ -5,22 +5,25 @@ const defaultFont = createFont({ size: 100, fontColor: "white" });
 const margin = 15;
 
 export interface ButtonParam {
-  scene: g.Scene,
-  parent?: g.Scene | g.E,
-  x: number,
-  y: number,
+  scene: g.Scene;
+  parent?: g.Scene | g.E;
+  x: number;
+  y: number;
 
-  width?: number,
-  height?: number,
+  width?: number;
+  height?: number;
 
-  text: string,
+  text: string;
 
-  font?: g.Font,
+  font?: g.Font;
   /** @default 65 */
-  fontSize?: number,
+  fontSize?: number;
 
   /** @default true */
-  touchable?: boolean,
+  touchable?: boolean;
+
+  /** デフォルトは`"left"`だが`width`を指定した場合のデフォルトは`"center"` */
+  textAlign?: g.TextAlignString;
 }
 
 export function createButton(param: ButtonParam): g.Sprite {
@@ -32,7 +35,7 @@ export function createButton(param: ButtonParam): g.Sprite {
     textColor: "white",
     width: width ?? 0,
     height,
-    textAlign: width == null ? "left" : "center",
+    textAlign: param.textAlign != null ? param.textAlign : width == null ? "left" : "center",
     widthAutoAdjust: width == null,
     lineBreak: false,
     fontSize: param.fontSize ?? 65,
