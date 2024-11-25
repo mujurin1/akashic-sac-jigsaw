@@ -1,11 +1,10 @@
-import { CommonOffset, CommonSize } from "akashic-sac";
 
 export function lineupPiece(
   seed: number,
   pieceCount: number,
-  pieceSize: CommonSize,
-  boardSize: CommonSize,
-): CommonOffset[] {
+  pieceSize: g.CommonSize,
+  boardSize: g.CommonSize,
+): g.CommonOffset[] {
   // 0.3 はピース枠の凸のサイズが0.25なので重ならないようにするマージン分
   const margine = { w: pieceSize.width * 0.3, h: pieceSize.height * 0.3 };
   const size = { w: pieceSize.width + margine.w * 2, h: pieceSize.height + margine.h * 2 };
@@ -21,7 +20,7 @@ export function lineupPiece(
   let dir: "right" | "bottom" | "left" | "top" = "right";
   let count = { w: 0, h: 0 };
 
-  const positions: CommonOffset[] = [];
+  const positions: g.CommonOffset[] = [];
 
   for (let i = 0; i < pieceCount; i++) {
     positions.push({ ...nextPos });

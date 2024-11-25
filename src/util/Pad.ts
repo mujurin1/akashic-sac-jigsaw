@@ -1,26 +1,26 @@
-import { CommonOffset } from "akashic-sac";
 
 export interface PadParam {
   scene: g.Scene;
-  padParent: g.E;
-  cursorParent: g.E;
+  parent: g.E;
+  cursorArea: g.CommonRect,
   x: number; y: number;
   cursorSpeed: number;
   hidden?: boolean;
 }
 
-export function createPad({ scene, padParent, cursorParent, x, y, cursorSpeed, hidden }: PadParam) {
+export type Pad = ReturnType<typeof createPad>;
+
+export function createPad({ scene, parent, cursorArea, x, y, cursorSpeed, hidden }: PadParam) {
   const width = 200, height = 200;
 
-  let padDir: CommonOffset | undefined;
+  let padDir: g.CommonOffset | undefined;
 
   const pad = new g.FilledRect({
-    scene, parent: padParent,
+    scene, parent,
     cssColor: "red",
     height, width,
     x, y,
-    touchable: true,
-    hidden,
+    touchable: true, hidden,
   });
   const padPointer = new g.FilledRect({
     scene, parent: pad,
@@ -55,51 +55,73 @@ export function createPad({ scene, padParent, cursorParent, x, y, cursorSpeed, h
     padDir = undefined;
     padPointer.moveTo(width / 2, height / 2);
     padPointer.modified();
-    result.onStop.fire();
+    result.onRelease.fire();
   });
 
   pad.onUpdate.add(() => {
     if (padDir == null) return;
 
     const moved = { x: padDir.x * cursorSpeed, y: padDir.y * cursorSpeed };
-    const cursorRest = { x: 0, y: 0 };
+    const cursorRest: g.CommonOffset = { x: 0, y: 0 };
     const newPos = { x: cursor.x + moved.x, y: cursor.y + moved.y };
 
-    if (newPos.x < 0) {
-      cursorRest.x = newPos.x;
-      newPos.x = 0;
-    } else if (cursorParent.width < newPos.x) {
-      cursorRest.x = newPos.x - cursorParent.width;
-      newPos.x = cursorParent.width;
+    if (newPos.x < cursorArea.left) {
+      cursorRest.x = newPos.x - cursorArea.left;
+      newPos.x = cursorArea.left;
+    } else {
+      if (cursorArea.right < newPos.x) {
+        cursorRest.x = newPos.x - cursorArea.right;
+        newPos.x = cursorArea.right;
+      }
     }
-    if (newPos.y < 0) {
-      cursorRest.y = newPos.y;
-      newPos.y = 0;
-    } else if (cursorParent.height < newPos.y) {
-      cursorRest.y = newPos.y - cursorParent.height;
-      newPos.y = cursorParent.height;
+    if (newPos.y < cursorArea.top) {
+      cursorRest.y = newPos.y - cursorArea.top;
+      newPos.y = cursorArea.top;
+    } else {
+      if (cursorArea.bottom < newPos.y) {
+        cursorRest.y = newPos.y - cursorArea.bottom;
+        newPos.y = cursorArea.bottom;
+      }
     }
 
-    cursor.moveTo(newPos.x, newPos.y);
-    cursor.modified();
+    if (!result.cursorLock) {
+      cursor.moveTo(newPos.x, newPos.y);
+      cursor.modified();
+    }
 
     result.onMoveing.fire({ padDir, moved, cursorRest });
   });
 
   const cursor = new g.FilledRect({
-    scene, parent: cursorParent,
+    scene, parent,
     cssColor: "yellow",
     width: 50, height: 50,
-    // anchorX: 0.5, anchorY: 0.5,
-    x: cursorParent.width / 2, y: cursorParent.height / 2,
+    x: cursorArea.left + (cursorArea.right - cursorArea.left) / 2,
+    y: cursorArea.top + (cursorArea.bottom - cursorArea.top) / 2,
+    hidden,
   });
 
   const result = {
     pad,
     cursor,
+    cursorLock: false,
     cursorSpeed,
     onMoveing: new g.Trigger<CursorMovePoint>(),
-    onStop: new g.Trigger(),
+    onRelease: new g.Trigger(),
+    show: () => {
+      pad.show();
+      cursor.show();
+    },
+    hide: () => {
+      pad.hide();
+      cursor.hide();
+    },
+    destroy: () => {
+      pad.destroy();
+      cursor.destroy();
+      result.onMoveing.destroy();
+      result.onRelease.destroy();
+    }
   };
 
   return result;
@@ -107,9 +129,9 @@ export function createPad({ scene, padParent, cursorParent, x, y, cursorSpeed, h
 
 export interface CursorMovePoint {
   /** パッドの傾き (-1 ~ 1) */
-  padDir: CommonOffset;
+  padDir: g.CommonOffset;
   /** パッドに依る移動量 (傾き * 速度) */
-  moved: CommonOffset;
+  moved: g.CommonOffset;
   /** カーソルが画面端に接して移動しなかった量 */
-  cursorRest: CommonOffset;
+  cursorRest: g.CommonOffset;
 }

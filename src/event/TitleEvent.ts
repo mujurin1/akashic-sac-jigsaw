@@ -1,6 +1,6 @@
-import { CommonOffset, CommonSize, SacEvent, Server } from "akashic-sac";
-import { serverPlaying } from "./PlayingEvent";
+import { SacEvent, Server } from "akashic-sac";
 import { readAssets } from "../util/readAssets";
+import { serverPlaying } from "./PlayingEvent";
 
 export class ChangePuzzle extends SacEvent {
   constructor(
@@ -21,11 +21,11 @@ export class GameStart extends SacEvent {
     readonly startTime: number,
     readonly puzzleIndex: number,
     /** 切り抜く原点（左上） */
-    readonly origin: CommonOffset,
+    readonly origin: g.CommonOffset,
     /** ピースのサイズ */
-    readonly pieceSize: CommonSize,
+    readonly pieceSize: g.CommonSize,
     /** ピースの縦横枚数 */
-    readonly pieceWH: CommonSize,
+    readonly pieceWH: g.CommonSize,
   ) { super(); }
 }
 
@@ -54,10 +54,9 @@ export function serverTitle(server: Server): void {
     }),
     GameStart.receive(server, data => {
       if (data.playerId !== g.game.env.hostId) return;
-      server.removeEventSet(...eventKeys);
 
       server.broadcast(data);
-
+      server.removeEventSet(...eventKeys);
       serverPlaying(server, data);
     }),
   ];

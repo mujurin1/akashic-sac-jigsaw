@@ -1,4 +1,3 @@
-import { CommonOffset } from "akashic-sac";
 import { CustomSprite } from "../../util/CustomSprite";
 
 export interface Piece extends CustomSprite { tag: PieceTag; }
@@ -15,7 +14,7 @@ export const Piece = {
   _pieceParent: null! as g.E,
   opacity: { default: 1, holded: 0.4 },
   // touchableAll: true,
-  getFromGlobalPoint(point: CommonOffset): Piece | undefined {
+  getFromGlobalPoint(point: g.CommonOffset): Piece | undefined {
     // https://github.com/akashic-games/akashic-engine/blob/dafc3e60341722db9584231fc326852090808c1c/src/entities/E.ts#L626
     // MEMO: _pieceParen.parent が Scene でない場合はその親を遡って m を計算する必要がある
     const matrix = Piece._pieceParent.getMatrix();

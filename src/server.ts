@@ -7,7 +7,7 @@ export function serverStart(server: Server) {
   const { serverDI } = g.game.serverEnv;
   const playerManager = serverDI.get(PlayerManager);
 
-  JoinPlayer.receive(server, (data) => {
+  JoinPlayer.receive(server, data => {
     if (data.playerId == null) return;
 
     playerManager.upsert(data.playerId, data.name, data.realName);

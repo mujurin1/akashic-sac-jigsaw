@@ -1,19 +1,18 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { CommonRect } from "akashic-sac";
 
 export interface CustomSpriteParameterObject extends g.SpriteParameterObject {
   /**
    * エンティティの領域から描画位置をずらす値\
    * それぞれの値分それぞれの方向に広がる
    */
-  drawOffset: CommonRect;
+  drawOffset: g.CommonRect;
 }
 
 /**
  * エンティティの領域から描画位置をずらせるスプライト
  */
 export class CustomSprite extends g.E {
-  drawOffset: CommonRect;
+  drawOffset: g.CommonRect;
 
   constructor(param: CustomSpriteParameterObject) {
     super(param);

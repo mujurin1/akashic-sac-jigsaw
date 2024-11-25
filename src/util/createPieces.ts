@@ -1,6 +1,6 @@
-import { CommonOffset, CommonRect, CommonSize, createImageDataFromSVGText, createSpriteFromImageData } from "akashic-sac";
-import { CustomSprite } from "./CustomSprite";
+import { createImageDataFromSVGText, createSpriteFromImageData } from "akashic-sac";
 import { Piece } from "../page/Playing/Piece";
+import { CustomSprite } from "./CustomSprite";
 
 export interface CreatePiecesParam {
   scene: g.Scene;
@@ -11,12 +11,12 @@ export interface CreatePiecesParam {
   /** 切り抜く画像 */
   imageSrc: g.ImageAsset | g.Surface;
   /** 切り抜く原点（左上） */
-  origine: CommonOffset;
+  origine: g.CommonOffset;
 
   /** ピースのサイズ */
-  pieceSize: CommonSize;
+  pieceSize: g.CommonSize;
   /** ピースの縦横枚数 */
-  pieceWH: CommonSize;
+  pieceWH: g.CommonSize;
 }
 
 export interface CreatePiecesResult {
@@ -43,6 +43,12 @@ const pieceLine = `
   stroke="red" stroke-width="12px" fill="transparent" stroke-linejoin="bevel" />
 </svg>`;
 
+// O:凸 X:凹 _:壁
+type WakuType = "_" | "O" | "X";
+function wakuReverse(w: WakuType) {
+  return w === "O" ? "X" : w === "X" ? "O" : "_";
+}
+
 /**
  * ピースを生成する\
  * サーバー環境で呼び出してはダメ
@@ -50,10 +56,7 @@ const pieceLine = `
  * @returns 
  */
 export async function createPieces(param: CreatePiecesParam): Promise<CreatePiecesResult> {
-  const { scene, } = param;
-  // O:凸 X:凹 (見やすいように)
-  type WakuType = "_" | "O" | "X";
-  const wakuReverse = (w: WakuType) => w === "O" ? "X" : w === "X" ? "O" : "_";
+  const { scene } = param;
 
   const margineW = param.pieceSize.width * 0.25;
   const margineH = param.pieceSize.height * 0.25;
@@ -80,49 +83,14 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
     // createImageDataFromSVGText(pieceLine, param.pieceSize.height, param.pieceSize.width),
   ]);
 
-  const createWaku = (type: WakuType, angle: number): g.Sprite => {
-    return createSpriteFromImageData(
-      type === "O" ? dekoImgData : bokoImgData,
-      {
-        compositeOperation: "destination-out",
-        scene, anchorX: null, angle,
-      }
-    );
-  };
-
   const allWakus = {
-    O: [270, 0, 90, 180].map(angle => createWaku("O", angle)),
-    X: [270, 0, 90, 180].map(angle => createWaku("X", angle)),
+    O: createWaku("O"),
+    X: createWaku("X"),
   } as const;
 
   const tmpE = new g.E({ scene, ...param.pieceSize });
   tmpE.append(preview);
-  const drawOffset: CommonRect = { left: margineW, top: margineH, right: margineW, bottom: margineH };
-
-  /**
-   * @param w 左からw個目のピース
-   * @param h 上からh個目のピース
-   * @param wakuTypes [左,上,右,下]
-   */
-  const stamp = (w: number, h: number, ...wakuTypes: [WakuType, WakuType, WakuType, WakuType]) => {
-    preview.x = margineW - param.pieceSize.width * w;
-    preview.y = margineH - param.pieceSize.height * h;
-    // preview.modified();  // 無くても良いみたい
-
-    const wakus: g.Sprite[] = [];
-    for (const i of [0, 1, 2, 3]) {
-      const waku = wakuTypes[i];
-      if (waku === "_") continue;
-      const wakuE = allWakus[waku][i];
-      tmpE.append(wakuE);
-      wakus.push(wakuE);
-    }
-
-    const s = createCustomSpriteFromE(scene, tmpE, drawOffset);
-    for (const waku of wakus) waku.remove();
-    return s;
-  };
-
+  const drawOffset: g.CommonRect = { left: margineW, top: margineH, right: margineW, bottom: margineH };
   const random = new g.Xorshift(param.randomSeed);
 
   // ピースの凸凹を作る (左/上から見たときに凸か凹か)
@@ -202,7 +170,8 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
   frame.compositeOperation = "destination-out";
   frame.modified();
 
-  for (const s of [...frameE.children!]) (<g.Sprite>s).destroy(true);
+  // for (const s of [...frameE.children!]) (<g.Sprite>s).destroy(true); // ????
+  for (const s of frameE.children!) (<g.Sprite>s).destroy(true);
 
   preview.moveTo(0, 0);
   preview.modified();
@@ -212,6 +181,46 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
     pieces,
     frame,
   };
+
+  /**
+   * @param w 左からw個目のピース
+   * @param h 上からh個目のピース
+   * @param wakuTypes [左,上,右,下]
+   */
+  function stamp(w: number, h: number, ...wakuTypes: [WakuType, WakuType, WakuType, WakuType]) {
+    preview.x = margineW - param.pieceSize.width * w;
+    preview.y = margineH - param.pieceSize.height * h;
+    // preview.modified();  // 無くても良いみたい
+
+    const wakus: g.Sprite[] = [];
+    for (const i of [0, 1, 2, 3]) {
+      const waku = wakuTypes[i];
+      if (waku === "_") continue;
+      const wakuE = allWakus[waku][i];
+      tmpE.append(wakuE);
+      wakus.push(wakuE);
+    }
+
+    const s = createCustomSpriteFromE(scene, tmpE, drawOffset);
+    for (const waku of wakus) waku.remove();
+    return s;
+  }
+
+  function createWaku(type: WakuType) {
+    const ary: g.Sprite[] = [];
+    for (const angle of [270, 0, 90, 180]) {
+      ary.push(
+        createSpriteFromImageData(
+          type === "O" ? dekoImgData : bokoImgData,
+          {
+            compositeOperation: "destination-out",
+            scene, anchorX: null, angle,
+          }
+        )
+      );
+    }
+    return ary;
+  }
 }
 
 /**
@@ -222,7 +231,7 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
  * @param drawOffset e の x,y,width,height から CustomSprite.drawOffset をどれくらいずらすか
  * @returns 
  */
-function createCustomSpriteFromE(scene: g.Scene, e: g.E, drawOffset: CommonRect): CustomSprite {
+function createCustomSpriteFromE(scene: g.Scene, e: g.E, drawOffset: g.CommonRect): CustomSprite {
   // 再描画フラグを立てたくないために e._matrix を直接触っている
   if (e._matrix) e._matrix._modified = true;
 

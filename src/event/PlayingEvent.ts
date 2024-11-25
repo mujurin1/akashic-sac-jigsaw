@@ -1,7 +1,7 @@
-import { CommonOffset, SacEvent, Server } from "akashic-sac";
-import { GameStart } from "./TitleEvent";
+import { SacEvent, Server } from "akashic-sac";
 import { lineupPiece } from "../page/Playing/lineupPiece";
 import { PlayerManager } from "../util/PlayerManager";
+import { GameStart } from "./TitleEvent";
 
 export class HoldPiece extends SacEvent {
   constructor(readonly pieceIndex: number) { super(); }
@@ -9,13 +9,13 @@ export class HoldPiece extends SacEvent {
 export class MovePiece extends SacEvent {
   constructor(
     readonly pieceIndex: number,
-    readonly point: CommonOffset,
+    readonly point: g.CommonOffset,
   ) { super(); }
 }
 export class ReleasePiece extends SacEvent {
   constructor(
     readonly pieceIndex: number,
-    readonly point?: CommonOffset,
+    readonly point?: g.CommonOffset,
   ) { super(); }
 }
 /** ピースを強制的に放す */
@@ -23,6 +23,23 @@ export class ForceReleasePiece extends SacEvent {
   constructor(
     /** -1 の場合は全てのピースを放す */
     readonly pieceIndex: number,
+  ) { super(); }
+}
+/** ピースを離さずに持っているピースがくっつく/ハマるかを判定する */
+export class CheckFitPiece extends SacEvent {
+  constructor() { super(); }
+}
+
+/** ピースがくっついた */
+export class ConnectPiece extends SacEvent {
+  constructor(
+    // TODO
+  ) { super(); }
+}
+/** ピースが盤面にハマった */
+export class FitPiece extends SacEvent {
+  constructor(
+    // TODO
   ) { super(); }
 }
 
@@ -35,7 +52,7 @@ interface PlayingState {
     pieceIndex: number,
     releaseCounter: number,
   }>;
-  pieces: { pos: CommonOffset; fited: boolean; }[];
+  pieces: { pos: g.CommonOffset; fited: boolean; }[];
 }
 
 export function serverPlaying(server: Server, gameStart: GameStart): void {
@@ -100,10 +117,17 @@ export function serverPlaying(server: Server, gameStart: GameStart): void {
 
       server.broadcast(data);
     }),
-    // // TODO: ホストがピースを[指定して/全ての]ピースを放す機能は未実装
+    // TODO: ホストがピースを[指定して/全ての]ピースを放す機能は未実装
     // ForceReleasePiece.receive(server, data => {
     //   if(data.playerId !== g.game.env.hostId) return;
     // }),
+    CheckFitPiece.receive(server, data => {
+      const { playerId } = data;
+      if (
+        !playerManager.has(playerId) ||
+        holders.has(playerId)
+      ) return;
+    })
   ];
 
   // ピースを一定時間で放す

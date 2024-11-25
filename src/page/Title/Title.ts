@@ -1,12 +1,12 @@
-import { Client, CommonOffset, CommonSize, createFont } from "akashic-sac";
-import { sendJoin } from "../share";
 import { Label } from "@akashic-extension/akashic-label";
-import { createButton } from "../../util/createButton";
+import { Client, createFont } from "akashic-sac";
 import { ChangeLevel, ChangePuzzle, GameStart } from "../../event/TitleEvent";
-import { Playing } from "../Playing/Playing";
 import { PlayerManager } from "../../util/PlayerManager";
 import { Slider } from "../../util/Slider";
+import { createButton } from "../../util/createButton";
 import { readAssets } from "../../util/readAssets";
+import { Playing } from "../Playing/Playing";
+import { sendJoin } from "../share";
 
 interface TitleState {
   client: Client;
@@ -14,14 +14,12 @@ interface TitleState {
   puzzleIndex: number;
   /** 0~100 */
   level: number;
-  origin: CommonOffset;
-  pieceSize: CommonSize;
-  pieceWH: CommonSize;
+  origin: g.CommonOffset;
+  pieceSize: g.CommonSize;
+  pieceWH: g.CommonSize;
 }
 
 export function Title(client: Client) {
-  const { scene } = client.env;
-
   const state: TitleState = {
     client,
     puzzleIndex: 0,
@@ -151,16 +149,19 @@ function createUi(state: TitleState) {
   });
   const levelNumText = new Label({
     scene, parent: levelTextBack,
+    y: 5,
     font: fontN,
     text: "レベル 50",
     width: 300,
   });
   const pieceNumText = new Label({
     scene, parent: levelTextBack,
-    x: levelNumText.x + levelNumText.width + 200,
+    x: 0,
+    y: 5,
     font: fontN,
-    text: "0000 枚",
-    width: 250,
+    text: "??x??   0000 枚",
+    textAlign: "right",
+    width: levelTextBack.width - 5,
   });
 
   //#region ホスト専用UI
@@ -173,8 +174,6 @@ function createUi(state: TitleState) {
       min: 0, max: 100,
     });
     levelSlider.onValueChange.add(value => {
-      if (state.puzzleIndex === -1) return; // TODO
-
       const newLevel = Math.round(value);
       if (newLevel === state.level) return;
 
@@ -185,47 +184,55 @@ function createUi(state: TitleState) {
   //#endregion レベルUI
 
   const setChangeLevel = (level: number) => {
-    const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
-    const pixel = (100 - state.level) + 40;
-
     state.level = level;
-    state.pieceSize = { width: pixel, height: pixel };
-    state.pieceWH = {
-      width: Math.floor(imageAsset.width / pixel),
-      height: Math.floor(imageAsset.height / pixel),
-    };
-    state.origin = {
-      x: Math.floor((imageAsset.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
-      y: Math.floor((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
-    };
-
     levelNumText.text = `レベル ${Math.round(state.level)}`;
     levelNumText.invalidate();
-    pieceNumText.text = `${state.pieceWH.width * state.pieceWH.height} 枚`;
-    pieceNumText.invalidate();
+
+    if (state.puzzleIndex === -1) {
+      // TODO
+      pieceNumText.text = `??x??   ??? 枚`;
+      pieceNumText.invalidate();
+    } else {
+      const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
+      const pixel = (100 - state.level) + 40;
+
+      state.pieceSize = { width: pixel, height: pixel };
+      state.pieceWH = {
+        width: Math.floor(imageAsset.width / pixel),
+        height: Math.floor(imageAsset.height / pixel),
+      };
+      state.origin = {
+        x: Math.floor((imageAsset.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
+        y: Math.floor((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
+      };
+
+      pieceNumText.text = `${state.pieceWH.height}x${state.pieceWH.width}   ${state.pieceWH.height * state.pieceWH.width} 枚`;
+      pieceNumText.invalidate();
+    }
   };
   setChangeLevel(50);
 
   const eventKeys = [
     ChangePuzzle.receive(client, data => {
       state.puzzleIndex = data.index;
+      setChangeLevel(state.level);
 
       if (state.puzzleIndex === -1) {
         preview.hide();
         titleText.text = "カスタム画像";
         titleText.invalidate();
       } else {
+        const info = previewsInfo[state.puzzleIndex];
         preview.show();
-        setSprite(preview, previewsInfo[state.puzzleIndex].imageAsset);
-        setChangeLevel(state.level);
+        titleText.text = info.title;
+        titleText.invalidate();
+        setSprite(preview, info.imageAsset);
       }
     }),
     ChangeLevel.receive(client, data => setChangeLevel(data.level)),
     GameStart.receive(client, data => {
       client.removeEventSet(...eventKeys);
       playerManager.onUpdate.remove(removePmKey);
-
-      client.removeEventSet(...eventKeys);
 
       const children = [...scene.children];
       for (const child of children) {
