@@ -26,64 +26,20 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
 
   const inputSystemState: InputSystemState = {
     playingState,
-    onHold(piece) {
-      if (!playingState.isJoined() || !Piece.canHold(piece)) return false;
-      playingState.holdPiece = piece;
-      sendMoveCounter = 0;
-      piece.parent!.append(piece);
-      client.sendEvent(new HoldPiece(piece.tag.index));
-      return true;
-    },
-    onMove(point) {
-      const piece = playingState.holdPiece;
-      if (piece == null || !Piece.canHold(piece)) return false;
-
-      piece.moveTo(point.x, point.y);
-      piece.modified();
-
-      if (++sendMoveCounter > sendMoveCount) {
-        sendMoveCounter = 0;
-        client.sendEvent(new MovePiece(piece.tag.index, point));
-      }
-
-      return true;
-    },
-    onRelease(point) {
-      const piece = playingState.holdPiece;
-      if (piece == null || !Piece.canHold(piece)) return false;
-
-      if (point == undefined) {
-        client.sendEvent(new ReleasePiece(piece.tag.index));
-      } else {
-        piece.moveTo(point.x, point.y);
-        piece.modified();
-        client.sendEvent(new ReleasePiece(piece.tag.index, point));
-      }
-
-      playingState.holdPiece = undefined;
-      return true;
-    },
-    onCheckFit() {
-
-    },
+    onHold,
+    onMove,
+    onRelease,
+    onCheckFit,
 
     toggle: {
       device: () => control.toggle(),
-      info: () => {
-
-      },
-      preview: () => {
-
-      },
+      info: () => { },
+      preview: () => { },
       color: () => {
         return "blue";
       },
-      visible: () => {
-
-      },
-      ranking: () => {
-
-      },
+      visible: () => { },
+      ranking: () => { },
     }
   };
 
@@ -133,12 +89,61 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
   control.current.toggleFeature(true);
 
   return control;
+
+  function onHold(_piece: Piece) {
+    const piece = getParentOrSelf(_piece);
+    if (!playingState.isJoined() || !Piece.canHold(piece)) return false;
+    playingState.holdPiece = piece;
+    sendMoveCounter = 0;
+    piece.parent!.append(piece);
+    client.sendEvent(new HoldPiece(piece.tag.index));
+    return true;
+  }
+
+  function onMove(point: g.CommonOffset) {
+    const piece = playingState.holdPiece;
+    if (piece == null || !Piece.canHold(piece)) return false;
+    playingState.pieces;
+
+    piece.moveTo(point.x, point.y);
+    piece.modified();
+
+    if (++sendMoveCounter > sendMoveCount) {
+      sendMoveCounter = 0;
+      client.sendEvent(new MovePiece(piece.tag.index, point));
+    }
+    return true;
+  }
+
+  function onRelease(point: g.CommonOffset) {
+    const piece = playingState.holdPiece;
+    if (piece == null || !Piece.canHold(piece)) return false;
+
+    if (point == undefined) {
+      client.sendEvent(new ReleasePiece(piece.tag.index));
+    } else {
+      piece.moveTo(point.x, point.y);
+      piece.modified();
+      client.sendEvent(new ReleasePiece(piece.tag.index, point));
+    }
+
+    playingState.holdPiece = undefined;
+    return true;
+  }
+  function onCheckFit() {
+    // ピースを離さずにハマるかチェックし、ハマるならハメる
+  }
+
+
+  function getParentOrSelf(piece: Piece): Piece {
+    return piece.tag.parent ?? piece;
+  }
 }
 
 
 export interface InputSystem {
   /**
-   * この操作モードの有効/無効を切り替える
+   * この操作モードが有効/無効になったことを伝える
    * @param enable 
    */
   toggleFeature: (enable: boolean) => void;

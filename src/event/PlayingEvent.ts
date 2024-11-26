@@ -25,7 +25,7 @@ export class ForceReleasePiece extends SacEvent {
     readonly pieceIndex: number,
   ) { super(); }
 }
-/** ピースを離さずに持っているピースがくっつく/ハマるかを判定する */
+/** ピースを離さずにそのピースがハマる/くっつくかを判定する */
 export class CheckFitPiece extends SacEvent {
   constructor() { super(); }
 }
@@ -33,7 +33,8 @@ export class CheckFitPiece extends SacEvent {
 /** ピースがくっついた */
 export class ConnectPiece extends SacEvent {
   constructor(
-    // TODO
+    readonly parentIndex: number,
+    readonly childIndex: number,
   ) { super(); }
 }
 /** ピースが盤面にハマった */
@@ -52,17 +53,56 @@ interface PlayingState {
     pieceIndex: number,
     releaseCounter: number,
   }>;
-  pieces: { pos: g.CommonOffset; fited: boolean; }[];
+  pieces: PieceState[];
 }
 
-export function serverPlaying(server: Server, gameStart: GameStart): void {
-  const playerManager = server.env.serverDI.get(PlayerManager);
+interface PieceState {
+  index: number;
+  /**
+   * 他のピースの子になっている場合は親からの相対正解座標になる
+   */
+  pos: g.CommonOffset;
+  fited: boolean;
+  /**
+   * 自分が子になっている場合にくっついている場合の親ピースIndex\
+   * * ピースの親は必ず自分より若い番号
+   * * ピースの関係は親子まで. 2つの親子がくっついた場合は一番若い番号が親になる
+   */
+  parentId?: number;
+  /**
+   * このピースが親になっているピース配列
+   */
+  children?: PieceState[];
+}
 
+type Dir = "top" | "left" | "right" | "bottom";
+const Dirs = ["top", "left", "right", "bottom"] as const;
+const DirR = {
+  top: "bottom",
+  bottom: "top",
+  left: "right",
+  right: "left",
+} as const satisfies Record<Dir, Dir>;
+
+// MS * COUNT = ピースを保持出来る時間
+const PIECE_RELEASE_MS = 10_0000;
+const PIECE_RELEASE_COUNT = 3;
+let server: Server;
+let gameStart: GameStart;
+let state: PlayingState;
+/** ピースのハマる誤差 */
+let fitMargin: number;
+/** その方向へのピースの距離 */
+let dirOffset: Record<Dir, g.CommonOffset>;
+
+function initialize(_server: Server, _gameStart: GameStart) {
+  server = _server;
+  gameStart = _gameStart;
   const boardSize = {
     width: gameStart.pieceSize.width * gameStart.pieceWH.width,
     height: gameStart.pieceSize.height * gameStart.pieceWH.height,
   };
-  const state: PlayingState = {
+  state = {
     gameStart,
     clearTime: undefined,
 
@@ -73,16 +113,28 @@ export function serverPlaying(server: Server, gameStart: GameStart): void {
       gameStart.pieceSize,
       boardSize,
     )
-      .map(pos => ({ pos, fited: false })),
+      .map((pos, index) => ({ index, pos, fited: false })),
   };
+  fitMargin = (gameStart.pieceSize.width + gameStart.pieceSize.height) / 8;
+  dirOffset = {
+    top: { x: 0, y: -gameStart.pieceSize.height },
+    bottom: { x: 0, y: gameStart.pieceSize.height },
+    left: { x: -gameStart.pieceSize.width, y: 0 },
+    right: { x: gameStart.pieceSize.width, y: 0 },
+  };
+}
 
+export function serverPlaying(server: Server, gameStart: GameStart): void {
+  initialize(server, gameStart);
+  const playerManager = server.env.serverDI.get(PlayerManager);
   const holders = state.holders;
 
   // TODO: server.removeEventSet(...eventKeys);
   const eventKeys = [
     HoldPiece.receive(server, data => {
       const { playerId, pieceIndex } = data;
-
+      const piece = state.pieces[pieceIndex];
+      if (piece.fited || piece.parentId != null) return;
       if (!playerManager.has(playerId)) return;
       for (const hold of holders.values()) if (hold.pieceIndex === pieceIndex) return;
       const oldHold = holders.get(playerId);
@@ -95,32 +147,32 @@ export function serverPlaying(server: Server, gameStart: GameStart): void {
     }),
     MovePiece.receive(server, data => {
       const { playerId, pieceIndex, point: position } = data;
-      if (
-        !playerManager.has(playerId) ||
-        holders.get(playerId)?.pieceIndex !== pieceIndex
-      ) return;
+      const piece = state.pieces[pieceIndex];
+      if (piece.fited || piece.parentId != null) return;
+      if (!playerManager.has(playerId)) return;
+      if (holders.get(playerId)?.pieceIndex !== pieceIndex) return;
 
-      state.pieces[pieceIndex].pos = position;
+      piece.pos = position;
 
       server.broadcast(data);
     }),
     ReleasePiece.receive(server, data => {
       const { playerId, pieceIndex, point } = data;
-      if (
-        !playerManager.has(playerId) ||
-        holders.get(playerId)?.pieceIndex !== pieceIndex
-      ) return;
+      const piece = state.pieces[pieceIndex];
+      if (piece.fited || piece.parentId != null) return;
+      if (!playerManager.has(playerId)) return;
+      if (holders.get(playerId)?.pieceIndex !== pieceIndex) return;
 
-      if (point != null)
-        state.pieces[pieceIndex].pos = point;
+      if (point != null) piece.pos = point;
       holders.delete(playerId);
-
-      server.broadcast(data);
+      if (!doFitAndConnect(data.pieceIndex)) {
+        server.broadcast(data);
+      }
     }),
-    // TODO: ホストがピースを[指定して/全ての]ピースを放す機能は未実装
-    // ForceReleasePiece.receive(server, data => {
-    //   if(data.playerId !== g.game.env.hostId) return;
-    // }),
+    // TODO: ホストがピースを[指定して/全て]放す機能は未実装
+    ForceReleasePiece.receive(server, data => {
+      if (data.playerId !== g.game.env.hostId) return;
+    }),
     CheckFitPiece.receive(server, data => {
       const { playerId } = data;
       if (
@@ -132,15 +184,208 @@ export function serverPlaying(server: Server, gameStart: GameStart): void {
 
   // ピースを一定時間で放す
   // TODO: g.game.env.scene.clearInterval
-  const autoReleaseIntervalKey = g.game.env.scene.setInterval(() => {
+  const _autoReleaseIntervalKey = g.game.env.scene.setInterval(() => {
     for (const [playerId, value] of holders) {
       value.releaseCounter++;
 
-      if (value.releaseCounter >= 3) {
+      if (value.releaseCounter >= PIECE_RELEASE_COUNT) {
         holders.delete(playerId);
         server.broadcast(new ForceReleasePiece(value.pieceIndex), playerId);
       }
     }
-    // }, 1000 * 1);
-  }, 1000 * 10);
+  }, PIECE_RELEASE_MS);
 }
+
+/**
+ * ピースが盤面にハマる/くっつくかをチェックしその後処理を行う
+ * @param pieceIndex
+ * @returns ハマったまたはくっついた
+ */
+function doFitAndConnect(pieceIndex: number): boolean {
+  const piece = state.pieces[pieceIndex];
+
+  if (checkFitPiece(piece)) {
+    server.broadcast(new FitPiece());
+    return true;
+  }
+
+  const pair = checkConnectPieceAll(piece);
+  if (pair != null) {
+    const [parent, child] = toParentChild(piece, pair);
+    normalizeConnectPieceAll(parent, child);
+
+    server.broadcast(new ConnectPiece(parent.index, child.index));
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * ピースがハマるかチェックする
+ */
+function checkFitPiece(piece: PieceState): boolean {
+  return false;
+}
+
+
+/**
+ * ピースがくっつくか子供までチェックする
+ * @returns くっつく相手ピース. 現時点で親を持たないピース
+ */
+function checkConnectPieceAll(piece: PieceState): PieceState | undefined {
+  const pair = checkConnectPiece(piece);
+  if (pair != null) return pair;
+
+  if (piece.children != null) {
+    for (const child of piece.children) {
+      const pair = checkConnectPiece(child);
+      if (pair != null) return pair;
+    }
+  }
+
+  return undefined;
+}
+/**
+ * ピースがくっつくかチェックする
+ * @returns くっつく相手ピース. 現時点で親を持たないピース
+ */
+function checkConnectPiece(piece: PieceState): PieceState | undefined {
+  const pairs = calcConnectPieceIndexes(piece);
+
+  for (const dir of Dirs) {
+    const pairIndex = pairs[dir];
+    if (pairIndex == null) continue;
+    const pair = state.pieces[pairIndex];
+
+    if (pair.fited) continue;
+    if (pair.parentId === piece.index) continue;
+    if (pair.index === piece.parentId) continue;
+    if (pair.parentId != null && pair.parentId === piece.parentId) continue;
+    if (checkOverlap(piece, pair, dir)) {
+      if (pair.parentId == null) return pair;
+      return state.pieces[pair.parentId];
+    }
+  }
+
+  return undefined;
+}
+
+
+/**
+ * 2つのピースが許容範囲内で重なっているかチェックする
+ * @param dir Aから見たBの方向
+ * @returns 
+ */
+function checkOverlap(pieceA: PieceState, pieceB: PieceState, dir: Dir): boolean {
+  const posA = sumPos(calcGroundPos(pieceA), dirOffset[dir]);
+  const posB = calcGroundPos(pieceB);
+  const x = posA.x - posB.x;
+  const y = posA.y - posB.y;
+
+  return (
+    -fitMargin <= x && x <= fitMargin &&
+    -fitMargin <= y && y <= fitMargin
+  );
+}
+
+/**
+ * ピースの親子関係を正規化する
+ * @param parent 親にするピース. 必ず親を持たないピースであるべき
+ * @param child 子にするピース. 必ず親を持たないピースであるべき
+ */
+function normalizeConnectPieceAll(parent: PieceState, child: PieceState): void {
+  if (parent.children == null) parent.children = [];
+  const children = child.children;
+  normalizeConnectPiece(parent, child);
+
+  if (children != null) {
+    for (const childPiece of children) {
+      normalizeConnectPiece(parent, childPiece);
+    }
+  }
+}
+function normalizeConnectPiece(parent: PieceState, child: PieceState): void {
+  parent.children!.push(child);
+  child.parentId = parent.index;
+  child.children = undefined;
+  const pos = calcRelativePosAtoB(parent.index, child.index);
+  child.pos = {
+    x: pos.x * gameStart.pieceSize.width,
+    y: pos.y * gameStart.pieceSize.height,
+  };
+}
+
+/**
+ * ピースの座標を親子関係を考慮して計算する
+ */
+function calcGroundPos(piece: PieceState): g.CommonOffset {
+  if (piece.parentId == null) return piece.pos;
+
+  const parent = state.pieces[piece.parentId];
+  return {
+    x: parent.pos.x + piece.pos.x,
+    y: parent.pos.y + piece.pos.y,
+  };
+}
+
+/**
+ * ピースIDとくっつくピースのIDを取得する
+ */
+function calcConnectPieceIndexes({ index }: PieceState): Record<Dir, number | undefined> {
+  const { width, height } = gameStart.pieceWH;
+  const row = Math.floor(index / width);
+  const col = index % width;
+  const record: Record<Dir, number | undefined> = {
+    top: undefined,
+    right: undefined,
+    bottom: undefined,
+    left: undefined,
+  };
+
+  if (row > 0) record.top = index - width;
+  if (col > 0) record.left = index - 1;
+  if (col < width - 1) record.right = index + 1;
+  if (row < height - 1) record.bottom = index + width;
+
+  return record;
+}
+
+/**
+ * 2つのピースを番号が[小さい、大きい]で並べて、a-bが反対の場合にdirを反対にして返す
+ */
+function toParentChild(a: PieceState, b: PieceState): [PieceState, PieceState] {
+  if (a.index < b.index) return [a, b];
+  return [b, a];
+}
+
+/**
+ * 2つのピースIDからマス目上の距離を計算する
+ */
+function calcRelativePosAtoB(a: number, b: number): g.CommonOffset {
+  const coordA = calcIndexXY(a);
+  const coordB = calcIndexXY(b);
+
+  return {
+    x: coordB.x - coordA.x,
+    y: coordB.y - coordA.y,
+  };
+}
+
+/**
+ * インデックスからマス目上の位置を計算する
+ */
+function calcIndexXY(index: number): { x: number, y: number; } {
+  const x = index % gameStart.pieceWH.width;
+  const y = Math.floor(index / gameStart.pieceWH.width);
+  return { x, y };
+}
+
+function sumPos(a: g.CommonOffset, b: g.CommonOffset): g.CommonOffset {
+  return { x: a.x + b.x, y: a.y + b.y };
+}
+
+// function getParentOrSelf(pieceIndex: number): PieceState {
+//   const piece = state.pieces[pieceIndex];
+//   return piece.parentId == null ? piece : state.pieces[piece.parentId];
+// }

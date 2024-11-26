@@ -1,6 +1,6 @@
 import { Label } from "@akashic-extension/akashic-label";
 import { CamerableE, Client, createFont } from "akashic-sac";
-import { ForceReleasePiece, HoldPiece, MovePiece, ReleasePiece } from "../../event/PlayingEvent";
+import { ConnectPiece, FitPiece, ForceReleasePiece, HoldPiece, MovePiece, ReleasePiece } from "../../event/PlayingEvent";
 import { GameStart } from "../../event/TitleEvent";
 import { PlayerManager } from "../../util/PlayerManager";
 import { createPieces } from "../../util/createPieces";
@@ -97,8 +97,6 @@ export async function Playing(client: Client, gameStart: GameStart, previewsInfo
       piece.modified();
     }),
     ReleasePiece.receive(client, ({ pieceIndex, point }) => {
-      // if (playerId == null || playerId === g.game.selfId) return;
-
       const piece = state.pieces[pieceIndex];
       Piece.release(piece);
 
@@ -110,6 +108,15 @@ export async function Playing(client: Client, gameStart: GameStart, previewsInfo
     ForceReleasePiece.receive(client, ({ pieceIndex }) => {
       const piece = state.pieces[pieceIndex];
       Piece.release(piece);
+    }),
+    FitPiece.receive(client, ({ playerId }) => {
+      // const piece = state.pieces[];
+      // Piece.fit(piece);
+    }),
+    ConnectPiece.receive(client, ({ playerId, parentIndex, childIndex }) => {
+      const parent = state.pieces[parentIndex];
+      const child = state.pieces[childIndex];
+      Piece.connect(parent, child, gameStart);
     }),
   ];
 
@@ -185,6 +192,13 @@ function createParts(state: PlayingState) {
     });
     join.onPointDown.add(sendJoin);
     change.onPointDown.add(() => state.pieceOperaterControl.toggle());
+
+    playArea.moveTo(
+      state.preview.width + 100,
+      state.preview.height - 100,
+    );
+    playArea.scale(2);
+    playArea.modified();
   }
 
   //#region 右上のやつ

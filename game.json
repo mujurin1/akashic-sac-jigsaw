@@ -241,6 +241,21 @@
 			"path": "script/event/Events.js",
 			"global": true
 		},
+		"lineupPiece": {
+			"type": "script",
+			"path": "script/page/Playing/lineupPiece.js",
+			"global": true
+		},
+		"PlayerManager": {
+			"type": "script",
+			"path": "script/util/PlayerManager.js",
+			"global": true
+		},
+		"readAssets": {
+			"type": "script",
+			"path": "script/util/readAssets.js",
+			"global": true
+		},
 		"PlayingEvent": {
 			"type": "script",
 			"path": "script/event/PlayingEvent.js",
@@ -249,6 +264,11 @@
 		"TitleEvent": {
 			"type": "script",
 			"path": "script/event/TitleEvent.js",
+			"global": true
+		},
+		"Slider": {
+			"type": "script",
+			"path": "script/util/Slider.js",
 			"global": true
 		},
 		"main": {
@@ -269,11 +289,6 @@
 		"PcInputSystem": {
 			"type": "script",
 			"path": "script/page/Playing/InputSystem/PcInputSystem.js",
-			"global": true
-		},
-		"lineupPiece": {
-			"type": "script",
-			"path": "script/page/Playing/lineupPiece.js",
 			"global": true
 		},
 		"Piece": {
@@ -329,21 +344,6 @@
 		"PieMenu": {
 			"type": "script",
 			"path": "script/util/PieMenu.js",
-			"global": true
-		},
-		"PlayerManager": {
-			"type": "script",
-			"path": "script/util/PlayerManager.js",
-			"global": true
-		},
-		"readAssets": {
-			"type": "script",
-			"path": "script/util/readAssets.js",
-			"global": true
-		},
-		"Slider": {
-			"type": "script",
-			"path": "script/util/Slider.js",
 			"global": true
 		}
 	}
