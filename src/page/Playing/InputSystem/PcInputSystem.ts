@@ -4,6 +4,7 @@ import { InputSystem, InputSystemState } from "./InputSystem";
 export function PcInputSystem(state: InputSystemState): InputSystem {
   const { playingState } = state;
   const { client, layer } = playingState;
+  const { camerable } = layer.playArea;
   const { scene } = client.env;
 
   let touchPoint: g.CommonOffset | undefined;
@@ -12,9 +13,8 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
 
   const moveCamera = (e: g.PointMoveEvent) => {
     if (touchPoint != null || e.target !== layer.bg) return;
-    const playArea = layer.playArea;
-    playArea.moveBy(-e.prevDelta.x * playArea.scaleX, -e.prevDelta.y * playArea.scaleX);
-    playArea.modified();
+    camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
+    camerable.modified();
   };
   const pieceTouch = (e: g.PointDownEvent) => {
     if (e.target !== layer.bg) return;
@@ -27,16 +27,16 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
     if (touchPoint == null) return;
 
     state.onMove({
-      x: touchPoint.x + e.startDelta.x * layer.playArea.scaleX,
-      y: touchPoint.y + e.startDelta.y * layer.playArea.scaleX,
+      x: touchPoint.x + e.startDelta.x * camerable.scaleX,
+      y: touchPoint.y + e.startDelta.y * camerable.scaleX,
     });
   };
   const pieceRelease = (e: g.PointUpEvent) => {
     if (touchPoint == null) return;
 
     state.onRelease({
-      x: touchPoint.x + e.startDelta.x * layer.playArea.scaleX,
-      y: touchPoint.y + e.startDelta.y * layer.playArea.scaleX,
+      x: touchPoint.x + e.startDelta.x * camerable.scaleX,
+      y: touchPoint.y + e.startDelta.y * camerable.scaleX,
     });
     touchPoint = undefined;
   };

@@ -8,25 +8,30 @@ import { PreviewInfo } from "../../util/readAssets";
 import { sendJoin } from "../share";
 import { InputSystemControl, inputSystemControl } from "./InputSystem/InputSystem";
 import { Piece } from "./Piece";
-import { lineupPiece } from "./lineupPiece";
+import { lineupPiece, MOVE_PIACE_SIZE, PREVIEW_ADJUST } from "./lineupPiece";
 
 export interface PlayingState {
   readonly client: Client;
   readonly gameStart: GameStart;
-  readonly preview: g.Sprite;
-  readonly frame: g.Sprite;
-  /**
-   * 元画像の左上位置のピースから順にインデックス付けられている. この順序を変えてはならない
-   */
-  readonly pieces: readonly Piece[];
-  readonly playAreaSize: g.CommonSize;
   readonly layer: {
     readonly bg: g.FilledRect;
-    readonly playArea: CamerableE;
+    // readonly playAreaCamera: CamerableE;
+    readonly playArea: {
+      readonly camerable: CamerableE;
+      readonly movePieceArea: g.CommonArea;
+      readonly board: g.E;
+      readonly boardPreview: g.E;
+      readonly boardFrame: g.E;
+    };
     readonly ui: g.E;
   };
+  /**
+   * 元画像の左上位置のピースから順にインデックス付けられている\
+   * この順序を変えてはならない
+   */
+  readonly pieces: Piece[];
 
-  isJoined: () => boolean;
+  readonly isJoined: () => boolean;
   pieceOperaterControl: InputSystemControl;
 
   holdPiece: Piece | undefined;
@@ -34,51 +39,8 @@ export interface PlayingState {
 }
 
 export async function Playing(client: Client, gameStart: GameStart, previewsInfo: PreviewInfo[]) {
-  const { scene, clientDI } = client.env;
-  const playerManager = clientDI.get(PlayerManager);
   const unlockEvent = client.lockEvent();
-
-  const result = await createPieces({
-    scene,
-    randomSeed: gameStart.seed,
-    imageSrc: previewsInfo[gameStart.puzzleIndex].imageAsset,
-    origine: gameStart.origin,
-    pieceSize: gameStart.pieceSize,
-    pieceWH: gameStart.pieceWH,
-  });
-
-  const state: PlayingState = {
-    ...result,
-    client,
-    gameStart,
-    playAreaSize: { width: result.preview.width * 3, height: result.preview.height * 3 },
-    layer: {
-      bg: new g.FilledRect({
-        scene, parent: scene,
-        cssColor: "#0087cc",
-        width: g.game.width, height: g.game.height,
-        touchable: true,
-      }),
-      playArea: new CamerableE({ scene, parent: scene }),
-      ui: new g.E({ scene, parent: scene }),
-    },
-
-    isJoined() { return playerManager.has(g.game.selfId); },
-    pieceOperaterControl: null!,
-    holdPiece: undefined,
-    finishTime: undefined,
-  };
-
-  // ピースを動かせるエリア
-  new g.FilledRect({
-    scene, parent: state.layer.playArea,
-    cssColor: "#f008",
-    width: state.preview.width * 3,
-    height: state.preview.height * 3,
-  });
-
-  Piece.pieceParentSetting(state.layer.playArea);
-  state.pieceOperaterControl = inputSystemControl(state);
+  const state = await createPlayingState(client, gameStart, previewsInfo);
 
   // TODO: client.removeEventSet(...eventKeys);
   const eventKeys = [
@@ -117,50 +79,112 @@ export async function Playing(client: Client, gameStart: GameStart, previewsInfo
       const parent = state.pieces[parentIndex];
       const child = state.pieces[childIndex];
       Piece.connect(parent, child, gameStart);
+      if (g.game.selfId === playerId)
+        parent.parent!.append(parent);
     }),
   ];
 
   createUi(state);
-  const parts = createParts(state);
-
 
   // アンロックは一番最後
   unlockEvent();
 }
 
 
-function createUi(state: PlayingState) {
-  const { client, gameStart, preview, layer: { playArea }, frame, pieces } = state;
-  const { scene } = client.env;
+async function createPlayingState(client: Client, gameStart: GameStart, previewsInfo: PreviewInfo[]): Promise<PlayingState> {
+  const { scene, clientDI } = client.env;
+  const playerManager = clientDI.get(PlayerManager);
 
+  const piecesResult = await createPieces({
+    scene,
+    randomSeed: gameStart.seed,
+    imageSrc: previewsInfo[gameStart.puzzleIndex].imageAsset,
+    origine: gameStart.origin,
+    pieceSize: gameStart.pieceSize,
+    pieceWH: gameStart.pieceWH,
+  });
+  const { preview } = piecesResult;
 
-  const board = new g.FilledRect({
-    scene, parent: playArea,
-    cssColor: "#ffffff50",
-    width: preview.width, height: preview.height,
-    x: preview.width, y: preview.height,
+  const bg = new g.FilledRect({
+    scene, parent: scene,
+    cssColor: "#0087cc",
+    width: g.game.width, height: g.game.height,
+    touchable: true,
   });
 
-  preview.opacity = 0.5;
-  preview.modified();
-  board.append(preview);
-  board.append(frame);
+  const playAreaCamera = new CamerableE({ scene, parent: scene });
+  const movePieceArea = new g.FilledRect({
+    scene, parent: playAreaCamera,
+    cssColor: "#f008",
+    width: preview.width * MOVE_PIACE_SIZE,
+    height: preview.height * MOVE_PIACE_SIZE,
+  });
+
+  const board = new g.FilledRect({
+    scene, parent: playAreaCamera,
+    cssColor: "#ffffff50",
+    width: preview.width, height: preview.height,
+    x: preview.width * (1 + PREVIEW_ADJUST),
+    y: preview.height * (1 + PREVIEW_ADJUST),
+  });
+  const boardPreview = new g.Sprite({
+    scene, parent: board,
+    src: preview.src,
+    srcX: preview.srcX,
+    srcY: preview.srcY,
+    width: preview.width, height: preview.height,
+    opacity: 0.5,
+  });
+  board.append(piecesResult.frame);
+
+  const state: PlayingState = {
+    pieces: piecesResult.pieces,
+    client,
+    gameStart,
+    layer: {
+      bg,
+      playArea: {
+        camerable: playAreaCamera,
+        movePieceArea,
+        board,
+        boardPreview,
+        boardFrame: piecesResult.frame,
+      },
+      ui: new g.E({ scene, parent: scene }),
+    },
+
+    isJoined() { return playerManager.has(g.game.selfId); },
+    pieceOperaterControl: null!,
+    holdPiece: undefined,
+    finishTime: undefined,
+  };
+
+  Piece.pieceParentSetting(state.layer.playArea.camerable);
+  state.pieceOperaterControl = inputSystemControl(state);
+
+  return state;
+}
+
+function createUi(state: PlayingState) {
+  const { gameStart, pieces, layer: { playArea: { camerable, board } } } = state;
 
   const positions = lineupPiece(gameStart.seed, pieces.length, gameStart.pieceSize, board);
   for (let i = 0; i < pieces.length; i++) {
     const piece = pieces[i];
     const position = positions[i];
-    playArea.append(piece);
+    camerable.append(piece);
     piece.moveTo(position.x, position.y);
     piece.modified();
   }
+
+  const parts = createParts(state);
 }
 
 /**
  * プレビューやランキングなどのパーツを作る
  */
 function createParts(state: PlayingState) {
-  const { client, layer: { playArea, ui } } = state;
+  const { client, layer: { playArea: { camerable }, ui } } = state;
   const { scene } = client.env;
   const font = createFont({ size: 50 });
 
@@ -183,22 +207,23 @@ function createParts(state: PlayingState) {
       x: 330, y: 10, touchable: true,
     });
     zooomIn.onPointDown.add(() => {
-      playArea.scale(playArea.scaleX * 0.9);
-      playArea.modified();
+      camerable.scale(camerable.scaleX * 0.9);
+      camerable.modified();
     });
     zooomOut.onPointDown.add(() => {
-      playArea.scale(playArea.scaleX * 1.1);
-      playArea.modified();
+      camerable.scale(camerable.scaleX * 1.1);
+      camerable.modified();
     });
     join.onPointDown.add(sendJoin);
     change.onPointDown.add(() => state.pieceOperaterControl.toggle());
 
-    playArea.moveTo(
-      state.preview.width + 100,
-      state.preview.height - 100,
+    const { board } = state.layer.playArea;
+    camerable.moveTo(
+      board.x + board.width / 2 + 500,
+      board.y + board.height / 2,
     );
-    playArea.scale(2);
-    playArea.modified();
+    camerable.scale(3);
+    camerable.modified();
   }
 
   //#region 右上のやつ

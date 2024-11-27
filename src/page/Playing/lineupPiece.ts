@@ -1,4 +1,20 @@
 
+/**
+ * プレビューサイズ基準でのピースを動かせる領域のサイズ\
+ * TODO: 実際には縦横比をある程度平均化したほうが良い
+ */
+export const MOVE_PIACE_SIZE = 4;
+export const PREVIEW_ADJUST = (MOVE_PIACE_SIZE - 3) / 2;
+
+/**
+ * ピースを並べる\
+ * この関数はクライアントとサーバーで共有している
+ * @param seed 
+ * @param pieceCount 
+ * @param pieceSize 
+ * @param boardSize 
+ * @returns 
+ */
 export function lineupPiece(
   seed: number,
   pieceCount: number,
@@ -8,14 +24,13 @@ export function lineupPiece(
   // 0.3 はピース枠の凸のサイズが0.25なので重ならないようにするマージン分
   const margine = { w: pieceSize.width * 0.3, h: pieceSize.height * 0.3 };
   const size = { w: pieceSize.width + margine.w * 2, h: pieceSize.height + margine.h * 2 };
-  const tmp = { w: boardSize.width / size.w, h: boardSize.height / size.h };
-  const int = { w: Math.floor(tmp.w), h: Math.floor(tmp.h) };
-  const decimal = { w: tmp.w - int.w, h: tmp.h - int.h };
+  const pieceDivide = { w: boardSize.width / size.w, h: boardSize.height / size.h };
+  const pieceCnt = { w: Math.floor(pieceDivide.w), h: Math.floor(pieceDivide.h) };
 
-  const lineup = { w: int.w + 2, h: int.h + 2 };
+  const lineup = { w: pieceCnt.w + 2, h: pieceCnt.h + 2 };
   const nextPos = {
-    x: boardSize.width - (size.w * ((1 - decimal.w) / 2)) + margine.w,
-    y: boardSize.height - (size.h * ((1 - decimal.h) / 2)) + margine.h - size.h,
+    x: (boardSize.width * PREVIEW_ADJUST) + boardSize.width - size.w * ((1 - (pieceDivide.w - pieceCnt.w)) / 2) + margine.w,
+    y: (boardSize.height * PREVIEW_ADJUST) + boardSize.height - size.h * ((1 - (pieceDivide.h - pieceCnt.h)) / 2) + margine.h - size.h,
   };
   let dir: "right" | "bottom" | "left" | "top" = "right";
   let count = { w: 0, h: 0 };

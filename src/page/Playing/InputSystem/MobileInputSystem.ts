@@ -7,6 +7,7 @@ import { InputSystem, InputSystemState } from "./InputSystem";
 export function MobileInputSystem(state: InputSystemState): InputSystem {
   const { playingState } = state;
   const { client, layer } = playingState;
+  const { camerable } = layer.playArea;
   const { scene } = client.env;
 
   const mobileUi = createUi(state);
@@ -37,16 +38,15 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
   function moveCamera(e: g.PointMoveEvent) {
     if (e.target !== layer.bg) return;
 
-    const playArea = layer.playArea;
-    playArea.moveBy(-e.prevDelta.x * playArea.scaleX, -e.prevDelta.y * playArea.scaleX);
-    playArea.modified();
+    camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
+    camerable.modified();
 
     if (playingState.holdPiece == null) {
       setCursorColor(mobileUi.pad, playingState);
     } else {
       state.onMove({
-        x: playingState.holdPiece.x - e.prevDelta.x * layer.playArea.scaleX,
-        y: playingState.holdPiece.y - e.prevDelta.y * layer.playArea.scaleX,
+        x: playingState.holdPiece.x - e.prevDelta.x * camerable.scaleX,
+        y: playingState.holdPiece.y - e.prevDelta.y * camerable.scaleX,
       });
     }
   }
@@ -55,6 +55,7 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
 function createUi(state: InputSystemState) {
   const { playingState } = state;
   const { client, layer } = playingState;
+  const { camerable } = layer.playArea;
   const { scene } = client.env;
 
   const holdPieceBtn = new g.FilledRect({
@@ -122,13 +123,13 @@ function createUi(state: InputSystemState) {
     if (pieMenu.entity.visible()) {
       pieMenu.target(padDir);
     } else {
-      layer.playArea.moveBy(cursorRest.x * layer.playArea.scaleX, cursorRest.y * layer.playArea.scaleX);
-      layer.playArea.modified();
+      camerable.moveBy(cursorRest.x * camerable.scaleX, cursorRest.y * camerable.scaleX);
+      camerable.modified();
 
       if (playingState.holdPiece != null) {
         state.onMove({
-          x: playingState.holdPiece.x + moved.x * layer.playArea.scaleX,
-          y: playingState.holdPiece.y + moved.y * layer.playArea.scaleX,
+          x: playingState.holdPiece.x + moved.x * camerable.scaleX,
+          y: playingState.holdPiece.y + moved.y * camerable.scaleX,
         });
       }
 

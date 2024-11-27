@@ -20,9 +20,9 @@ export interface CreatePiecesParam {
 }
 
 export interface CreatePiecesResult {
-  preview: g.Sprite;
-  frame: g.Sprite;
-  pieces: Piece[];
+  readonly preview: g.Sprite;
+  readonly frame: g.Sprite;
+  readonly pieces: Piece[];
 }
 
 /**
@@ -165,22 +165,18 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
     }
   }
 
-  const frame = g.SpriteFactory.createSpriteFromE(scene, frameE);
-  frame.opacity = 0.5;
-  frame.compositeOperation = "destination-out";
-  frame.modified();
-
-  // for (const s of [...frameE.children!]) (<g.Sprite>s).destroy(true); // ????
-  for (const s of frameE.children!) (<g.Sprite>s).destroy(true);
-
   preview.moveTo(0, 0);
   preview.modified();
 
-  return {
-    preview,
-    pieces,
-    frame,
-  };
+  const frame = g.SpriteFactory.createSpriteFromE(scene, frameE);
+  frame.opacity = 0.5;
+  frame.compositeOperation = "destination-out";
+  frame.moveTo(preview.x, preview.y);
+  frame.modified();
+
+  for (const s of [...frameE.children!]) (<g.Sprite>s).destroy(true);
+
+  return { preview, pieces, frame };
 
   /**
    * @param w 左からw個目のピース
