@@ -241,19 +241,9 @@
 			"path": "script/event/Events.js",
 			"global": true
 		},
-		"lineupPiece": {
-			"type": "script",
-			"path": "script/page/Playing/lineupPiece.js",
-			"global": true
-		},
 		"PlayerManager": {
 			"type": "script",
 			"path": "script/util/PlayerManager.js",
-			"global": true
-		},
-		"readAssets": {
-			"type": "script",
-			"path": "script/util/readAssets.js",
 			"global": true
 		},
 		"PlayingEvent": {
@@ -266,9 +256,29 @@
 			"path": "script/event/TitleEvent.js",
 			"global": true
 		},
+		"lineupPiece": {
+			"type": "script",
+			"path": "script/page/Playing/lineupPiece.js",
+			"global": true
+		},
+		"createButton": {
+			"type": "script",
+			"path": "script/util/createButton.js",
+			"global": true
+		},
+		"readAssets": {
+			"type": "script",
+			"path": "script/util/readAssets.js",
+			"global": true
+		},
 		"Slider": {
 			"type": "script",
 			"path": "script/util/Slider.js",
+			"global": true
+		},
+		"timeFlowController": {
+			"type": "script",
+			"path": "script/util/timeFlowController.js",
 			"global": true
 		},
 		"main": {
@@ -314,11 +324,6 @@
 		"server": {
 			"type": "script",
 			"path": "script/server.js",
-			"global": true
-		},
-		"createButton": {
-			"type": "script",
-			"path": "script/util/createButton.js",
 			"global": true
 		},
 		"createPieces": {

@@ -49,26 +49,32 @@ interface PlayingState {
   gameStart: GameStart;
   clearTime: number | undefined;
 
+  /** `{ [playerId]: VALUE }` */
   holders: Map<string, {
     pieceIndex: number,
     releaseCounter: number,
   }>;
+  setHolder(playerId: string, piec: PieceState): void;
+  deleteHolder(playerId: string): void;
+
   pieces: PieceState[];
 }
 
 interface PieceState {
+  /** ピースIDでもある */
   index: number;
-  /**
-   * 他のピースの子になっている場合は親からの相対正解座標になる
-   */
+  /** 他のピースの子になっている場合は親からの相対正解座標になる */
   pos: g.CommonOffset;
+  /** ハマっているか */
   fited: boolean;
   /**
-   * 自分が子になっている場合にくっついている場合の親ピースIndex\
+   * 自分が子になっている場合にくっついている場合の親ピースIndex
    * * ピースの親は必ず自分より若い番号
    * * ピースの関係は親子まで. 2つの親子がくっついた場合は一番若い番号が親になる
    */
   parentId?: number;
+  /** ピースを持っているプレイヤーID */
+  holderId?: string;
   /**
    * このピースが親になっているピース配列
    */
@@ -107,6 +113,8 @@ function initialize(_server: Server, _gameStart: GameStart) {
     clearTime: undefined,
 
     holders: new Map(),
+    setHolder,
+    deleteHolder,
     pieces: lineupPiece(
       gameStart.seed,
       gameStart.pieceWH.width * gameStart.pieceWH.height,
@@ -122,6 +130,19 @@ function initialize(_server: Server, _gameStart: GameStart) {
     left: { x: -gameStart.pieceSize.width, y: 0 },
     right: { x: gameStart.pieceSize.width, y: 0 },
   };
+
+
+  function setHolder(playerId: string, piece: PieceState) {
+    state.holders.set(playerId, { pieceIndex: piece.index, releaseCounter: 0 });
+    piece.holderId = playerId;
+  }
+  function deleteHolder(playerId: string) {
+    const holdState = state.holders.get(playerId);
+    if (holdState == null) return;
+
+    state.holders.delete(playerId);
+    state.pieces[holdState.pieceIndex].holderId = undefined;
+  }
 }
 
 export function serverPlaying(server: Server, gameStart: GameStart): void {
@@ -136,12 +157,11 @@ export function serverPlaying(server: Server, gameStart: GameStart): void {
       const piece = state.pieces[pieceIndex];
       if (piece.fited || piece.parentId != null) return;
       if (!playerManager.has(playerId)) return;
-      for (const hold of holders.values()) if (hold.pieceIndex === pieceIndex) return;
+      if (piece.holderId != null) return;
       const oldHold = holders.get(playerId);
-      if (oldHold != null)
-        server.broadcast(new ForceReleasePiece(oldHold.pieceIndex));
+      if (oldHold != null) server.broadcast(new ForceReleasePiece(oldHold.pieceIndex));
 
-      holders.set(playerId, { pieceIndex, releaseCounter: 0 });
+      state.setHolder(playerId, piece);
 
       server.broadcast(data);
     }),
@@ -164,7 +184,7 @@ export function serverPlaying(server: Server, gameStart: GameStart): void {
       if (holders.get(playerId)?.pieceIndex !== pieceIndex) return;
 
       if (point != null) piece.pos = point;
-      holders.delete(playerId);
+      state.deleteHolder(playerId);
       if (!doFitAndConnect(data.pieceIndex)) {
         server.broadcast(data);
       }
@@ -189,7 +209,7 @@ export function serverPlaying(server: Server, gameStart: GameStart): void {
       value.releaseCounter++;
 
       if (value.releaseCounter >= PIECE_RELEASE_COUNT) {
-        holders.delete(playerId);
+        state.deleteHolder(playerId);
         server.broadcast(new ForceReleasePiece(value.pieceIndex), playerId);
       }
     }
@@ -258,10 +278,13 @@ function checkConnectPiece(piece: PieceState): PieceState | undefined {
     if (pairIndex == null) continue;
     const pair = state.pieces[pairIndex];
 
-    if (pair.fited) continue;
-    if (pair.parentId === piece.index) continue;
-    if (pair.index === piece.parentId) continue;
-    if (pair.parentId != null && pair.parentId === piece.parentId) continue;
+    if (
+      pair.fited ||
+      // pair.holderId != null ||  // MEMO: 誰かが持っているピースにくっつくか
+      pair.parentId === piece.index ||
+      pair.index === piece.parentId ||
+      pair.parentId != null && pair.parentId === piece.parentId
+    ) continue;
     if (checkOverlap(piece, pair, dir)) {
       if (pair.parentId == null) return pair;
       return state.pieces[pair.parentId];
@@ -384,8 +407,3 @@ function calcIndexXY(index: number): { x: number, y: number; } {
 function sumPos(a: g.CommonOffset, b: g.CommonOffset): g.CommonOffset {
   return { x: a.x + b.x, y: a.y + b.y };
 }
-
-// function getParentOrSelf(pieceIndex: number): PieceState {
-//   const piece = state.pieces[pieceIndex];
-//   return piece.parentId == null ? piece : state.pieces[piece.parentId];
-// }

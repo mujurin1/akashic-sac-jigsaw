@@ -5,6 +5,7 @@ import { PlayerManager } from "../../util/PlayerManager";
 import { Slider } from "../../util/Slider";
 import { createButton } from "../../util/createButton";
 import { readAssets } from "../../util/readAssets";
+import { timeFlowController } from "../../util/timeFlowController";
 import { Playing } from "../Playing/Playing";
 import { sendJoin } from "../share";
 
@@ -173,11 +174,16 @@ function createUi(state: TitleState) {
       per: 0.5,
       min: 0, max: 100,
     });
+    const sendChangeLevel = timeFlowController(500, (newLevel: number) => {
+      client.sendEvent(new ChangeLevel(newLevel));
+    });
+
     levelSlider.onValueChange.add(value => {
       const newLevel = Math.round(value);
       if (newLevel === state.level) return;
 
-      client.sendEvent(new ChangeLevel(newLevel));
+      setChangeLevel(newLevel);
+      sendChangeLevel.do(newLevel);
     });
   }
   //#endregion ホスト専用UI
@@ -212,7 +218,18 @@ function createUi(state: TitleState) {
   };
   setChangeLevel(50);
 
-  const eventKeys = [
+  const eventKeys: number[] = [
+    GameStart.receive(client, data => {
+      client.removeEventSet(...eventKeys);
+      playerManager.onUpdate.remove(removePmKey);
+
+      const children = [...scene.children];
+      for (const child of children) {
+        child.destroy();
+      }
+
+      void Playing(client, data, previewsInfo);
+    }),
     ChangePuzzle.receive(client, data => {
       state.puzzleIndex = data.index;
       setChangeLevel(state.level);
@@ -229,19 +246,13 @@ function createUi(state: TitleState) {
         setSprite(preview, info.imageAsset);
       }
     }),
-    ChangeLevel.receive(client, data => setChangeLevel(data.level)),
-    GameStart.receive(client, data => {
-      client.removeEventSet(...eventKeys);
-      playerManager.onUpdate.remove(removePmKey);
-
-      const children = [...scene.children];
-      for (const child of children) {
-        child.destroy();
-      }
-
-      void Playing(client, data, previewsInfo);
-    }),
   ];
+
+  if (!g.game.env.isHost) {
+    eventKeys.push(
+      ChangeLevel.receive(client, data => setChangeLevel(data.level))
+    );
+  }
 }
 
 
