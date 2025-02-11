@@ -1,6 +1,5 @@
 import { createPad, Pad } from "../../../util/Pad";
 import { pieMenuBuilder } from "../../../util/PieMenu";
-import { Piece } from "../Piece";
 import { PlayingState } from "../Playing";
 import { InputSystem, InputSystemState } from "./InputSystem";
 
@@ -102,9 +101,15 @@ function createUi(state: InputSystemState) {
   });
   zoomInBtn.onPointDown.add(() => {
     state.scale(0.9);
+    if (playingState.holdState != null) {
+      state.move(pad.cursor.x, pad.cursor.y);
+    }
   });
   zoomOutBtn.onPointDown.add(() => {
     state.scale(1.1);
+    if (playingState.holdState != null) {
+      state.move(pad.cursor.x, pad.cursor.y);
+    }
   });
 
   const pad = createPad({
@@ -199,18 +204,11 @@ function createUi(state: InputSystemState) {
   }
 }
 
-function getCursorPointPiece(pad: Pad): Piece | undefined {
-  const piece = Piece.getFromGlobalPoint({ x: pad.cursor.x, y: pad.cursor.y });
-  if (piece == null) return;
-
-  return piece;
-}
-
 function setCursorColor(pad: Pad, playingState: PlayingState) {
   pad.cursor.cssColor =
     playingState.holdState != null
       ? "rgba(255,0,0,0.4)"
-      : getCursorPointPiece(pad) != null
+      : playingState.getPieceFromScreenPx(pad.cursor.x, pad.cursor.y) != null
         ? "red"
         : "yellow";
 }
