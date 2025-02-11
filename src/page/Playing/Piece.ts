@@ -68,8 +68,8 @@ export const Piece = {
       if (piece.children == null) continue;
 
       for (const childPiece of piece.children) {
-        const px = childPiece.x + childPiece.width;
-        const py = childPiece.y + childPiece.height;
+        const px = piece.x + childPiece.x + childPiece.width;
+        const py = piece.y + childPiece.y + childPiece.height;
         if (
           childPiece.x <= x && x <= px &&
           childPiece.y <= y && y <= py
