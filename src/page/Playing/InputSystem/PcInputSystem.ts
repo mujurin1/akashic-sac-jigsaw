@@ -21,12 +21,12 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
 
     const piece = Piece.getFromGlobalPoint(e.point);
     if (piece == null) return;
-    if (state.onHold(piece)) touchPoint = { x: piece.x, y: piece.y };
+    if (state.hold(piece)) touchPoint = { x: piece.x, y: piece.y };
   };
   const pieceMove = (e: g.PointMoveEvent) => {
     if (touchPoint == null) return;
 
-    state.onMove({
+    state.move({
       x: touchPoint.x + e.startDelta.x * camerable.scaleX,
       y: touchPoint.y + e.startDelta.y * camerable.scaleX,
     });
@@ -34,7 +34,7 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
   const pieceRelease = (e: g.PointUpEvent) => {
     if (touchPoint == null) return;
 
-    state.onRelease({
+    state.release({
       x: touchPoint.x + e.startDelta.x * camerable.scaleX,
       y: touchPoint.y + e.startDelta.y * camerable.scaleX,
     });

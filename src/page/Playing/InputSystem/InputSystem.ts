@@ -19,17 +19,19 @@ export interface InputSystemControl {
  * デバイス毎の操作方法の管理を行う
  */
 export function inputSystemControl(playingState: PlayingState): InputSystemControl {
-  const { client } = playingState;
+  const { client, layer: { playArea: { camerable } } } = playingState;
 
   const sendMoveCount = 5;
   let sendMoveCounter = 0;
 
   const inputSystemState: InputSystemState = {
     playingState,
-    onHold,
-    onMove,
-    onRelease,
-    onCheckFit,
+    hold,
+    move,
+    release,
+    checkFit,
+
+    scale,
 
     toggle: {
       device: () => control.toggle(),
@@ -72,7 +74,7 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
     toggle(type?: InputSystemType) {
       if (type == null) type = control.currentType === "mobile" ? "pc" : "mobile";
       if (type === control.currentType) return;
-      inputSystemState.onRelease();
+      inputSystemState.release();
       inputSystems[control.currentType].toggleFeature(false);
 
       control.currentType = type;
@@ -90,7 +92,7 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
 
   return control;
 
-  function onHold(_piece: Piece) {
+  function hold(_piece: Piece) {
     const piece = getParentOrSelf(_piece);
     if (!playingState.isJoined() || !Piece.canHold(piece)) return false;
     playingState.holdPiece = piece;
@@ -99,8 +101,7 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
     client.sendEvent(new HoldPiece(piece.tag.index));
     return true;
   }
-
-  function onMove(point: g.CommonOffset) {
+  function move(point: g.CommonOffset) {
     const piece = playingState.holdPiece;
     if (piece == null || !Piece.canHold(piece)) return false;
     playingState.pieces;
@@ -114,8 +115,7 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
     }
     return true;
   }
-
-  function onRelease(point: g.CommonOffset) {
+  function release(point: g.CommonOffset) {
     const piece = playingState.holdPiece;
     if (piece == null || !Piece.canHold(piece)) return false;
 
@@ -130,11 +130,14 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
     playingState.holdPiece = undefined;
     return true;
   }
-  function onCheckFit() {
+  function checkFit() {
     // ピースを離さずにハマるかチェックし、ハマるならハメる
   }
-
-
+  function scale(_per: number, isAbsolute = false) {
+    const per = isAbsolute ? _per : camerable.scaleX * _per;
+    camerable.scale(per);
+    camerable.modified();
+  }
   function getParentOrSelf(piece: Piece): Piece {
     return piece.tag.parent ?? piece;
   }
@@ -168,23 +171,29 @@ export interface InputSystemState {
    * ピースを持つ
    * @returns ピースを持つことが出来たか
    */
-  onHold: (piece: Piece) => boolean;
+  hold: (piece: Piece) => boolean;
   /**
    * ピースを動かす
    * @param point 移動先
    * @returns ピースを動かす事が出来たか
    */
-  onMove: (point: g.CommonOffset) => boolean;
+  move: (point: g.CommonOffset) => boolean;
   /**
    * ピースを放す
    * @returns ピースを放したか (持っている状態から持っていない状態に遷移したか)
    */
-  onRelease: (point?: g.CommonOffset) => boolean;
+  release: (point?: g.CommonOffset) => boolean;
   /**
    * 持っているピースがくっつく/ハマるかを判定する (離さない)
    */
-  onCheckFit: () => void;
+  checkFit: () => void;
 
+  /**
+   * 拡大縮小 相対指定
+   * @param per 拡大縮小率
+   * @param isAbsolute 絶対値指定なら`true` @default `false`
+   */
+  scale: (per: number, isAbsolute?: boolean) => void;
 
 
   toggle: {

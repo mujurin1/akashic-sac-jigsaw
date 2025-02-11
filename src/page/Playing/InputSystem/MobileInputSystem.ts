@@ -44,7 +44,7 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
     if (playingState.holdPiece == null) {
       setCursorColor(mobileUi.pad, playingState);
     } else {
-      state.onMove({
+      state.move({
         x: playingState.holdPiece.x - e.prevDelta.x * camerable.scaleX,
         y: playingState.holdPiece.y - e.prevDelta.y * camerable.scaleX,
       });
@@ -74,14 +74,14 @@ function createUi(state: InputSystemState) {
   });
   const zoomInBtn = new g.FilledRect({
     scene, parent: layer.ui,
-    cssColor: "blue",
+    cssColor: "#00F",
     x: 950, y: 470,
     width: 100, height: 100,
     touchable: true, hidden: true,
   });
-  const zoomInOut = new g.FilledRect({
+  const zoomOutBtn = new g.FilledRect({
     scene, parent: layer.ui,
-    cssColor: "blue",
+    cssColor: "#00F8",
     x: 950, y: 590,
     width: 100, height: 100,
     touchable: true, hidden: true,
@@ -92,19 +92,25 @@ function createUi(state: InputSystemState) {
       const piece = getCursorPointPiece(pad);
       if (piece == null) return;
 
-      if (state.onHold(piece)) {
+      if (state.hold(piece)) {
         pad.cursor.cssColor = "rgba(255,0,0,0.4)";
         pad.cursor.modified();
       }
     } else {
-      if (state.onRelease()) {
+      if (state.release()) {
         pad.cursor.cssColor = "red";
         pad.cursor.modified();
       }
     }
   });
   checkFitBtn.onPointDown.add(() => {
-    state.onCheckFit();
+    state.checkFit();
+  });
+  zoomInBtn.onPointDown.add(() => {
+    state.scale(0.9);
+  });
+  zoomOutBtn.onPointDown.add(() => {
+    state.scale(1.1);
   });
 
   const pad = createPad({
@@ -127,7 +133,7 @@ function createUi(state: InputSystemState) {
       camerable.modified();
 
       if (playingState.holdPiece != null) {
-        state.onMove({
+        state.move({
           x: playingState.holdPiece.x + moved.x * camerable.scaleX,
           y: playingState.holdPiece.y + moved.y * camerable.scaleX,
         });
@@ -184,7 +190,7 @@ function createUi(state: InputSystemState) {
   }
   //#endregion PieMenu
 
-  const showHideDestroyParts = [holdPieceBtn, checkFitBtn, zoomInBtn, zoomInOut, pieMenuToggle, pad] as const;
+  const showHideDestroyParts = [holdPieceBtn, checkFitBtn, zoomInBtn, zoomOutBtn, pieMenuToggle, pad] as const;
 
   return { pad, show, hide, destroy };
 

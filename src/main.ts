@@ -1,14 +1,8 @@
-import { binaryBase64ToImageData, Client, createSpriteFromImageData, DragDrop, SacEvent, sacInitialize, Server, ShareBigText } from "akashic-sac";
+import { binaryBase64ToImageData, Client, createSpriteFromImageData, DragDrop, SacEvent, sacInitialize, SacInitializedValue, Server, ShareBigText, SnapshotSaveDataSac } from "akashic-sac";
 import { clientStart } from "./page/share";
 import { serverStart } from "./server";
 
-
 export = (gameMainParam: g.GameMainParameterObject) => {
-  if (gameMainParam.snapshot != null) {
-    // MEMO: sacInitialize の引数 serverStart,clientStart は第２引数で gameMainParam を受け取れる
-    console.log(gameMainParam.snapshot);
-  }
-
   sacInitialize({
     gameMainParam,
     serverStart,
@@ -31,40 +25,59 @@ export = (gameMainParam: g.GameMainParameterObject) => {
 };
 
 
-//#region シーンを切り替えるテスト
+//#region シーン切り替え・スナップショット
 class ChangeScene__test extends SacEvent { }
+class RequestSnapShot extends SacEvent { }
 
-function _changeSceneServer(server: Server) {
-  ChangeScene__test.receive(server, server.broadcast_bind);
+interface SnapshotData extends SnapshotSaveDataSac {
+  isFirstScene: boolean;
 }
 
-function _changeSceneClient(client: Client) {
-  let firstScene = true;
+function _changeSceneServer(server: Server) {
+  let isFirstScene = true;
+  ChangeScene__test.receive(server, data => {
+    isFirstScene = !isFirstScene;
+    server.broadcast(data);
+  });
+  RequestSnapShot.receive(server, () => {
+    server.requestSaveSnapshot<SnapshotData>(() => {
+      return {
+        snapshot: { hostId: g.game.env.hostId, isFirstScene }
+      };
+    });
+  });
+}
 
-  createBtn(client.env.scene, "red");
+function _changeSceneClient(client: Client, initializedValue: SacInitializedValue) {
+  let isFirstScene = true;
+
+  changeSceneBtn(client.env.scene, "red");
+  saveBtn(client.env.scene);
   const blueScene = new g.Scene({
     game: g.game, tickGenerationMode: "manual", local: "interpolate-local",
-    assetIds: [
-      "default_frame", "title_back", "sanka_nin",
-      "ico_ban", "ico_device", "ico_info", "ico_preview", "ico_ranking", "ico_more", "ico_visible",
-    ],
+  });
+  blueScene.onLoad.add(() => {
+    changeSceneBtn(blueScene, "blue");
+    saveBtn(blueScene);
   });
 
-  ChangeScene__test.receive(client, () => {
-    firstScene = !firstScene;
+  ChangeScene__test.receive(client, switchScene);
 
-    if (firstScene) {
-      g.game.popScene(true);
-    } else {
-      g.game.pushScene(blueScene);
+  const snapshot = initializedValue.gameMainParam.snapshot as SnapshotData;
+  if (snapshot != null) {
+    console.log("has snaphost");
+    console.log(snapshot);
+    if (!snapshot.isFirstScene) switchScene();
+  }
 
-      blueScene.onLoad.add(() => {
-        createBtn(blueScene, "blue");
-      });
-    }
-  });
 
-  function createBtn(scene: g.Scene, cssColor: string) {
+  function switchScene() {
+    isFirstScene = !isFirstScene;
+    if (isFirstScene) g.game.popScene(true);
+    else g.game.pushScene(blueScene);
+  }
+
+  function changeSceneBtn(scene: g.Scene, cssColor: string) {
     const btn = new g.FilledRect({
       scene, parent: scene,
       cssColor,
@@ -76,8 +89,21 @@ function _changeSceneClient(client: Client) {
       client.sendEvent(new ChangeScene__test());
     });
   }
+
+  function saveBtn(scene: g.Scene) {
+    const btn = new g.FilledRect({
+      scene, parent: scene,
+      cssColor: "gray",
+      x: 300, y: 100,
+      width: 100, height: 100,
+      touchable: true,
+    });
+    btn.onPointDown.add(() => {
+      client.sendEvent(new RequestSnapShot());
+    });
+  }
 }
-//#endregion シーンを切り替えるテスト
+//#endregion シーン切り替え・スナップショット
 
 
 //#region 画像を共有するテスト
