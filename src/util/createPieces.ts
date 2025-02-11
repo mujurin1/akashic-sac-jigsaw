@@ -183,7 +183,7 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
    * @param h 上からh個目のピース
    * @param wakuTypes [左,上,右,下]
    */
-  function stamp(w: number, h: number, ...wakuTypes: [WakuType, WakuType, WakuType, WakuType]) {
+  function stamp(w: number, h: number, ...wakuTypes: [WakuType, WakuType, WakuType, WakuType]): Piece {
     preview.x = margineW - param.pieceSize.width * w;
     preview.y = margineH - param.pieceSize.height * h;
     // preview.modified();  // 無くても良いみたい
@@ -199,7 +199,7 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
 
     const s = createCustomSpriteFromE(scene, tmpE, drawOffset);
     for (const waku of wakus) waku.remove();
-    return s;
+    return s as Piece;
   }
 
   function createWaku(type: WakuType) {

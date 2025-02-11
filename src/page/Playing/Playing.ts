@@ -32,9 +32,27 @@ export interface PlayingState {
   readonly pieces: Piece[];
 
   readonly isJoined: () => boolean;
+
+  /**
+   * 画面上の座標をピースエリア座標に変換する
+   */
+  readonly toPieceArea: (x: number, y: number) => g.CommonOffset;
+
+  /**
+   * 画面上の座標を元にその場所に存在するピースを取得する
+   * @param x 画面上のX座標
+   * @param y 画面上のY座標
+   * @returns `[ピース, 引数(x,y)とピース座標のズレ(ピースエリア座標)]`
+   */
+  readonly getPieceFromScreenPx: (x: number, y: number) => { piece: Piece, offset: g.CommonOffset; } | undefined;
+
   pieceOperaterControl: InputSystemControl;
 
-  holdPiece: Piece | undefined;
+  holdState: {
+    piece: Piece;
+    /** ピースを掴んだときのピース座標との誤差 (ピースエリア座標) */
+    offset: g.CommonOffset;
+  } | undefined;
   finishTime: number | undefined;
 }
 
@@ -137,6 +155,10 @@ async function createPlayingState(client: Client, gameStart: GameStart, previews
   });
   board.append(piecesResult.frame);
 
+
+  const CAMERABLE_W_HARF = playAreaCamera.width / 2;
+  const CAMERABLE_H_HARF = playAreaCamera.height / 2;
+
   const state: PlayingState = {
     pieces: piecesResult.pieces,
     client,
@@ -153,9 +175,27 @@ async function createPlayingState(client: Client, gameStart: GameStart, previews
       ui: new g.E({ scene, parent: scene }),
     },
 
-    isJoined() { return playerManager.has(g.game.selfId); },
+    isJoined: () => playerManager.has(g.game.selfId),
+    toPieceArea: (x, y) => ({
+      x: playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HARF),
+      y: playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HARF),
+    }),
+    getPieceFromScreenPx(x, y) {
+      if (!state.isJoined()) return;
+
+      const playareaX = playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HARF);
+      const playareaY = playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HARF);
+      const piece = Piece.getParentOrSelf(Piece.getFromPoint(playareaX, playareaY));
+      if (piece == null || !Piece.canHold(piece)) return;
+
+      return {
+        piece,
+        offset: { x: piece.x - playareaX, y: piece.y - playareaY },
+      };
+    },
+
     pieceOperaterControl: null!,
-    holdPiece: undefined,
+    holdState: undefined,
     finishTime: undefined,
   };
 

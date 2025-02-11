@@ -11,7 +11,7 @@ const servProc = run(startServer, true);
 
 watchChangeFile("./src", () => {
   const currentTime = Date.now();
-  if (currentTime - lastChangeTime < 100) return;
+  if (currentTime - lastChangeTime < 1000) return;
   lastChangeTime = currentTime;
 
   build();

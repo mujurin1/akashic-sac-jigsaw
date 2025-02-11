@@ -1,4 +1,3 @@
-import { Piece } from "../Piece";
 import { InputSystem, InputSystemState } from "./InputSystem";
 
 export function PcInputSystem(state: InputSystemState): InputSystem {
@@ -7,38 +6,24 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
   const { camerable } = layer.playArea;
   const { scene } = client.env;
 
-  let touchPoint: g.CommonOffset | undefined;
-
   const icons = createIcons(state);
 
   const moveCamera = (e: g.PointMoveEvent) => {
-    if (touchPoint != null || e.target !== layer.bg) return;
+    if (playingState.holdState != null || e.target !== layer.bg) return;
     camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
     camerable.modified();
   };
   const pieceTouch = (e: g.PointDownEvent) => {
     if (e.target !== layer.bg) return;
-
-    const piece = Piece.getFromGlobalPoint(e.point);
-    if (piece == null) return;
-    if (state.hold(piece)) touchPoint = { x: piece.x, y: piece.y };
+    state.hold(e.point.x, e.point.y);
   };
   const pieceMove = (e: g.PointMoveEvent) => {
-    if (touchPoint == null) return;
-
-    state.move({
-      x: touchPoint.x + e.startDelta.x * camerable.scaleX,
-      y: touchPoint.y + e.startDelta.y * camerable.scaleX,
-    });
+    if (playingState.holdState == null) return;
+    state.move(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
   };
   const pieceRelease = (e: g.PointUpEvent) => {
-    if (touchPoint == null) return;
-
-    state.release({
-      x: touchPoint.x + e.startDelta.x * camerable.scaleX,
-      y: touchPoint.y + e.startDelta.y * camerable.scaleX,
-    });
-    touchPoint = undefined;
+    if (playingState.holdState == null) return;
+    state.release(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
   };
 
   const result: InputSystem = {
@@ -56,7 +41,6 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
         scene.onPointDownCapture.remove(pieceTouch);
         scene.onPointMoveCapture.remove(pieceMove);
         scene.onPointUpCapture.remove(pieceRelease);
-        touchPoint = undefined;
       }
     },
     forceReleace() { },

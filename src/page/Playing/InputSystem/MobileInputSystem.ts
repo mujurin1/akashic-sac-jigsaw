@@ -41,13 +41,10 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
     camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
     camerable.modified();
 
-    if (playingState.holdPiece == null) {
+    if (playingState.holdState == null) {
       setCursorColor(mobileUi.pad, playingState);
     } else {
-      state.move({
-        x: playingState.holdPiece.x - e.prevDelta.x * camerable.scaleX,
-        y: playingState.holdPiece.y - e.prevDelta.y * camerable.scaleX,
-      });
+      state.move(mobileUi.pad.cursor.x, mobileUi.pad.cursor.y);
     }
   }
 }
@@ -88,11 +85,8 @@ function createUi(state: InputSystemState) {
   });
 
   holdPieceBtn.onPointDown.add(() => {
-    if (playingState.holdPiece == null) {
-      const piece = getCursorPointPiece(pad);
-      if (piece == null) return;
-
-      if (state.hold(piece)) {
+    if (playingState.holdState == null) {
+      if (state.hold(pad.cursor.x, pad.cursor.y)) {
         pad.cursor.cssColor = "rgba(255,0,0,0.4)";
         pad.cursor.modified();
       }
@@ -132,11 +126,8 @@ function createUi(state: InputSystemState) {
       camerable.moveBy(cursorRest.x * camerable.scaleX, cursorRest.y * camerable.scaleX);
       camerable.modified();
 
-      if (playingState.holdPiece != null) {
-        state.move({
-          x: playingState.holdPiece.x + moved.x * camerable.scaleX,
-          y: playingState.holdPiece.y + moved.y * camerable.scaleX,
-        });
+      if (playingState.holdState != null) {
+        state.move(pad.cursor.x, pad.cursor.y);
       }
 
       setCursorColor(pad, playingState);
@@ -217,7 +208,7 @@ function getCursorPointPiece(pad: Pad): Piece | undefined {
 
 function setCursorColor(pad: Pad, playingState: PlayingState) {
   pad.cursor.cssColor =
-    playingState.holdPiece != null
+    playingState.holdState != null
       ? "rgba(255,0,0,0.4)"
       : getCursorPointPiece(pad) != null
         ? "red"

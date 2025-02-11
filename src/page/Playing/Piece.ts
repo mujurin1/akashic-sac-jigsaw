@@ -1,7 +1,10 @@
 import { GameStart } from "../../event/TitleEvent";
 import { CustomSprite } from "../../util/CustomSprite";
 
-export interface Piece extends CustomSprite { tag: PieceTag; }
+export interface Piece extends CustomSprite {
+  tag: PieceTag;
+  children: Piece[] | undefined;
+}
 
 export interface PieceTag {
   type: "piece";
@@ -21,6 +24,7 @@ export const Piece = {
    * 子の場合は親ピースを返す
    * @param point プレイ画面上の座標軸
    * @returns 
+   * @deprecated もう不要のはず
    */
   getFromGlobalPoint(point: g.CommonOffset): Piece | undefined {
     // https://github.com/akashic-games/akashic-engine/blob/dafc3e60341722db9584231fc326852090808c1c/src/entities/E.ts#L626
@@ -39,7 +43,7 @@ export const Piece = {
       if (0 <= p.x && piece.width > p.x && 0 <= p.y && piece.height > p.y)
         return piece;
       if (piece.children != null) {
-        for (const childPiece of piece.children as Piece[]) {
+        for (const childPiece of piece.children) {
           const newP = { x: p.x - childPiece.x, y: p.y - childPiece.y };
           if (0 <= newP.x && childPiece.width > newP.x && 0 <= newP.y && childPiece.height > newP.y) {
             return piece;
@@ -50,7 +54,41 @@ export const Piece = {
 
     return undefined;
   },
-  /** ピースの親要素に必要な設定を行う */
+  getFromPoint(x: number, y: number): Piece | undefined {
+    for (let pieceId = Piece._pieceParent.children!.length - 1; pieceId >= 0; pieceId--) {
+      const piece = Piece._pieceParent.children![pieceId];
+      if (!Piece.isPiece(piece)) continue;
+
+      const px = piece.x + piece.width;
+      const py = piece.y + piece.height;
+      if (
+        piece.x <= x && x <= px &&
+        piece.y <= y && y <= py
+      ) return piece;
+      if (piece.children == null) continue;
+
+      for (const childPiece of piece.children) {
+        const px = childPiece.x + childPiece.width;
+        const py = childPiece.y + childPiece.height;
+        if (
+          childPiece.x <= x && x <= px &&
+          childPiece.y <= y && y <= py
+        ) return childPiece;
+      }
+    }
+    return undefined;
+  },
+  /**
+   * 親ピースがいる場合は親を、ない場合は自身を返す
+   * @param piece `Piece`
+   * @returns 親または`piece`
+   */
+  getParentOrSelf(piece: Piece | undefined): Piece | undefined {
+    return piece?.tag.parent ?? piece;
+  },
+  /**
+   * ピースの親要素に必要な設定を行う
+   */
   pieceParentSetting(pieceParent: g.E) {
     Piece._pieceParent = pieceParent;
     // pieceParent.onPointMove.add
@@ -76,10 +114,10 @@ export const Piece = {
     Piece.release(child);
     normalizeConnectPieceAll(parent, child, gameStart);
   },
-  isPiece(piece?: g.E): piece is Piece {
-    return (<Piece>piece)?.tag?.type === "piece";
+  isPiece(piece: g.E): piece is Piece {
+    return (<PieceTag | undefined>piece.tag)?.type === "piece";
   },
-  canHold(piece?: g.E): piece is Piece {
+  canHold(piece: g.E): piece is Piece {
     return Piece.isPiece(piece) &&
       piece.opacity === Piece.opacity.default &&
       !piece.tag.fited;
@@ -98,7 +136,7 @@ function normalizeConnectPieceAll(parent: Piece, child: Piece, gameStart: GameSt
   normalizeConnectPiece(parent, child, gameStart);
 
   if (children != null) {
-    for (const childPiece of children as Piece[]) {
+    for (const childPiece of children) {
       normalizeConnectPiece(parent, childPiece, gameStart);
     }
   }

@@ -18,14 +18,14 @@ export interface InputSystemControl {
 /**
  * デバイス毎の操作方法の管理を行う
  */
-export function inputSystemControl(playingState: PlayingState): InputSystemControl {
-  const { client, layer: { playArea: { camerable } } } = playingState;
+export function inputSystemControl(state: PlayingState): InputSystemControl {
+  const { client, layer: { playArea: { camerable } } } = state;
 
   const sendMoveCount = 5;
   let sendMoveCounter = 0;
 
   const inputSystemState: InputSystemState = {
-    playingState,
+    playingState: state,
     hold,
     move,
     release,
@@ -49,17 +49,17 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
     // 自分が持っているピースを他人が操作した
     HoldPiece.receive(client, ({ pieceIndex, playerId }) => {
       if (playerId == null || playerId === g.game.selfId) return;
-      if (pieceIndex !== playingState.holdPiece?.tag.index) return;
+      if (pieceIndex !== state.holdState?.piece?.tag.index) return;
 
-      Piece.hold(playingState.pieces[pieceIndex], playerId);
-      playingState.holdPiece = undefined;
+      Piece.hold(state.pieces[pieceIndex], playerId);
+      state.holdState = undefined;
     }),
     // 自分が持っているピースを強制開放
     ForceReleasePiece.receive(client, ({ pieceIndex }) => {
-      if (playingState.holdPiece?.tag.index !== pieceIndex) return;
+      if (state.holdState?.piece?.tag.index !== pieceIndex) return;
 
-      playingState.holdPiece = undefined;
-      playingState.pieceOperaterControl.current.forceReleace();
+      state.holdState = undefined;
+      state.pieceOperaterControl.current.forceReleace();
     }),
   ];
 
@@ -92,42 +92,50 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
 
   return control;
 
-  function hold(_piece: Piece) {
-    const piece = getParentOrSelf(_piece);
-    if (!playingState.isJoined() || !Piece.canHold(piece)) return false;
-    playingState.holdPiece = piece;
+  function hold(x: number, y: number): boolean {
+    state.holdState = state.getPieceFromScreenPx(x, y);
+    if (state.holdState == null) return false;
+
     sendMoveCounter = 0;
+    const piece = state.holdState.piece;
     piece.parent!.append(piece);
     client.sendEvent(new HoldPiece(piece.tag.index));
     return true;
   }
-  function move(point: g.CommonOffset) {
-    const piece = playingState.holdPiece;
-    if (piece == null || !Piece.canHold(piece)) return false;
-    playingState.pieces;
-
-    piece.moveTo(point.x, point.y);
-    piece.modified();
+  function move(x: number, y: number): boolean {
+    const holdState = state.holdState;
+    if (holdState == null || !Piece.canHold(holdState.piece)) {
+      state.holdState = undefined;
+      return false;
+    }
+    const point = state.toPieceArea(x, y);
+    holdState.piece.moveTo(point.x + holdState.offset.x, point.y + holdState.offset.y);
+    holdState.piece.modified();
 
     if (++sendMoveCounter > sendMoveCount) {
       sendMoveCounter = 0;
-      client.sendEvent(new MovePiece(piece.tag.index, point));
+      client.sendEvent(new MovePiece(holdState.piece.tag.index, point));
     }
     return true;
   }
-  function release(point: g.CommonOffset) {
-    const piece = playingState.holdPiece;
-    if (piece == null || !Piece.canHold(piece)) return false;
-
-    if (point == undefined) {
-      client.sendEvent(new ReleasePiece(piece.tag.index));
-    } else {
-      piece.moveTo(point.x, point.y);
-      piece.modified();
-      client.sendEvent(new ReleasePiece(piece.tag.index, point));
+  function release(x?: number, y?: number): boolean {
+    const holdState = state.holdState;
+    if (holdState == null || !Piece.canHold(holdState.piece)) {
+      state.holdState = undefined;
+      return false;
     }
 
-    playingState.holdPiece = undefined;
+    if (x == null || y == null) {
+      client.sendEvent(new ReleasePiece(holdState.piece.tag.index));
+    } else {
+      const _point = state.toPieceArea(x, y);
+      const point = { x: _point.x + holdState.offset.x, y: _point.y + holdState.offset.y };
+      holdState.piece.moveTo(point.x, point.y);
+      holdState.piece.modified();
+      client.sendEvent(new ReleasePiece(holdState.piece.tag.index, point));
+    }
+
+    state.holdState = undefined;
     return true;
   }
   function checkFit() {
@@ -137,9 +145,6 @@ export function inputSystemControl(playingState: PlayingState): InputSystemContr
     const per = isAbsolute ? _per : camerable.scaleX * _per;
     camerable.scale(per);
     camerable.modified();
-  }
-  function getParentOrSelf(piece: Piece): Piece {
-    return piece.tag.parent ?? piece;
   }
 }
 
@@ -163,28 +168,36 @@ export interface InputSystem {
 
 /**
  * 各InputSystem (PC,Mobile) に渡す値
+ * 
+ * ピースに対する操作は画面上の座標で行う\
+ * `InputSystem`側でピース領域スケールへ変換する
  */
 export interface InputSystemState {
   readonly playingState: PlayingState;
 
   /**
-   * ピースを持つ
+   * 指定座標に存在するピースを持つ
    * @returns ピースを持つことが出来たか
    */
-  hold: (piece: Piece) => boolean;
+  hold: (x: number, y: number) => boolean;
   /**
-   * ピースを動かす
-   * @param point 移動先
+   * ピースを絶対値で動かす
+   * @param x 絶対移動量
+   * @param y 絶対移動量
    * @returns ピースを動かす事が出来たか
    */
-  move: (point: g.CommonOffset) => boolean;
+  move: (x: number, y: number) => boolean;
   /**
    * ピースを放す
+   * @param x 絶対移動量
+   * @param y 絶対移動量
    * @returns ピースを放したか (持っている状態から持っていない状態に遷移したか)
    */
-  release: (point?: g.CommonOffset) => boolean;
+  release(): boolean;
+  release(x: number, y: number): boolean;
   /**
-   * 持っているピースがくっつく/ハマるかを判定する (離さない)
+   * 持っているピースがくっつく/ハマるかを判定する (離さない)\
+   * TODO: 判定が`true`ならくっつけるのか?
    */
   checkFit: () => void;
 
