@@ -1,7 +1,7 @@
 const fs = require("fs");
 const { exec } = require("child_process");
 
-const buildCommand = "rimraf ./script && npm run build";
+const buildCommand = "npm run build";
 const startServer = "akashic serve -p 3300 -s nicolive -w -B";
 
 let lastChangeTime = Date.now();

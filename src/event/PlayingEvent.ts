@@ -185,7 +185,7 @@ export function serverPlaying(server: Server, gameStart: GameStart): void {
 
       if (point != null) piece.pos = point;
       state.deleteHolder(playerId);
-      if (!doFitAndConnect(data.pieceIndex)) {
+      if (!checkFitAndConnect(data.pieceIndex)) {
         server.broadcast(data);
       }
     }),
@@ -221,7 +221,7 @@ export function serverPlaying(server: Server, gameStart: GameStart): void {
  * @param pieceIndex
  * @returns ハマったまたはくっついた
  */
-function doFitAndConnect(pieceIndex: number): boolean {
+function checkFitAndConnect(pieceIndex: number): boolean {
   const piece = state.pieces[pieceIndex];
 
   if (checkFitPiece(piece)) {
@@ -267,8 +267,9 @@ function checkConnectPieceAll(piece: PieceState): PieceState | undefined {
   return undefined;
 }
 /**
- * ピースがくっつくかチェックする
- * @returns くっつく相手ピース. 現時点で親を持たないピース
+ * ピースがくっつくかチェックする\
+ * 直接くっつく相手が親を持つ場合、その親ピースを返す
+ * @returns くっつく相手ピース. 必ず親を持たないピース
  */
 function checkConnectPiece(piece: PieceState): PieceState | undefined {
   const pairs = calcConnectPieceIndexes(piece);
@@ -280,7 +281,7 @@ function checkConnectPiece(piece: PieceState): PieceState | undefined {
 
     if (
       pair.fited ||
-      // pair.holderId != null ||  // MEMO: 誰かが持っているピースにくっつくか
+      pair.holderId != null ||
       pair.parentId === piece.index ||
       pair.index === piece.parentId ||
       pair.parentId != null && pair.parentId === piece.parentId

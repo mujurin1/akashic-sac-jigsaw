@@ -108,8 +108,9 @@ export function inputSystemControl(state: PlayingState): InputSystemControl {
       state.holdState = undefined;
       return false;
     }
-    const point = state.toPieceArea(x, y);
-    holdState.piece.moveTo(point.x + holdState.offset.x, point.y + holdState.offset.y);
+    const _point = state.toPieceArea(x, y);
+    const point = { x: _point.x + holdState.offset.x, y: _point.y + holdState.offset.y };
+    holdState.piece.moveTo(point.x, point.y);
     holdState.piece.modified();
 
     if (++sendMoveCounter > sendMoveCount) {
