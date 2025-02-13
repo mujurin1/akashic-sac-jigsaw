@@ -1,4 +1,4 @@
-import { createImageDataFromSVGText, createSpriteFromImageData } from "akashic-sac";
+import { imageDataUtil } from "akashic-sac";
 import { Piece } from "../page/Playing/Piece";
 import { CustomSprite } from "./CustomSprite";
 
@@ -74,13 +74,13 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
   });
 
   const [dekoImgData, bokoImgData, lineImgData] = await Promise.all([
-    createImageDataFromSVGText(pieceDeko, wakuW, wakuH),
-    createImageDataFromSVGText(pieceBoko, wakuW, wakuH),
-    createImageDataFromSVGText(pieceLine, param.pieceSize.width, param.pieceSize.height),
+    imageDataUtil.fromSvgText(pieceDeko, wakuW, wakuH),
+    imageDataUtil.fromSvgText(pieceBoko, wakuW, wakuH),
+    imageDataUtil.fromSvgText(pieceLine, param.pieceSize.width, param.pieceSize.height),
     // TODO: ピースの縦横比が1:1でない場合は更に倍の通り作る必要がある
-    // createImageDataFromSVGText(pieceDeko, wakuH, wakuW),
-    // createImageDataFromSVGText(pieceBoko, wakuH, wakuW),
-    // createImageDataFromSVGText(pieceLine, param.pieceSize.height, param.pieceSize.width),
+    // imageDataUtil.fromSvgText(pieceDeko, wakuH, wakuW),
+    // imageDataUtil.fromSvgText(pieceBoko, wakuH, wakuW),
+    // imageDataUtil.fromSvgText(pieceLine, param.pieceSize.height, param.pieceSize.width),
   ]);
 
   const allWakus = {
@@ -131,11 +131,11 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
 
   // ピースの枠を作る
   const frameE = new g.E({ scene, width: boardW, height: boardH });
-  const lineParam: Parameters<typeof createSpriteFromImageData>[1] = {
+  const lineParam: Parameters<typeof imageDataUtil.toSprite>[1] = {
     scene, parent: frameE, anchorX: null
   };
 
-  // TODO: ここの createSpriteFromImageData を無くす (canvas で生成する)
+  // TODO: ここの imageDataUtil.toSprite を無くす (canvas で生成する)
   for (let w = 0; w < param.pieceWH.width; w++) {
     for (let h = 0; h < param.pieceWH.height; h++) {
       // 右側
@@ -148,7 +148,7 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
           lineParam.angle += 180;
           lineParam.x += param.pieceSize.width - margineW * 2;
         }
-        createSpriteFromImageData(lineImgData, lineParam);
+        imageDataUtil.toSprite(lineImgData, lineParam);
       }
       // 下側
       const lineH = hOXs[w][h + 1];
@@ -160,7 +160,7 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
           lineParam.angle += 180;
           lineParam.y += param.pieceSize.height - margineH * 2;
         }
-        createSpriteFromImageData(lineImgData, lineParam);
+        imageDataUtil.toSprite(lineImgData, lineParam);
       }
     }
   }
@@ -206,7 +206,7 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
     const ary: g.Sprite[] = [];
     for (const angle of [270, 0, 90, 180]) {
       ary.push(
-        createSpriteFromImageData(
+        imageDataUtil.toSprite(
           type === "O" ? dekoImgData : bokoImgData,
           {
             compositeOperation: "destination-out",

@@ -17,10 +17,10 @@ watchChangeFile("./src", () => {
   build();
 });
 
-watchChangeFile("../akashic-sac/akashic-sac-0.2.3.tgz", () => {
-  exec("npm run usac")
-    .on("exit", build);
-});
+// watchChangeFile("../akashic-sac/akashic-sac-0.2.3.tgz", () => {
+//   exec("npm run usac")
+//     .on("exit", build);
+// });
 
 
 build();

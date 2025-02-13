@@ -1,4 +1,4 @@
-import { binaryBase64ToImageData, Client, createSpriteFromImageData, DragDrop, SacEvent, sacInitialize, SacInitializedValue, Server, ShareBigText, SnapshotSaveDataSac } from "akashic-sac";
+import { Client, DragDrop, fileToImageDataUrl, imageDataUtil, SacEvent, sacInitialize, SacInitializedValue, Server, ShareBigText, SnapshotSaveDataSac } from "akashic-sac";
 import { clientStart } from "./page/share";
 import { serverStart } from "./server";
 
@@ -107,6 +107,12 @@ function _changeSceneClient(client: Client, initializedValue: SacInitializedValu
 
 
 //#region 画像を共有するテスト
+class ChangeColor extends SacEvent {
+  constructor(
+    public readonly color: string
+  ) { super(); }
+}
+
 function _imageShareServer(server: Server) {
   ShareBigText.waitingFromSingleUser("IMAGE", g.game.env.hostId, () => true);
 
@@ -141,15 +147,15 @@ function _imageShareSample(client: Client) {
   ShareBigText.waitingFromSingleUser(
     "IMAGE",
     g.game.env.hostId,
-    base64 => {
-      console.log(`receuve size: ${base64.length / 1000} KB`);
+    imageDataUrl => {
+      console.log(`receuve size: ${imageDataUrl.length / 1000} KB`);
 
       // 非同期処理を行うのでイベントの処理を一時停止
       const unlockEvent = client.lockEvent();
 
-      void binaryBase64ToImageData(base64)
+      void imageDataUtil.fromImageDataUrl(imageDataUrl)
         .then(imageData => {
-          createSpriteFromImageData(
+          imageDataUtil.toSprite(
             imageData,
             {
               scene, parent: g.game.env.scene,
@@ -161,35 +167,34 @@ function _imageShareSample(client: Client) {
             rect.modified();
           });
 
+          // イベントの再開は最後
           unlockEvent();
         });
+
+      // {
+      //   if (g.game.env.hasClient) {
+      //     const img = document.createElement("img");
+      //     img.src = imageDataUrl;
+      //     g.game.env.canvas.parentElement!.prepend(img);
+      //   }
+      // }
     },
   );
 
   if (g.game.env.isHost) {
-    DragDrop.dragDropedFile(e => {
+    DragDrop.hook(async e => {
       const file = e.dataTransfer?.files[0];
       if (file == null || file.type.match(/image.*/g) == null) return;
+      const imageDataUrl = await fileToImageDataUrl(file);
+      console.log(imageDataUrl.split(";")[0]);
+      ShareBigText.send("IMAGE", imageDataUrl);
 
-      DragDrop.unhookDragDropEvent();
-
-      const fr = new FileReader();
-      fr.readAsDataURL(file);
-      fr.onload = e => {
-        let imageBase64 = e.target?.result;
-        if (typeof imageBase64 !== "string") return;
-        imageBase64 = imageBase64.substring(imageBase64.indexOf(",") + 1);
-        console.log(`send size: ${imageBase64.length / 1000} KB`);
-
-        ShareBigText.send("IMAGE", imageBase64);
-      };
+      // const reader = new FileReader();
+      // reader.readAsDataURL(file);
+      // reader.onload = e => {
+      //   ShareBigText.send("IMAGE", e.target!.result as string);
+      // };
     });
   }
-}
-
-class ChangeColor extends SacEvent {
-  constructor(
-    public readonly color: string
-  ) { super(); }
 }
 //#endregion 画像を共有するテスト

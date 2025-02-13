@@ -46,7 +46,7 @@
 		"node_modules/akashic-sac/lib/sac/game.js",
 		"node_modules/akashic-sac/lib/utils/AkashicEnigne.js",
 		"node_modules/akashic-sac/lib/utils/DragDrop.js",
-		"node_modules/akashic-sac/lib/utils/Image.js",
+		"node_modules/akashic-sac/lib/utils/ImageData.js",
 		"node_modules/akashic-sac/lib/utils/LocalStorage.js",
 		"node_modules/akashic-sac/lib/impl/AutoGenerateKeyMap.js",
 		"node_modules/akashic-sac/lib/sac/SacEvent.js"
