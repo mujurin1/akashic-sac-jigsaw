@@ -81,7 +81,7 @@ export function inputSystemControl(state: PlayingState): InputSystemControl {
       inputSystems[type].toggleFeature(true);
     },
     destroy() {
-      client.removeEventSet(...clientEventKeys);
+      client.removeEventSets(clientEventKeys);
       for (const type of InputSystemType) {
         inputSystems[type].destroy();
       }

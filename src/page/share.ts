@@ -1,10 +1,10 @@
 import { resolvePlayerInfo } from "@akashic-extension/resolve-player-info";
-import { Client } from "akashic-sac";
+import { SacClient } from "akashic-sac";
 import { JoinPlayer } from "../event/Events";
 import { PlayerManager } from "../util/PlayerManager";
 import { Title } from "./Title/Title";
 
-export function clientStart(client: Client) {
+export function clientStart(client: SacClient) {
   const { clientDI } = client.env;
   const playerManager = clientDI.get(PlayerManager);
 
@@ -24,7 +24,6 @@ export function sendJoin() {
   resolvePlayerInfo({ limitSeconds: 20 }, (err, info) => {
     client.sendEvent(
       new JoinPlayer(info?.name ?? "NULL", info?.userData?.accepted ?? false),
-      true
     );
   });
 }

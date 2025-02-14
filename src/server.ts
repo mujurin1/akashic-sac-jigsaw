@@ -1,9 +1,9 @@
-import { Server } from "akashic-sac";
+import { SacServer } from "akashic-sac";
 import { JoinPlayer } from "./event/Events";
 import { serverTitle } from "./event/TitleEvent";
 import { PlayerManager } from "./util/PlayerManager";
 
-export function serverStart(server: Server) {
+export function serverStart(server: SacServer) {
   const { serverDI } = g.game.serverEnv;
   const playerManager = serverDI.get(PlayerManager);
 

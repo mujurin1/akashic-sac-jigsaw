@@ -1,4 +1,4 @@
-import { SacEvent, Server } from "akashic-sac";
+import { SacEvent, SacServer } from "akashic-sac";
 import { readAssets } from "../util/readAssets";
 import { serverPlaying } from "./PlayingEvent";
 
@@ -32,7 +32,7 @@ export class GameStart extends SacEvent {
 
 
 
-export function serverTitle(server: Server): void {
+export function serverTitle(server: SacServer): void {
   const previewInfo = readAssets(server.env.scene);
   const puzzleMaxIndex = previewInfo.length - 1;
 
@@ -56,7 +56,7 @@ export function serverTitle(server: Server): void {
       if (data.playerId !== g.game.env.hostId) return;
 
       server.broadcast(data);
-      server.removeEventSet(...eventKeys);
+      server.removeEventSets(eventKeys);
       serverPlaying(server, data);
     }),
   ];

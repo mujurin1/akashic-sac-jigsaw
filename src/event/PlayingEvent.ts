@@ -1,4 +1,4 @@
-import { SacEvent, Server } from "akashic-sac";
+import { SacEvent, SacServer } from "akashic-sac";
 import { lineupPiece } from "../page/Playing/lineupPiece";
 import { PlayerManager } from "../util/PlayerManager";
 import { GameStart } from "./TitleEvent";
@@ -93,7 +93,7 @@ const DirR = {
 // MS * COUNT = ピースを保持出来る時間
 const PIECE_RELEASE_MS = 10_0000;
 const PIECE_RELEASE_COUNT = 3;
-let server: Server;
+let server: SacServer;
 let gameStart: GameStart;
 let state: PlayingState;
 /** ピースのハマる誤差 */
@@ -101,7 +101,7 @@ let fitMargin: number;
 /** その方向へのピースの距離 */
 let dirOffset: Record<Dir, g.CommonOffset>;
 
-function initialize(_server: Server, _gameStart: GameStart) {
+function initialize(_server: SacServer, _gameStart: GameStart) {
   server = _server;
   gameStart = _gameStart;
   const boardSize = {
@@ -145,12 +145,12 @@ function initialize(_server: Server, _gameStart: GameStart) {
   }
 }
 
-export function serverPlaying(server: Server, gameStart: GameStart): void {
+export function serverPlaying(server: SacServer, gameStart: GameStart): void {
   initialize(server, gameStart);
   const playerManager = server.env.serverDI.get(PlayerManager);
   const holders = state.holders;
 
-  // TODO: server.removeEventSet(...eventKeys);
+  // TODO: server.removeEventSets(eventKeys);
   const eventKeys = [
     HoldPiece.receive(server, data => {
       const { playerId, pieceIndex } = data;

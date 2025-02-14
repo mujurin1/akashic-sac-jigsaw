@@ -1,5 +1,5 @@
 import { Label } from "@akashic-extension/akashic-label";
-import { Client, createFont } from "akashic-sac";
+import { SacClient, createFont } from "akashic-sac";
 import { ChangeLevel, ChangePuzzle, GameStart } from "../../event/TitleEvent";
 import { PlayerManager } from "../../util/PlayerManager";
 import { Slider } from "../../util/Slider";
@@ -10,7 +10,7 @@ import { Playing } from "../Playing/Playing";
 import { sendJoin } from "../share";
 
 interface TitleState {
-  client: Client;
+  client: SacClient;
   /** 0~デフォルトの画像枚数-1枚, index:-1 はカスタム画像 */
   puzzleIndex: number;
   /** 0~100 */
@@ -20,7 +20,7 @@ interface TitleState {
   pieceWH: g.CommonSize;
 }
 
-export function Title(client: Client) {
+export function Title(client: SacClient) {
   const state: TitleState = {
     client,
     puzzleIndex: 0,
@@ -220,7 +220,7 @@ function createUi(state: TitleState) {
 
   const eventKeys: number[] = [
     GameStart.receive(client, data => {
-      client.removeEventSet(...eventKeys);
+      client.removeEventSets(eventKeys);
       playerManager.onUpdate.remove(removePmKey);
 
       const children = [...scene.children];

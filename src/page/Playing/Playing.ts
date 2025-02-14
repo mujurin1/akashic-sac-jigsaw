@@ -1,5 +1,5 @@
 import { Label } from "@akashic-extension/akashic-label";
-import { CamerableE, Client, createFont } from "akashic-sac";
+import { CamerableE, createFont, SacClient } from "akashic-sac";
 import { ConnectPiece, FitPiece, ForceReleasePiece, HoldPiece, MovePiece, ReleasePiece } from "../../event/PlayingEvent";
 import { GameStart } from "../../event/TitleEvent";
 import { PlayerManager } from "../../util/PlayerManager";
@@ -11,7 +11,7 @@ import { Piece } from "./Piece";
 import { lineupPiece, MOVE_PIACE_SIZE, PREVIEW_ADJUST } from "./lineupPiece";
 
 export interface PlayingState {
-  readonly client: Client;
+  readonly client: SacClient;
   readonly gameStart: GameStart;
   readonly layer: {
     readonly bg: g.FilledRect;
@@ -56,11 +56,11 @@ export interface PlayingState {
   finishTime: number | undefined;
 }
 
-export async function Playing(client: Client, gameStart: GameStart, previewsInfo: PreviewInfo[]) {
+export async function Playing(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]) {
   const unlockEvent = client.lockEvent();
   const state = await createPlayingState(client, gameStart, previewsInfo);
 
-  // TODO: client.removeEventSet(...eventKeys);
+  // TODO: client.removeEventSets(eventKeys);
   const eventKeys = [
     HoldPiece.receive(client, ({ playerId, pieceIndex }) => {
       if (playerId == null || playerId === g.game.selfId) return;
@@ -109,7 +109,7 @@ export async function Playing(client: Client, gameStart: GameStart, previewsInfo
 }
 
 
-async function createPlayingState(client: Client, gameStart: GameStart, previewsInfo: PreviewInfo[]): Promise<PlayingState> {
+async function createPlayingState(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]): Promise<PlayingState> {
   const { scene, clientDI } = client.env;
   const playerManager = clientDI.get(PlayerManager);
 

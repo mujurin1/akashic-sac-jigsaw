@@ -7,7 +7,7 @@
     "nico": "npm run build && akashic serve -s nicolive",
     "watch": "node build-script.js",
     "usac": "akashic install ../akashic-sac/akashic-sac-0.2.3.tgz",
-    "export": "npm run build:scan && akashic export zip -f -o ./game.zip --nicolive",
+    "export": "npm run build:scan && akashic export zip -f -o ./game.zip --nicolive --minify",
     "build": "tsc",
     "build:scan": "npm run build && akashic-cli-scan asset script",
     "scan": "akashic scan asset",
@@ -26,13 +26,13 @@
     "@akashic/akashic-cli-export-html": "^1.4.3",
     "@akashic/akashic-cli-export-zip": "^0.9.1",
     "@akashic/akashic-cli-scan": "^0.17.7",
-    "@akashic/akashic-engine": "^3.18.3",
-    "@akashic/akashic-sandbox": "^0.28.23",
+    "@akashic/akashic-engine": "^3.20.1",
+    "@akashic/akashic-sandbox": "^0.28.26",
     "@akashic/headless-akashic": "^4.6.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
     "akashic-sac": "file:../akashic-sac/akashic-sac-0.2.3.tgz",
     "eslint": "^8.56.0",
     "rimraf": "^6.0.1",
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.3"
   }
 }
