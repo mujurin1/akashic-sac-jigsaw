@@ -107,6 +107,7 @@ export const Piece = {
     piece.tag.fited = true;
     delete piece.tag.holdPlayerId;
 
+    piece.opacity = Piece.opacity.default;
     const pos = calcAnswerXY(piece.tag.index, gameState);
     piece.moveTo(pos.x, pos.y);
     piece.modified();

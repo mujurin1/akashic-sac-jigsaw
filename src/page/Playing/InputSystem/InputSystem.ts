@@ -126,15 +126,16 @@ export function inputSystemControl(state: PlayingState): InputSystemControl {
       return false;
     }
 
+    let point: g.CommonOffset;
     if (x == null || y == null) {
-      client.sendEvent(new ReleasePiece(holdState.piece.tag.index));
+      point = { x: holdState.piece.x, y: holdState.piece.y };
     } else {
       const _point = state.toPieceArea(x, y);
-      const point = { x: _point.x + holdState.offset.x, y: _point.y + holdState.offset.y };
+      point = { x: _point.x + holdState.offset.x, y: _point.y + holdState.offset.y };
       holdState.piece.moveTo(point.x, point.y);
       holdState.piece.modified();
-      client.sendEvent(new ReleasePiece(holdState.piece.tag.index, point));
     }
+    client.sendEvent(new ReleasePiece(holdState.piece.tag.index, point));
 
     state.holdState = undefined;
     return true;
@@ -189,13 +190,14 @@ export interface InputSystemState {
    */
   move: (x: number, y: number) => boolean;
   /**
-   * ピースを放す
+   * ピースを放す\
+   * x,yを指定しない場合は今のピースの座標で離す
    * @param x 絶対移動量
    * @param y 絶対移動量
    * @returns ピースを放したか (持っている状態から持っていない状態に遷移したか)
    */
-  release(): boolean;
   release(x: number, y: number): boolean;
+  release(): boolean;
   /**
    * 持っているピースがくっつく/ハマるかを判定する (離さない)\
    * TODO: 判定が`true`ならくっつけるのか?

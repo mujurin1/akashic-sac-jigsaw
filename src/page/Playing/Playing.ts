@@ -81,10 +81,8 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
       const piece = state.pieces[pieceIndex];
       Piece.release(piece);
 
-      if (point != null) {
-        piece.moveTo(point.x, point.y);
-        piece.modified();
-      }
+      piece.moveTo(point.x, point.y);
+      piece.modified();
     }),
     ForceReleasePiece.receive(client, ({ pieceIndex }) => {
       const piece = state.pieces[pieceIndex];

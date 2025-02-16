@@ -15,7 +15,7 @@ export class MovePiece extends SacEvent {
 export class ReleasePiece extends SacEvent {
   constructor(
     readonly pieceIndex: number,
-    readonly point?: g.CommonOffset,
+    readonly point: g.CommonOffset,
   ) { super(); }
 }
 /** ピースを強制的に放す */
@@ -183,7 +183,7 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
       if (!playerManager.has(playerId)) return;
       if (holders.get(playerId)?.pieceIndex !== pieceIndex) return;
 
-      if (point != null) piece.pos = point;
+      piece.pos = point;
       state.deleteHolder(playerId);
       if (!checkFitAndConnect(data.pieceIndex)) {
         server.broadcast(data);
