@@ -71,8 +71,8 @@ export const Piece = {
         const px = piece.x + childPiece.x + childPiece.width;
         const py = piece.y + childPiece.y + childPiece.height;
         if (
-          childPiece.x <= x && x <= px &&
-          childPiece.y <= y && y <= py
+          piece.x + childPiece.x <= x && x <= px &&
+          piece.y + childPiece.y <= y && y <= py
         ) return childPiece;
       }
     }
