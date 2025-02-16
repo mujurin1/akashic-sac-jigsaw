@@ -1,10 +1,12 @@
+import { SacEvent } from "akashic-sac";
+import { GameStart } from "../../event/TitleEvent";
 
 /**
  * プレビューサイズ基準でのピースを動かせる領域のサイズ\
  * TODO: 実際には縦横比をある程度平均化したほうが良い
  */
-export const MOVE_PIACE_SIZE = 4;
-export const PREVIEW_ADJUST = (MOVE_PIACE_SIZE - 3) / 2;
+export const MOVE_PIACE_AREA_SIZE = 4;
+export const PREVIEW_ADJUST = (MOVE_PIACE_AREA_SIZE - 3) / 2;
 
 /**
  * ピースを並べる\
@@ -75,4 +77,51 @@ export function lineupPiece(
   // }
 
   return positions;
+}
+
+export interface GameState extends Omit<GameStart, keyof SacEvent> {
+  /** ピースがハマるボード */
+  board: g.CommonArea;
+  /** ピースが移動可能なエリアの制限 */
+  movePieceArea: g.CommonOffset;
+}
+
+export function createGameState(gameStart: GameStart): GameState {
+  const boardSize = {
+    width: gameStart.pieceSize.width * gameStart.pieceWH.width,
+    height: gameStart.pieceSize.height * gameStart.pieceWH.height,
+  };
+  return {
+    ...gameStart,
+    board: {
+      x: boardSize.width * (1 + PREVIEW_ADJUST),
+      y: boardSize.height * (1 + PREVIEW_ADJUST),
+      ...boardSize,
+    },
+    movePieceArea: {
+      x: boardSize.width * MOVE_PIACE_AREA_SIZE,
+      y: boardSize.height * MOVE_PIACE_AREA_SIZE,
+    }
+  };
+}
+
+/**
+ * ピースの正解座標を計算する\
+ * プレイエリア全体からの座標
+ */
+export function calcAnswerXY(index: number, gameState: GameState): g.CommonOffset {
+  const pos = calcIndexXY(index, gameState);
+  return {
+    x: gameState.board.x + gameState.pieceSize.width * pos.x,
+    y: gameState.board.y + gameState.pieceSize.height * pos.y,
+  };
+}
+
+/**
+ * インデックスからマス目上の位置を計算する
+ */
+export function calcIndexXY(index: number, gameState: GameState): g.CommonOffset {
+  const x = index % gameState.pieceWH.width;
+  const y = Math.floor(index / gameState.pieceWH.width);
+  return { x, y };
 }

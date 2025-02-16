@@ -1,5 +1,5 @@
 import { SacEvent, SacServer } from "akashic-sac";
-import { lineupPiece } from "../page/Playing/lineupPiece";
+import { calcAnswerXY, calcIndexXY, createGameState, GameState, lineupPiece } from "../page/Playing/pieceUtil";
 import { PlayerManager } from "../util/PlayerManager";
 import { GameStart } from "./TitleEvent";
 
@@ -40,13 +40,13 @@ export class ConnectPiece extends SacEvent {
 /** ピースが盤面にハマった */
 export class FitPiece extends SacEvent {
   constructor(
-    // TODO
+    readonly pieceIndex: number,
   ) { super(); }
 }
 
 
 interface PlayingState {
-  gameStart: GameStart;
+  gameState: GameState;
   clearTime: number | undefined;
 
   /** `{ [playerId]: VALUE }` */
@@ -94,41 +94,41 @@ const DirR = {
 const PIECE_RELEASE_MS = 10_0000;
 const PIECE_RELEASE_COUNT = 3;
 let server: SacServer;
-let gameStart: GameStart;
+let gameState: GameState;
 let state: PlayingState;
-/** ピースのハマる誤差 */
+/** ピースのくっつく・ハマる誤差 */
 let fitMargin: number;
 /** その方向へのピースの距離 */
 let dirOffset: Record<Dir, g.CommonOffset>;
 
 function initialize(_server: SacServer, _gameStart: GameStart) {
   server = _server;
-  gameStart = _gameStart;
+  gameState = createGameState(_gameStart);
   const boardSize = {
-    width: gameStart.pieceSize.width * gameStart.pieceWH.width,
-    height: gameStart.pieceSize.height * gameStart.pieceWH.height,
+    width: gameState.pieceSize.width * gameState.pieceWH.width,
+    height: gameState.pieceSize.height * gameState.pieceWH.height,
   };
   state = {
-    gameStart,
+    gameState,
     clearTime: undefined,
 
     holders: new Map(),
     setHolder,
     deleteHolder,
     pieces: lineupPiece(
-      gameStart.seed,
-      gameStart.pieceWH.width * gameStart.pieceWH.height,
-      gameStart.pieceSize,
+      gameState.seed,
+      gameState.pieceWH.width * gameState.pieceWH.height,
+      gameState.pieceSize,
       boardSize,
     )
       .map((pos, index) => ({ index, pos, fited: false })),
   };
-  fitMargin = (gameStart.pieceSize.width + gameStart.pieceSize.height) / 8;
+  fitMargin = (gameState.pieceSize.width + gameState.pieceSize.height) / 8;
   dirOffset = {
-    top: { x: 0, y: -gameStart.pieceSize.height },
-    bottom: { x: 0, y: gameStart.pieceSize.height },
-    left: { x: -gameStart.pieceSize.width, y: 0 },
-    right: { x: gameStart.pieceSize.width, y: 0 },
+    top: { x: 0, y: -gameState.pieceSize.height },
+    bottom: { x: 0, y: gameState.pieceSize.height },
+    left: { x: -gameState.pieceSize.width, y: 0 },
+    right: { x: gameState.pieceSize.width, y: 0 },
   };
 
 
@@ -224,17 +224,19 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
 function checkFitAndConnect(pieceIndex: number): boolean {
   const piece = state.pieces[pieceIndex];
 
-  if (checkFitPiece(piece)) {
-    server.broadcast(new FitPiece());
-    return true;
-  }
-
+  // ピースがくっつくかチェックする
   const pair = checkConnectPieceAll(piece);
   if (pair != null) {
     const [parent, child] = toParentChild(piece, pair);
     normalizeConnectPieceAll(parent, child);
 
     server.broadcast(new ConnectPiece(parent.index, child.index));
+    return true;
+  }
+
+  // ピースがハマるかチェックする
+  if (checkFitPiece(piece)) {
+    server.broadcast(new FitPiece(piece.index));
     return true;
   }
 
@@ -245,7 +247,16 @@ function checkFitAndConnect(pieceIndex: number): boolean {
  * ピースがハマるかチェックする
  */
 function checkFitPiece(piece: PieceState): boolean {
-  return false;
+  piece = piece.parentId == null ? piece : state.pieces[piece.parentId];
+
+  const pos = calcAnswerXY(piece.index, gameState);
+  const x = piece.pos.x - pos.x;
+  const y = piece.pos.y - pos.y;
+
+  return (
+    -fitMargin <= x && x <= fitMargin &&
+    -fitMargin <= y && y <= fitMargin
+  );
 }
 
 
@@ -286,7 +297,7 @@ function checkConnectPiece(piece: PieceState): PieceState | undefined {
       pair.index === piece.parentId ||
       pair.parentId != null && pair.parentId === piece.parentId
     ) continue;
-    if (checkOverlap(piece, pair, dir)) {
+    if (checkConnect(piece, pair, dir)) {
       if (pair.parentId == null) return pair;
       return state.pieces[pair.parentId];
     }
@@ -297,11 +308,11 @@ function checkConnectPiece(piece: PieceState): PieceState | undefined {
 
 
 /**
- * 2つのピースが許容範囲内で重なっているかチェックする
+ * 2つのピースが許容範囲内で接続されるかチェックする
  * @param dir Aから見たBの方向
  * @returns 
  */
-function checkOverlap(pieceA: PieceState, pieceB: PieceState, dir: Dir): boolean {
+function checkConnect(pieceA: PieceState, pieceB: PieceState, dir: Dir): boolean {
   const posA = sumPos(calcGroundPos(pieceA), dirOffset[dir]);
   const posB = calcGroundPos(pieceB);
   const x = posA.x - posB.x;
@@ -335,8 +346,8 @@ function normalizeConnectPiece(parent: PieceState, child: PieceState): void {
   child.children = undefined;
   const pos = calcRelativePosAtoB(parent.index, child.index);
   child.pos = {
-    x: pos.x * gameStart.pieceSize.width,
-    y: pos.y * gameStart.pieceSize.height,
+    x: pos.x * gameState.pieceSize.width,
+    y: pos.y * gameState.pieceSize.height,
   };
 }
 
@@ -357,7 +368,7 @@ function calcGroundPos(piece: PieceState): g.CommonOffset {
  * ピースIDとくっつくピースのIDを取得する
  */
 function calcConnectPieceIndexes({ index }: PieceState): Record<Dir, number | undefined> {
-  const { width, height } = gameStart.pieceWH;
+  const { width, height } = gameState.pieceWH;
   const row = Math.floor(index / width);
   const col = index % width;
   const record: Record<Dir, number | undefined> = {
@@ -387,22 +398,13 @@ function toParentChild(a: PieceState, b: PieceState): [PieceState, PieceState] {
  * 2つのピースIDからマス目上の距離を計算する
  */
 function calcRelativePosAtoB(a: number, b: number): g.CommonOffset {
-  const coordA = calcIndexXY(a);
-  const coordB = calcIndexXY(b);
+  const coordA = calcIndexXY(a, gameState);
+  const coordB = calcIndexXY(b, gameState);
 
   return {
     x: coordB.x - coordA.x,
     y: coordB.y - coordA.y,
   };
-}
-
-/**
- * インデックスからマス目上の位置を計算する
- */
-function calcIndexXY(index: number): { x: number, y: number; } {
-  const x = index % gameStart.pieceWH.width;
-  const y = Math.floor(index / gameStart.pieceWH.width);
-  return { x, y };
 }
 
 function sumPos(a: g.CommonOffset, b: g.CommonOffset): g.CommonOffset {

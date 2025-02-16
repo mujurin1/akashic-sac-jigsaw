@@ -8,11 +8,11 @@ import { PreviewInfo } from "../../util/readAssets";
 import { sendJoin } from "../share";
 import { InputSystemControl, inputSystemControl } from "./InputSystem/InputSystem";
 import { Piece } from "./Piece";
-import { lineupPiece, MOVE_PIACE_SIZE, PREVIEW_ADJUST } from "./lineupPiece";
+import { createGameState, GameState, lineupPiece } from "./pieceUtil";
 
 export interface PlayingState {
   readonly client: SacClient;
-  readonly gameStart: GameStart;
+  readonly gameState: GameState;
   readonly layer: {
     readonly bg: g.FilledRect;
     // readonly playAreaCamera: CamerableE;
@@ -58,7 +58,8 @@ export interface PlayingState {
 
 export async function Playing(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]) {
   const unlockEvent = client.lockEvent();
-  const state = await createPlayingState(client, gameStart, previewsInfo);
+  const gameState = createGameState(gameStart);
+  const state = await createPlayingState(client, gameState, previewsInfo);
 
   // TODO: client.removeEventSets(eventKeys);
   const eventKeys = [
@@ -89,9 +90,9 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
       const piece = state.pieces[pieceIndex];
       Piece.release(piece);
     }),
-    FitPiece.receive(client, ({ playerId }) => {
-      // const piece = state.pieces[];
-      // Piece.fit(piece);
+    FitPiece.receive(client, ({ playerId, pieceIndex }) => {
+      const piece = state.pieces[pieceIndex];
+      Piece.fit(piece, gameState);
     }),
     ConnectPiece.receive(client, ({ playerId, parentIndex, childIndex }) => {
       const parent = state.pieces[parentIndex];
@@ -109,18 +110,15 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
 }
 
 
-async function createPlayingState(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]): Promise<PlayingState> {
+async function createPlayingState(client: SacClient, gameState: GameState, previewsInfo: PreviewInfo[]): Promise<PlayingState> {
   const { scene, clientDI } = client.env;
   const playerManager = clientDI.get(PlayerManager);
 
-  const piecesResult = await createPieces({
+  const piecesResult = await createPieces(
     scene,
-    randomSeed: gameStart.seed,
-    imageSrc: previewsInfo[gameStart.puzzleIndex].imageAsset,
-    origine: gameStart.origin,
-    pieceSize: gameStart.pieceSize,
-    pieceWH: gameStart.pieceWH,
-  });
+    gameState,
+    previewsInfo[gameState.puzzleIndex].imageAsset,
+  );
   const { preview } = piecesResult;
 
   const bg = new g.FilledRect({
@@ -134,16 +132,16 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
   const movePieceArea = new g.FilledRect({
     scene, parent: playAreaCamera,
     cssColor: "#f008",
-    width: preview.width * MOVE_PIACE_SIZE,
-    height: preview.height * MOVE_PIACE_SIZE,
+    width: gameState.movePieceArea.x,
+    height: gameState.movePieceArea.y,
   });
 
   const board = new g.FilledRect({
     scene, parent: playAreaCamera,
     cssColor: "#ffffff50",
     width: preview.width, height: preview.height,
-    x: preview.width * (1 + PREVIEW_ADJUST),
-    y: preview.height * (1 + PREVIEW_ADJUST),
+    x: gameState.board.x,
+    y: gameState.board.y,
   });
   const boardPreview = new g.Sprite({
     scene, parent: board,
@@ -162,7 +160,7 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
   const state: PlayingState = {
     pieces: piecesResult.pieces,
     client,
-    gameStart,
+    gameState,
     layer: {
       bg,
       playArea: {
@@ -206,9 +204,9 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
 }
 
 function createUi(state: PlayingState) {
-  const { gameStart, pieces, layer: { playArea: { camerable, board } } } = state;
+  const { gameState, pieces, layer: { playArea: { camerable, board } } } = state;
 
-  const positions = lineupPiece(gameStart.seed, pieces.length, gameStart.pieceSize, board);
+  const positions = lineupPiece(gameState.seed, pieces.length, gameState.pieceSize, board);
   for (let i = 0; i < pieces.length; i++) {
     const piece = pieces[i];
     const position = positions[i];

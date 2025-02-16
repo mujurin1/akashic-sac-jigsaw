@@ -1,5 +1,6 @@
 import { GameStart } from "../../event/TitleEvent";
 import { CustomSprite } from "../../util/CustomSprite";
+import { calcAnswerXY, GameState } from "./pieceUtil";
 
 export interface Piece extends CustomSprite {
   tag: PieceTag;
@@ -91,7 +92,6 @@ export const Piece = {
    */
   pieceParentSetting(pieceParent: g.E) {
     Piece._pieceParent = pieceParent;
-    // pieceParent.onPointMove.add
   },
   hold(piece: Piece, playerId: string) {
     piece.tag.holdPlayerId = playerId;
@@ -103,11 +103,13 @@ export const Piece = {
     piece.opacity = Piece.opacity.default;
     piece.modified();
   },
-  fit(piece: Piece, gameStart: GameStart) {
+  fit(piece: Piece, gameState: GameState) {
     piece.tag.fited = true;
     delete piece.tag.holdPlayerId;
 
-    // TODO: piece.moveTo fit position
+    const pos = calcAnswerXY(piece.tag.index, gameState);
+    piece.moveTo(pos.x, pos.y);
+    piece.modified();
   },
   connect(parent: Piece, child: Piece, gameStart: GameStart) {
     Piece.release(parent);

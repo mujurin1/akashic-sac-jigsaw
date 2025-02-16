@@ -350,6 +350,11 @@
 			"type": "script",
 			"path": "script/util/PieMenu.js",
 			"global": true
+		},
+		"pieceUtil": {
+			"type": "script",
+			"path": "script/page/Playing/pieceUtil.js",
+			"global": true
 		}
 	}
 }

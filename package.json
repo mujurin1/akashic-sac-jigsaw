@@ -5,7 +5,7 @@
   "description": "",
   "scripts": {
     "nico": "npm run build && akashic serve -s nicolive",
-    "watch": "node build-script.js",
+    "watch": "node watch-script.js",
     "usac": "akashic install ../akashic-sac/akashic-sac-0.2.3.tgz",
     "export": "npm run build:scan && akashic export zip -f -o ./game.zip --nicolive --minify",
     "build": "tsc",

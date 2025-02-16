@@ -1,8 +1,9 @@
 import { imageDataUtil } from "akashic-sac";
 import { Piece } from "../page/Playing/Piece";
+import { GameState } from "../page/Playing/pieceUtil";
 import { CustomSprite } from "./CustomSprite";
 
-export interface CreatePiecesParam {
+interface CreatePiecesParam {
   scene: g.Scene;
 
   /** 使用する乱数のシード値 */
@@ -11,7 +12,7 @@ export interface CreatePiecesParam {
   /** 切り抜く画像 */
   imageSrc: g.ImageAsset | g.Surface;
   /** 切り抜く原点（左上） */
-  origine: g.CommonOffset;
+  origin: g.CommonOffset;
 
   /** ピースのサイズ */
   pieceSize: g.CommonSize;
@@ -52,31 +53,31 @@ function wakuReverse(w: WakuType) {
 /**
  * ピースを生成する\
  * サーバー環境で呼び出してはダメ
- * @param param 
- * @returns 
  */
-export async function createPieces(param: CreatePiecesParam): Promise<CreatePiecesResult> {
-  const { scene } = param;
-
-  const margineW = param.pieceSize.width * 0.25;
-  const margineH = param.pieceSize.height * 0.25;
-  const wakuW = param.pieceSize.width + margineW * 2;
-  const wakuH = param.pieceSize.height + margineH * 2;
-  const boardW = param.pieceSize.width * param.pieceWH.width;
-  const boardH = param.pieceSize.height * param.pieceWH.height;
+export async function createPieces(
+  scene: g.Scene,
+  gameState: GameState,
+  imageSrc: g.ImageAsset | g.Surface,
+): Promise<CreatePiecesResult> {
+  const margineW = gameState.pieceSize.width * 0.25;
+  const margineH = gameState.pieceSize.height * 0.25;
+  const wakuW = gameState.pieceSize.width + margineW * 2;
+  const wakuH = gameState.pieceSize.height + margineH * 2;
+  const boardW = gameState.board.width;
+  const boardH = gameState.board.height;
 
   const preview = new g.Sprite({
     scene,
-    src: param.imageSrc,
-    srcX: param.origine.x,
-    srcY: param.origine.y,
+    src: imageSrc,
+    srcX: gameState.origin.x,
+    srcY: gameState.origin.y,
     width: boardW, height: boardH,
   });
 
   const [dekoImgData, bokoImgData, lineImgData] = await Promise.all([
     imageDataUtil.fromSvgText(pieceDeko, wakuW, wakuH),
     imageDataUtil.fromSvgText(pieceBoko, wakuW, wakuH),
-    imageDataUtil.fromSvgText(pieceLine, param.pieceSize.width, param.pieceSize.height),
+    imageDataUtil.fromSvgText(pieceLine, gameState.pieceSize.width, gameState.pieceSize.height),
     // TODO: ピースの縦横比が1:1でない場合は更に倍の通り作る必要がある
     // imageDataUtil.fromSvgText(pieceDeko, wakuH, wakuW),
     // imageDataUtil.fromSvgText(pieceBoko, wakuH, wakuW),
@@ -88,25 +89,25 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
     X: createWaku("X"),
   } as const;
 
-  const tmpE = new g.E({ scene, ...param.pieceSize });
+  const tmpE = new g.E({ scene, ...gameState.pieceSize });
   tmpE.append(preview);
   const drawOffset: g.CommonRect = { left: margineW, top: margineH, right: margineW, bottom: margineH };
-  const random = new g.Xorshift(param.randomSeed);
+  const random = new g.Xorshift(gameState.seed);
 
   // ピースの凸凹を作る (左/上から見たときに凸か凹か)
   const wOXs: WakuType[][] = [];
   const hOXs: WakuType[][] = [];
 
-  for (let a = 0; a < param.pieceWH.height; a++) {
+  for (let a = 0; a < gameState.pieceWH.height; a++) {
     const ary: WakuType[] = ["_"];
-    for (let b = 0; b < param.pieceWH.width - 1; b++)
+    for (let b = 0; b < gameState.pieceWH.width - 1; b++)
       ary.push(randomBool(random) ? "O" : "X");
     ary.push("_");
     wOXs.push(ary);
   }
-  for (let a = 0; a < param.pieceWH.width; a++) {
+  for (let a = 0; a < gameState.pieceWH.width; a++) {
     const ary: WakuType[] = ["_"];
-    for (let b = 0; b < param.pieceWH.height - 1; b++)
+    for (let b = 0; b < gameState.pieceWH.height - 1; b++)
       ary.push(randomBool(random) ? "O" : "X");
     ary.push("_");
     hOXs.push(ary);
@@ -115,8 +116,8 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
   // ピースを作る
   const pieces: Piece[] = [];
 
-  for (let h = 0; h < param.pieceWH.height; h++) {
-    for (let w = 0; w < param.pieceWH.width; w++) {
+  for (let h = 0; h < gameState.pieceWH.height; h++) {
+    for (let w = 0; w < gameState.pieceWH.width; w++) {
       const p = stamp(
         w, h,
         wakuReverse(wOXs[h][w]),
@@ -124,7 +125,7 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
         wOXs[h][w + 1],
         hOXs[w][h + 1],
       );
-      Piece.setTag(p, h * param.pieceWH.width + w);
+      Piece.setTag(p, h * gameState.pieceWH.width + w);
       pieces.push(p);
     }
   }
@@ -136,29 +137,29 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
   };
 
   // TODO: ここの imageDataUtil.toSprite を無くす (canvas で生成する)
-  for (let w = 0; w < param.pieceWH.width; w++) {
-    for (let h = 0; h < param.pieceWH.height; h++) {
+  for (let w = 0; w < gameState.pieceWH.width; w++) {
+    for (let h = 0; h < gameState.pieceWH.height; h++) {
       // 右側
       const lineW = wOXs[h][w + 1];
       if (lineW !== "_") {
-        lineParam.x = w * param.pieceSize.width + margineW;
-        lineParam.y = h * param.pieceSize.height;
+        lineParam.x = w * gameState.pieceSize.width + margineW;
+        lineParam.y = h * gameState.pieceSize.height;
         lineParam.angle = 90;
         if (lineW === "X") {
           lineParam.angle += 180;
-          lineParam.x += param.pieceSize.width - margineW * 2;
+          lineParam.x += gameState.pieceSize.width - margineW * 2;
         }
         imageDataUtil.toSprite(lineImgData, lineParam);
       }
       // 下側
       const lineH = hOXs[w][h + 1];
       if (lineH !== "_") {
-        lineParam.x = w * param.pieceSize.width;
-        lineParam.y = h * param.pieceSize.height + margineH;
+        lineParam.x = w * gameState.pieceSize.width;
+        lineParam.y = h * gameState.pieceSize.height + margineH;
         lineParam.angle = 180;
         if (lineH === "X") {
           lineParam.angle += 180;
-          lineParam.y += param.pieceSize.height - margineH * 2;
+          lineParam.y += gameState.pieceSize.height - margineH * 2;
         }
         imageDataUtil.toSprite(lineImgData, lineParam);
       }
@@ -184,8 +185,8 @@ export async function createPieces(param: CreatePiecesParam): Promise<CreatePiec
    * @param wakuTypes [左,上,右,下]
    */
   function stamp(w: number, h: number, ...wakuTypes: [WakuType, WakuType, WakuType, WakuType]): Piece {
-    preview.x = margineW - param.pieceSize.width * w;
-    preview.y = margineH - param.pieceSize.height * h;
+    preview.x = margineW - gameState.pieceSize.width * w;
+    preview.y = margineH - gameState.pieceSize.height * h;
     // preview.modified();  // 無くても良いみたい
 
     const wakus: g.Sprite[] = [];
