@@ -3,32 +3,9 @@ import { Piece } from "../page/Playing/Piece";
 import { GameState } from "../page/Playing/pieceUtil";
 import { CustomSprite } from "./CustomSprite";
 
-interface CreatePiecesParam {
-  scene: g.Scene;
-
-  /** 使用する乱数のシード値 */
-  randomSeed: number;
-
-  /** 切り抜く画像 */
-  imageSrc: g.ImageAsset | g.Surface;
-  /** 切り抜く原点（左上） */
-  origin: g.CommonOffset;
-
-  /** ピースのサイズ */
-  pieceSize: g.CommonSize;
-  /** ピースの縦横枚数 */
-  pieceWH: g.CommonSize;
-}
-
-export interface CreatePiecesResult {
-  readonly preview: g.Sprite;
-  readonly frame: g.Sprite;
-  readonly pieces: Piece[];
-}
-
 /**
  * ピース枠の仕様
- * ・300x300 px 上下左右50px が他のピースの範囲（出っ張る部分）
+ * * 300x300 px 上下左右50px が他のピースの範囲（出っ張る部分）
  */
 const pieceDeko = `
 <svg width="300" height="300" version="1.1" xmlns="http://www.w3.org/2000/svg">
@@ -46,8 +23,12 @@ const pieceLine = `
 
 // O:凸 X:凹 _:壁
 type WakuType = "_" | "O" | "X";
-function wakuReverse(w: WakuType) {
-  return w === "O" ? "X" : w === "X" ? "O" : "_";
+const WakuReverse = { O: "X", X: "O", _: "_" } as const;
+
+export interface CreatePiecesResult {
+  readonly preview: g.Sprite;
+  readonly frame: g.Sprite;
+  readonly pieces: Piece[];
 }
 
 /**
@@ -120,8 +101,8 @@ export async function createPieces(
     for (let w = 0; w < gameState.pieceWH.width; w++) {
       const p = stamp(
         w, h,
-        wakuReverse(wOXs[h][w]),
-        wakuReverse(hOXs[w][h]),
+        WakuReverse[wOXs[h][w]],
+        WakuReverse[hOXs[w][h]],
         wOXs[h][w + 1],
         hOXs[w][h + 1],
       );

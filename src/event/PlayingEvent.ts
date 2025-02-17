@@ -236,6 +236,7 @@ function checkFitAndConnect(pieceIndex: number): boolean {
 
   // ピースがハマるかチェックする
   if (checkFitPiece(piece)) {
+    piece.fited = true;
     server.broadcast(new FitPiece(piece.index));
     return true;
   }
