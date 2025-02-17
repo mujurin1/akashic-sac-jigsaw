@@ -40,7 +40,7 @@ const pieceBoko = `
 </svg>`;
 const pieceLine = `
 <svg width="200" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-<path d="M 0 50 L 75 50 A 29 29 0 1 1 125 50 L 200 50"
+<path d="M 0 50 L 75 50 A 31 31 0 1 0 125 50 L 200 50"
   stroke="red" stroke-width="12px" fill="transparent" stroke-linejoin="bevel" />
 </svg>`;
 
@@ -137,33 +137,38 @@ export async function createPieces(
   };
 
   // TODO: ここの imageDataUtil.toSprite を無くす (canvas で生成する)
+  let baseX = 0;
   for (let w = 0; w < gameState.pieceWH.width; w++) {
+    let baseY = 0;
     for (let h = 0; h < gameState.pieceWH.height; h++) {
       // 右側
       const lineW = wOXs[h][w + 1];
       if (lineW !== "_") {
-        lineParam.x = w * gameState.pieceSize.width + margineW;
-        lineParam.y = h * gameState.pieceSize.height;
-        lineParam.angle = 90;
+        lineParam.x = baseX + gameState.pieceSize.width - margineW;
+        lineParam.y = baseY;
+        lineParam.angle = 270;
         if (lineW === "X") {
-          lineParam.angle += 180;
-          lineParam.x += gameState.pieceSize.width - margineW * 2;
+          lineParam.x = baseX + margineW;
+          lineParam.angle = 90;
         }
         imageDataUtil.toSprite(lineImgData, lineParam);
       }
       // 下側
       const lineH = hOXs[w][h + 1];
       if (lineH !== "_") {
-        lineParam.x = w * gameState.pieceSize.width;
-        lineParam.y = h * gameState.pieceSize.height + margineH;
-        lineParam.angle = 180;
+        lineParam.x = baseX;
+        lineParam.y = baseY + gameState.pieceSize.height - margineH;
+        lineParam.angle = 0;
         if (lineH === "X") {
-          lineParam.angle += 180;
-          lineParam.y += gameState.pieceSize.height - margineH * 2;
+          lineParam.y = baseY + margineH;
+          lineParam.angle = 180;
         }
         imageDataUtil.toSprite(lineImgData, lineParam);
       }
+
+      baseY += gameState.pieceSize.height;
     }
+    baseX += gameState.pieceSize.width;
   }
 
   preview.moveTo(0, 0);
@@ -180,6 +185,7 @@ export async function createPieces(
   return { preview, pieces, frame };
 
   /**
+   * ピースを生成する
    * @param w 左からw個目のピース
    * @param h 上からh個目のピース
    * @param wakuTypes [左,上,右,下]
