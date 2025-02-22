@@ -159,7 +159,10 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
       if (!playerManager.has(playerId)) return;
       if (piece.holderId != null) return;
       const oldHold = holders.get(playerId);
-      if (oldHold != null) server.broadcast(new ForceReleasePiece(oldHold.pieceIndex));
+      if (oldHold != null) {
+        state.deleteHolder(playerId);
+        server.broadcast(new ForceReleasePiece(oldHold.pieceIndex));
+      }
 
       state.setHolder(playerId, piece);
 
