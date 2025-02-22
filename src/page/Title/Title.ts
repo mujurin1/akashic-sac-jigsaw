@@ -93,7 +93,7 @@ function createUi(state: TitleState) {
   });
 
   joinBtn.onPointDown.add(sendJoin);
-  const removePmKey = playerManager.onUpdate.add(({ id, realName }) => {
+  const removePmKey = playerManager.onUpdate.on(({ id, realName }) => {
     if (id === g.game.selfId) {
       if (realName) {
         joinBtn.destroy();
@@ -221,7 +221,7 @@ function createUi(state: TitleState) {
   const eventKeys: number[] = [
     GameStart.receive(client, data => {
       client.removeEventSets(eventKeys);
-      playerManager.onUpdate.remove(removePmKey);
+      playerManager.onUpdate.off(removePmKey);
 
       const children = [...scene.children];
       for (const child of children) {

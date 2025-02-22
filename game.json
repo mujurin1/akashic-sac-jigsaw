@@ -37,6 +37,7 @@
 		"node_modules/akashic-sac/lib/impl/CamerableE.js",
 		"node_modules/akashic-sac/lib/impl/CanvasDrawer.js",
 		"node_modules/akashic-sac/lib/impl/DIContainer.js",
+		"node_modules/akashic-sac/lib/impl/EventTrigger.js",
 		"node_modules/akashic-sac/lib/impl/IgnoreCameraE.js",
 		"node_modules/akashic-sac/lib/sac/AkashicEnigne.js",
 		"node_modules/akashic-sac/lib/sac/Environment.js",

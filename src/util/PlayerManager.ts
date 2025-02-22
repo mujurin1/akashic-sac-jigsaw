@@ -1,4 +1,4 @@
-import { Trigger } from "akashic-sac";
+import { EventTrigger } from "akashic-sac";
 
 export interface Player {
   id: string;
@@ -8,8 +8,8 @@ export interface Player {
 }
 
 export class PlayerManager {
-  private readonly _onUpdate = new Trigger<[Player]>();
-  public readonly onUpdate = this._onUpdate.asSetOnlyTrigger;
+  private readonly _onUpdate = new EventTrigger<[Player]>();
+  public readonly onUpdate = this._onUpdate.asSetOnly;
 
   readonly players = new Map<string, Player>();
 
