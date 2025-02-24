@@ -1,5 +1,5 @@
 import { SacEvent, SacServer } from "akashic-sac";
-import { calcAnswerXY, calcIndexXY, createGameState, GameState, lineupPiece } from "../page/Playing/pieceUtil";
+import { calcAnswerXY, calcIndexXY, createGameState, GameState } from "../page/Playing/pieceUtil";
 import { PlayerManager } from "../util/PlayerManager";
 import { GameStart } from "./TitleEvent";
 
@@ -104,10 +104,7 @@ let dirOffset: Record<Dir, g.CommonOffset>;
 function initialize(_server: SacServer, _gameStart: GameStart) {
   server = _server;
   gameState = createGameState(_gameStart);
-  const boardSize = {
-    width: gameState.pieceSize.width * gameState.pieceWH.width,
-    height: gameState.pieceSize.height * gameState.pieceWH.height,
-  };
+
   state = {
     gameState,
     clearTime: undefined,
@@ -115,13 +112,7 @@ function initialize(_server: SacServer, _gameStart: GameStart) {
     holders: new Map(),
     setHolder,
     deleteHolder,
-    pieces: lineupPiece(
-      gameState.seed,
-      gameState.pieceWH.width * gameState.pieceWH.height,
-      gameState.pieceSize,
-      boardSize,
-    )
-      .map((pos, index) => ({ index, pos, fited: false })),
+    pieces: gameState.piecePositions.map((pos, index) => ({ index, pos, fited: false })),
   };
   fitMargin = (gameState.pieceSize.width + gameState.pieceSize.height) / 8;
   dirOffset = {

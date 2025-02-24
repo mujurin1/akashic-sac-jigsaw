@@ -5,35 +5,76 @@ import { GameStart } from "../../event/TitleEvent";
  * プレビューサイズ基準でのピースを動かせる領域のサイズ\
  * TODO: 実際には縦横比をある程度平均化したほうが良い
  */
-export const MOVE_PIACE_AREA_SIZE = 4;
-export const PREVIEW_ADJUST = (MOVE_PIACE_AREA_SIZE - 3) / 2;
+const MOVE_PIACE_AREA_SIZE = 4;
+/**
+ * ピースを並べる時の大きさに対するマージン比\
+ * ピースの凸が0.25なので余裕を持って0.3
+ */
+const PIECE_MARGIN_PER = 0.3;
+
+export interface GameState extends Omit<GameStart, keyof SacEvent> {
+  /** ピースがハマるボード */
+  readonly board: g.CommonArea;
+  /** ピースが移動可能なエリアの制限 */
+  readonly movePieceArea: g.CommonSize;
+  readonly piecePositions: g.CommonOffset[];
+}
+
+export function createGameState(gameStart: GameStart): GameState {
+  const boardSize = {
+    width: gameStart.pieceSize.width * gameStart.pieceWH.width,
+    height: gameStart.pieceSize.height * gameStart.pieceWH.height,
+  };
+  const [piecePositions, lineup] = lineupPiece(
+    gameStart.seed,
+    gameStart.pieceWH.width * gameStart.pieceWH.height,
+    gameStart.pieceSize,
+    boardSize,
+  );
+  // TODO: lineup 変数を使って適切なボードサイズを計算する
+  const movePieceArea: g.CommonSize = {
+    width: boardSize.width * MOVE_PIACE_AREA_SIZE,
+    height: boardSize.height * MOVE_PIACE_AREA_SIZE,
+  };
+  return {
+    ...gameStart,
+    board: {
+      ...boardSize,
+      // ピースの移動可能な領域は 
+      x: (movePieceArea.width - boardSize.width) / 2,
+      y: (movePieceArea.height - boardSize.height) / 2,
+    },
+    movePieceArea,
+    piecePositions,
+  };
+}
 
 /**
- * ピースを並べる\
- * この関数はクライアントとサーバーで共有している
+ * ピースを並べる
  * @param seed 
  * @param pieceCount 
  * @param pieceSize 
  * @param boardSize 
- * @returns 
+ * @returns [ ピース座標の配列, ピースの行列数 ]
  */
-export function lineupPiece(
+function lineupPiece(
   seed: number,
   pieceCount: number,
   pieceSize: g.CommonSize,
   boardSize: g.CommonSize,
-): g.CommonOffset[] {
-  // 0.3 はピース枠の凸のサイズが0.25なので重ならないようにするマージン分
-  const margine = { w: pieceSize.width * 0.3, h: pieceSize.height * 0.3 };
-  const size = { w: pieceSize.width + margine.w * 2, h: pieceSize.height + margine.h * 2 };
-  const pieceDivide = { w: boardSize.width / size.w, h: boardSize.height / size.h };
-  const pieceCnt = { w: Math.floor(pieceDivide.w), h: Math.floor(pieceDivide.h) };
+): readonly [piecePositions: g.CommonOffset[], lineup: g.CommonSize] {
+  // ピースのマージンpx
+  const pieceMargin = { w: pieceSize.width * PIECE_MARGIN_PER, h: pieceSize.height * PIECE_MARGIN_PER };
+  // ピース１つが使う領域px
+  const pieceArea = { w: pieceSize.width + pieceMargin.w * 2, h: pieceSize.height + pieceMargin.h * 2 };
+  const pieceDivide = { w: Math.ceil(boardSize.width / pieceArea.w), h: Math.ceil(boardSize.height / pieceArea.h) };
 
-  const lineup = { w: pieceCnt.w + 2, h: pieceCnt.h + 2 };
+  const lineup = { w: pieceDivide.w + 1, h: pieceDivide.h + 1 };
   const nextPos = {
-    x: (boardSize.width * PREVIEW_ADJUST) + boardSize.width - size.w * ((1 - (pieceDivide.w - pieceCnt.w)) / 2) + margine.w,
-    y: (boardSize.height * PREVIEW_ADJUST) + boardSize.height - size.h * ((1 - (pieceDivide.h - pieceCnt.h)) / 2) + margine.h - size.h,
+    x: boardSize.width * 2 - (pieceArea.w * (pieceDivide.w) / 2) + pieceMargin.w,
+    y: boardSize.height * 2 - (pieceArea.h * (pieceDivide.h + 2) / 2) + pieceMargin.h,
   };
+
   let dir: "right" | "bottom" | "left" | "top" = "right";
   let count = { w: 0, h: 0 };
 
@@ -43,26 +84,27 @@ export function lineupPiece(
     positions.push({ ...nextPos });
 
     if (dir === "right") {
-      nextPos.x += size.w;
+      nextPos.x += pieceArea.w;
       count.w += 1;
       if (count.w === lineup.w - 1) {
         count.w += 1;
         dir = "bottom";
       }
     } else if (dir === "bottom") {
-      nextPos.y += size.h;
+      nextPos.y += pieceArea.h;
       count.h += 1;
       if (count.h === lineup.h) dir = "left";
     } else if (dir === "left") {
-      nextPos.x -= size.w;
+      nextPos.x -= pieceArea.w;
       count.w -= 1;
       if (count.w === 0) dir = "top";
     } else {
-      nextPos.y -= size.h;
+      nextPos.y -= pieceArea.h;
       count.h -= 1;
       if (count.h === -1) {
         dir = "right";
         count = { w: 0, h: 0 };
+        if (i >= pieceCount) break;
         lineup.w += 2;
         lineup.h += 2;
       }
@@ -76,34 +118,9 @@ export function lineupPiece(
   //   [positions[i], positions[j]] = [positions[j], positions[i]];
   // }
 
-  return positions;
+  return [positions, { width: lineup.w, height: lineup.h }];
 }
 
-export interface GameState extends Omit<GameStart, keyof SacEvent> {
-  /** ピースがハマるボード */
-  board: g.CommonArea;
-  /** ピースが移動可能なエリアの制限 */
-  movePieceArea: g.CommonOffset;
-}
-
-export function createGameState(gameStart: GameStart): GameState {
-  const boardSize = {
-    width: gameStart.pieceSize.width * gameStart.pieceWH.width,
-    height: gameStart.pieceSize.height * gameStart.pieceWH.height,
-  };
-  return {
-    ...gameStart,
-    board: {
-      x: boardSize.width * (1 + PREVIEW_ADJUST),
-      y: boardSize.height * (1 + PREVIEW_ADJUST),
-      ...boardSize,
-    },
-    movePieceArea: {
-      x: boardSize.width * MOVE_PIACE_AREA_SIZE,
-      y: boardSize.height * MOVE_PIACE_AREA_SIZE,
-    }
-  };
-}
 
 /**
  * ピースの正解座標を計算する\

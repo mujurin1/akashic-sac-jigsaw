@@ -8,7 +8,7 @@ import { PreviewInfo } from "../../util/readAssets";
 import { sendJoin } from "../share";
 import { InputSystemControl, inputSystemControl } from "./InputSystem/InputSystem";
 import { Piece } from "./Piece";
-import { createGameState, GameState, lineupPiece } from "./pieceUtil";
+import { createGameState, GameState } from "./pieceUtil";
 
 export interface PlayingState {
   readonly client: SacClient;
@@ -58,8 +58,7 @@ export interface PlayingState {
 
 export async function Playing(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]) {
   const unlockEvent = client.lockEvent();
-  const gameState = createGameState(gameStart);
-  const state = await createPlayingState(client, gameState, previewsInfo);
+  const state = await createPlayingState(client, gameStart, previewsInfo);
 
   // TODO: client.removeEventSets(eventKeys);
   const eventKeys = [
@@ -90,7 +89,7 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
     }),
     FitPiece.receive(client, ({ playerId, pieceIndex }) => {
       const piece = state.pieces[pieceIndex];
-      Piece.fit(piece, gameState);
+      Piece.fit(piece, state.gameState);
     }),
     ConnectPiece.receive(client, ({ playerId, parentIndex, childIndex }) => {
       const parent = state.pieces[parentIndex];
@@ -101,16 +100,15 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
     }),
   ];
 
-  createUi(state);
-
   // アンロックは一番最後
   unlockEvent();
 }
 
 
-async function createPlayingState(client: SacClient, gameState: GameState, previewsInfo: PreviewInfo[]): Promise<PlayingState> {
+async function createPlayingState(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]): Promise<PlayingState> {
   const { scene, clientDI } = client.env;
   const playerManager = clientDI.get(PlayerManager);
+  const gameState = createGameState(gameStart);
 
   const piecesResult = await createPieces(
     scene,
@@ -119,6 +117,7 @@ async function createPlayingState(client: SacClient, gameState: GameState, previ
   );
   const { preview } = piecesResult;
 
+  //#region Entity の作成
   const bg = new g.FilledRect({
     scene, parent: scene,
     cssColor: "#0087cc",
@@ -130,8 +129,8 @@ async function createPlayingState(client: SacClient, gameState: GameState, previ
   const movePieceArea = new g.FilledRect({
     scene, parent: playAreaCamera,
     cssColor: "#f008",
-    width: gameState.movePieceArea.x,
-    height: gameState.movePieceArea.y,
+    width: gameState.movePieceArea.width,
+    height: gameState.movePieceArea.height,
   });
 
   const board = new g.FilledRect({
@@ -150,7 +149,16 @@ async function createPlayingState(client: SacClient, gameState: GameState, previ
     opacity: 0.5,
   });
   board.append(piecesResult.frame);
+  //#endregion Entity の作成
 
+  // ピースを配置
+  for (let i = 0; i < piecesResult.pieces.length; i++) {
+    const piece = piecesResult.pieces[i];
+    const position = gameState.piecePositions[i];
+    playAreaCamera.append(piece);
+    piece.moveTo(position.x, position.y);
+    piece.modified();
+  }
 
   const CAMERABLE_W_HARF = playAreaCamera.width / 2;
   const CAMERABLE_H_HARF = playAreaCamera.height / 2;
@@ -198,22 +206,9 @@ async function createPlayingState(client: SacClient, gameState: GameState, previ
   Piece.pieceParentSetting(state.layer.playArea.camerable);
   state.pieceOperaterControl = inputSystemControl(state);
 
-  return state;
-}
-
-function createUi(state: PlayingState) {
-  const { gameState, pieces, layer: { playArea: { camerable, board } } } = state;
-
-  const positions = lineupPiece(gameState.seed, pieces.length, gameState.pieceSize, board);
-  for (let i = 0; i < pieces.length; i++) {
-    const piece = pieces[i];
-    const position = positions[i];
-    camerable.append(piece);
-    piece.moveTo(position.x, position.y);
-    piece.modified();
-  }
-
   const parts = createParts(state);
+
+  return state;
 }
 
 /**
