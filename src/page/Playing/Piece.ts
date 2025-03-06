@@ -10,7 +10,7 @@ export interface Piece extends CustomSprite {
 export interface PieceTag {
   type: "piece";
   index: number;
-  fited: boolean;
+  fitted: boolean;
   parent?: Piece;
   /** 自分以外のプレイヤーが持っているときだけフィールドが存在する */
   holdPlayerId?: string;
@@ -104,7 +104,7 @@ export const Piece = {
     piece.modified();
   },
   fit(piece: Piece, gameState: GameState) {
-    piece.tag.fited = true;
+    piece.tag.fitted = true;
     delete piece.tag.holdPlayerId;
 
     piece.opacity = Piece.opacity.default;
@@ -123,13 +123,13 @@ export const Piece = {
   canHold(piece: g.E): piece is Piece {
     return Piece.isPiece(piece) &&
       piece.opacity === Piece.opacity.default &&
-      !piece.tag.fited;
+      !piece.tag.fitted;
   },
   setTag(e: g.E, index: number) {
     e.tag = {
       type: "piece",
       index,
-      fited: false,
+      fitted: false,
     } satisfies PieceTag;
   },
 };
