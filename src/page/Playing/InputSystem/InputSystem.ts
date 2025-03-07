@@ -59,7 +59,7 @@ export function inputSystemControl(state: PlayingState): InputSystemControl {
       if (state.holdState?.piece?.tag.index !== pieceIndex) return;
 
       state.holdState = undefined;
-      state.pieceOperaterControl.current.forceReleace();
+      state.pieceOperatorControl.current.forceRelease();
     }),
   ];
 
@@ -160,7 +160,7 @@ export interface InputSystem {
   /**
    * 今持っているピースを強制的に放す
    */
-  forceReleace: () => void;
+  forceRelease: () => void;
 
   /**
    * 全てのイベントを解除して機能を停止する

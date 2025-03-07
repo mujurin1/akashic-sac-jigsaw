@@ -46,7 +46,7 @@ export interface PlayingState {
    */
   readonly getPieceFromScreenPx: (x: number, y: number) => { piece: Piece, offset: g.CommonOffset; } | undefined;
 
-  pieceOperaterControl: InputSystemControl;
+  pieceOperatorControl: InputSystemControl;
 
   holdState: {
     piece: Piece;
@@ -160,8 +160,8 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
     piece.modified();
   }
 
-  const CAMERABLE_W_HARF = playAreaCamera.width / 2;
-  const CAMERABLE_H_HARF = playAreaCamera.height / 2;
+  const CAMERABLE_W_HALF = playAreaCamera.width / 2;
+  const CAMERABLE_H_HALF = playAreaCamera.height / 2;
 
   const state: PlayingState = {
     pieces: piecesResult.pieces,
@@ -181,30 +181,30 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
 
     isJoined: () => playerManager.has(g.game.selfId),
     toPieceArea: (x, y) => ({
-      x: playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HARF),
-      y: playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HARF),
+      x: playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HALF),
+      y: playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HALF),
     }),
     getPieceFromScreenPx(x, y) {
       if (!state.isJoined()) return;
 
-      const playareaX = playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HARF);
-      const playareaY = playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HARF);
-      const piece = Piece.getParentOrSelf(Piece.getFromPoint(playareaX, playareaY));
+      const playAreaX = playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HALF);
+      const playAreaY = playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HALF);
+      const piece = Piece.getParentOrSelf(Piece.getFromPoint(playAreaX, playAreaY));
       if (piece == null || !Piece.canHold(piece)) return;
 
       return {
         piece,
-        offset: { x: piece.x - playareaX, y: piece.y - playareaY },
+        offset: { x: piece.x - playAreaX, y: piece.y - playAreaY },
       };
     },
 
-    pieceOperaterControl: null!,
+    pieceOperatorControl: null!,
     holdState: undefined,
     finishTime: undefined,
   };
 
   Piece.pieceParentSetting(state.layer.playArea.camerable);
-  state.pieceOperaterControl = inputSystemControl(state);
+  state.pieceOperatorControl = inputSystemControl(state);
 
   const parts = createParts(state);
 
@@ -221,11 +221,11 @@ function createParts(state: PlayingState) {
 
   /** 左上の仮UI */
   {
-    const zooomIn = new g.Label({
+    const zoomIn = new g.Label({
       scene, parent: ui, font, text: "In",
       x: 10, y: 10, touchable: true,
     });
-    const zooomOut = new g.Label({
+    const zoomOut = new g.Label({
       scene, parent: ui, font, text: "Out",
       x: 90, y: 10, touchable: true,
     });
@@ -237,16 +237,16 @@ function createParts(state: PlayingState) {
       scene, parent: ui, font, text: "変更",
       x: 330, y: 10, touchable: true,
     });
-    zooomIn.onPointDown.add(() => {
+    zoomIn.onPointDown.add(() => {
       camerable.scale(camerable.scaleX * 0.9);
       camerable.modified();
     });
-    zooomOut.onPointDown.add(() => {
+    zoomOut.onPointDown.add(() => {
       camerable.scale(camerable.scaleX * 1.1);
       camerable.modified();
     });
     join.onPointDown.add(sendJoin);
-    change.onPointDown.add(() => state.pieceOperaterControl.toggle());
+    change.onPointDown.add(() => state.pieceOperatorControl.toggle());
 
     const { board } = state.layer.playArea;
     camerable.moveTo(
@@ -274,7 +274,7 @@ function createParts(state: PlayingState) {
       width: infoPanel.width,
       x: 0, y: 10,
     }),
-    persent: new Label({
+    percent: new Label({
       scene, parent: infoPanel,
       font: textFont, text: "100%",
       textAlign: "right",

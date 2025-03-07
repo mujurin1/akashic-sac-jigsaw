@@ -12,7 +12,7 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
   const mobileUi = createUi(state);
 
   let enabled = false;
-  return { toggleFeature, forceReleace, destroy };
+  return { toggleFeature, forceRelease, destroy };
 
   function toggleFeature(enable: boolean) {
     if (enabled === enable) return;
@@ -25,7 +25,7 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
       mobileUi.hide();
     }
   }
-  function forceReleace() {
+  function forceRelease() {
     mobileUi.pad.cursor.cssColor = "red";
     mobileUi.pad.cursor.modified();
   }
@@ -124,7 +124,7 @@ function createUi(state: InputSystemState) {
     cursorSpeed: 17,
     hidden: true,
   });
-  pad.onMoveing.add(({ padDir, moved, cursorRest }) => {
+  pad.onMoving.add(({ padDir, moved, cursorRest }) => {
     if (pieMenu.entity.visible()) {
       pieMenu.target(padDir);
     } else {

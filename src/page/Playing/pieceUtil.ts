@@ -5,7 +5,7 @@ import { GameStart } from "../../event/TitleEvent";
  * プレビューサイズ基準でのピースを動かせる領域のサイズ\
  * TODO: 実際には縦横比をある程度平均化したほうが良い
  */
-const MOVE_PIACE_AREA_SIZE = 4;
+const MOVE_PIECE_AREA_SIZE = 4;
 /**
  * ピースを並べる時の大きさに対するマージン比\
  * ピースの凸が0.25なので余裕を持って0.3
@@ -33,8 +33,8 @@ export function createGameState(gameStart: GameStart): GameState {
   );
   // TODO: lineup 変数を使って適切なボードサイズを計算する
   const movePieceArea: g.CommonSize = {
-    width: boardSize.width * MOVE_PIACE_AREA_SIZE,
-    height: boardSize.height * MOVE_PIACE_AREA_SIZE,
+    width: boardSize.width * MOVE_PIECE_AREA_SIZE,
+    height: boardSize.height * MOVE_PIECE_AREA_SIZE,
   };
   return {
     ...gameStart,

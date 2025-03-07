@@ -54,7 +54,7 @@ interface PlayingState {
     pieceIndex: number,
     releaseCounter: number,
   }>;
-  setHolder(playerId: string, piec: PieceState): void;
+  setHolder(playerId: string, piece: PieceState): void;
   deleteHolder(playerId: string): void;
 
   pieces: PieceState[];
@@ -66,7 +66,7 @@ interface PieceState {
   /** 他のピースの子になっている場合は親からの相対正解座標になる */
   pos: g.CommonOffset;
   /** ハマっているか */
-  fited: boolean;
+  fitted: boolean;
   /**
    * 自分が子になっている場合にくっついている場合の親ピースIndex
    * * ピースの親は必ず自分より若い番号
@@ -112,7 +112,7 @@ function initialize(_server: SacServer, _gameStart: GameStart) {
     holders: new Map(),
     setHolder,
     deleteHolder,
-    pieces: gameState.piecePositions.map((pos, index) => ({ index, pos, fited: false })),
+    pieces: gameState.piecePositions.map((pos, index) => ({ index, pos, fitted: false })),
   };
   fitMargin = (gameState.pieceSize.width + gameState.pieceSize.height) / 8;
   dirOffset = {
@@ -146,7 +146,7 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
     HoldPiece.receive(server, data => {
       const { playerId, pieceIndex } = data;
       const piece = state.pieces[pieceIndex];
-      if (piece.fited || piece.parentId != null) return;
+      if (piece.fitted || piece.parentId != null) return;
       if (!playerManager.has(playerId)) return;
       if (piece.holderId != null) return;
       const oldHold = holders.get(playerId);
@@ -162,7 +162,7 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
     MovePiece.receive(server, data => {
       const { playerId, pieceIndex, point: position } = data;
       const piece = state.pieces[pieceIndex];
-      if (piece.fited || piece.parentId != null) return;
+      if (piece.fitted || piece.parentId != null) return;
       if (!playerManager.has(playerId)) return;
       if (holders.get(playerId)?.pieceIndex !== pieceIndex) return;
 
@@ -173,7 +173,7 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
     ReleasePiece.receive(server, data => {
       const { playerId, pieceIndex, point } = data;
       const piece = state.pieces[pieceIndex];
-      if (piece.fited || piece.parentId != null) return;
+      if (piece.fitted || piece.parentId != null) return;
       if (!playerManager.has(playerId)) return;
       if (holders.get(playerId)?.pieceIndex !== pieceIndex) return;
 
@@ -230,7 +230,7 @@ function checkFitAndConnect(pieceIndex: number): boolean {
 
   // ピースがハマるかチェックする
   if (checkFitPiece(piece)) {
-    piece.fited = true;
+    piece.fitted = true;
     server.broadcast(new FitPiece(piece.index));
     return true;
   }
@@ -286,7 +286,7 @@ function checkConnectPiece(piece: PieceState): PieceState | undefined {
     const pair = state.pieces[pairIndex];
 
     if (
-      pair.fited ||
+      pair.fitted ||
       pair.holderId != null ||
       pair.parentId === piece.index ||
       pair.index === piece.parentId ||

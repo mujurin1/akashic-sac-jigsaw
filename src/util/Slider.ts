@@ -10,7 +10,7 @@ export interface SliderParams extends Omit<g.EParameterObject, "touchable"> {
   height: number;
   /** スライダーの上昇量曲線 */
   quadratic?: number;
-  bakcgroundCssColor?: string;
+  backgroundCssColor?: string;
   barCssColor?: string;
   gripCssColor?: string;
 }
@@ -34,17 +34,17 @@ export class Slider extends g.FilledRect {
   constructor(_param: SliderParams) {
     const param = {
       per: 0, min: 0,
-      bakcgroundCssColor: "white",
+      backgroundCssColor: "white",
       barCssColor: "#FFA500a0",
       gripCssColor: "#000a",
       quadratic: 1,
       gripWidth: 50,
       ..._param,
-    };
+    } satisfies SliderParams;
 
     super({
       ...param,
-      cssColor: param.bakcgroundCssColor,
+      cssColor: param.backgroundCssColor,
     });
     // const display = new g.E({
     //   ...param,

@@ -66,7 +66,7 @@ function _changeSceneClient(client: SacClient, initializedValue: SacInitializedV
 
   const snapshot = initializedValue.gameMainParam.snapshot as SnapshotData;
   if (snapshot != null) {
-    console.log("has snaphost", snapshot);
+    console.log("has snapshot", snapshot);
     if (!snapshot.isFirstScene) switchScene();
   }
 

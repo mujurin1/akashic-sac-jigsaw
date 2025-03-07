@@ -40,10 +40,10 @@ export async function createPieces(
   gameState: GameState,
   imageSrc: g.ImageAsset | g.Surface,
 ): Promise<CreatePiecesResult> {
-  const margineW = gameState.pieceSize.width * 0.25;
-  const margineH = gameState.pieceSize.height * 0.25;
-  const wakuW = gameState.pieceSize.width + margineW * 2;
-  const wakuH = gameState.pieceSize.height + margineH * 2;
+  const marginW = gameState.pieceSize.width * 0.25;
+  const marginH = gameState.pieceSize.height * 0.25;
+  const wakuW = gameState.pieceSize.width + marginW * 2;
+  const wakuH = gameState.pieceSize.height + marginH * 2;
   const boardW = gameState.board.width;
   const boardH = gameState.board.height;
 
@@ -72,7 +72,7 @@ export async function createPieces(
 
   const tmpE = new g.E({ scene, ...gameState.pieceSize });
   tmpE.append(preview);
-  const drawOffset: g.CommonRect = { left: margineW, top: margineH, right: margineW, bottom: margineH };
+  const drawOffset: g.CommonRect = { left: marginW, top: marginH, right: marginW, bottom: marginH };
   const random = new g.Xorshift(gameState.seed);
 
   // ピースの凸凹を作る (左/上から見たときに凸か凹か)
@@ -125,11 +125,11 @@ export async function createPieces(
       // 右側
       const lineW = wOXs[h][w + 1];
       if (lineW !== "_") {
-        lineParam.x = baseX + gameState.pieceSize.width - margineW;
+        lineParam.x = baseX + gameState.pieceSize.width - marginW;
         lineParam.y = baseY;
         lineParam.angle = 270;
         if (lineW === "X") {
-          lineParam.x = baseX + margineW;
+          lineParam.x = baseX + marginW;
           lineParam.angle = 90;
         }
         imageDataUtil.toSprite(lineImgData, lineParam);
@@ -138,10 +138,10 @@ export async function createPieces(
       const lineH = hOXs[w][h + 1];
       if (lineH !== "_") {
         lineParam.x = baseX;
-        lineParam.y = baseY + gameState.pieceSize.height - margineH;
+        lineParam.y = baseY + gameState.pieceSize.height - marginH;
         lineParam.angle = 0;
         if (lineH === "X") {
-          lineParam.y = baseY + margineH;
+          lineParam.y = baseY + marginH;
           lineParam.angle = 180;
         }
         imageDataUtil.toSprite(lineImgData, lineParam);
@@ -172,8 +172,8 @@ export async function createPieces(
    * @param wakuTypes [左,上,右,下]
    */
   function stamp(w: number, h: number, ...wakuTypes: [WakuType, WakuType, WakuType, WakuType]): Piece {
-    preview.x = margineW - gameState.pieceSize.width * w;
-    preview.y = margineH - gameState.pieceSize.height * h;
+    preview.x = marginW - gameState.pieceSize.width * w;
+    preview.y = marginH - gameState.pieceSize.height * h;
     // preview.modified();  // 無くても良いみたい
 
     const wakus: g.Sprite[] = [];

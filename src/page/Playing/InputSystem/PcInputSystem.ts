@@ -43,7 +43,7 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
         scene.onPointUpCapture.remove(pieceRelease);
       }
     },
-    forceReleace() { },
+    forceRelease() { },
     destroy() {
       result.toggleFeature(false);
     },

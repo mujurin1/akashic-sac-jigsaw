@@ -4,9 +4,6 @@ import { createFont } from "akashic-sac";
 export type PieIcons<T extends PieIconSrc[]> = {
   [K in T[number]["name"]]: Parameters<Extract<T[number], PieIconSrc<K>>["event"]>[0]
 };
-export type PieIconSrces<T extends PieIconSrc[]> = {
-  [K in T[number]["name"]]: Extract<T[number], PieIconSrc<K>>
-};
 export type PieIconSrc<Name extends string = string> = PieIconSrc_Image<Name> | PieIconSrc_Rect<Name>;
 export interface PieIconSrc_Base<Name extends string, E extends g.E> {
   type: string;
@@ -71,8 +68,8 @@ export function pieMenuBuilder(
 ): PieMenuBuilder<[]> {
   const icons: PieIconSrc[] = [];
 
-  const bulder: PieMenuBuilder<[]> = { build, addIcon, addIcon_Rect };
-  return bulder;
+  const builder: PieMenuBuilder<[]> = { build, addIcon, addIcon_Rect };
+  return builder;
 
   function build(params?: Parameters<PieMenuBuilder<any>["build"]>[0]) {
     return createPieMenu(iconSize, icons, centerFn, params) as any;
@@ -85,7 +82,7 @@ export function pieMenuBuilder(
    */
   function addIcon<T extends string>(name: T, event: (e: g.Sprite) => void) {
     icons.push({ type: "image", name, event });
-    return bulder as any;
+    return builder as any;
   }
 
   /**
@@ -96,7 +93,7 @@ export function pieMenuBuilder(
    */
   function addIcon_Rect<T extends string>(name: T, firstColor: string, event: (e: g.FilledRect) => void) {
     icons.push({ type: "rect", name, event, firstColor });
-    return bulder as any;
+    return builder as any;
   }
 }
 

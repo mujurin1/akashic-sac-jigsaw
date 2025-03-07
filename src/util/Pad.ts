@@ -89,7 +89,7 @@ export function createPad({ scene, parent, cursorArea, x, y, cursorSpeed, hidden
       cursor.modified();
     }
 
-    result.onMoveing.fire({ padDir, moved, cursorRest });
+    result.onMoving.fire({ padDir, moved, cursorRest });
   });
 
   const cursor = new g.FilledRect({
@@ -106,7 +106,7 @@ export function createPad({ scene, parent, cursorArea, x, y, cursorSpeed, hidden
     cursor,
     cursorLock: false,
     cursorSpeed,
-    onMoveing: new g.Trigger<CursorMovePoint>(),
+    onMoving: new g.Trigger<CursorMovePoint>(),
     onRelease: new g.Trigger(),
     show: () => {
       pad.show();
@@ -119,7 +119,7 @@ export function createPad({ scene, parent, cursorArea, x, y, cursorSpeed, hidden
     destroy: () => {
       pad.destroy();
       cursor.destroy();
-      result.onMoveing.destroy();
+      result.onMoving.destroy();
       result.onRelease.destroy();
     }
   };
