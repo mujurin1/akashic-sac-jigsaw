@@ -5,8 +5,8 @@ import { InputSystem, InputSystemState } from "./InputSystem";
 
 export function MobileInputSystem(state: InputSystemState): InputSystem {
   const { playingState } = state;
-  const { client, layer } = playingState;
-  const { camerable } = layer.playArea;
+  const { client, playArea } = playingState;
+  const { camerable } = playArea;
   const { scene } = client.env;
 
   const mobileUi = createUi(state);
@@ -35,7 +35,7 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
   }
 
   function moveCamera(e: g.PointMoveEvent) {
-    if (e.target !== layer.bg) return;
+    if (e.target !== playArea.bg) return;
 
     camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
     camerable.modified();
@@ -50,33 +50,33 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
 
 function createUi(state: InputSystemState) {
   const { playingState } = state;
-  const { client, layer } = playingState;
-  const { camerable } = layer.playArea;
+  const { client, playArea, ui } = playingState;
+  const { camerable } = playArea;
   const { scene } = client.env;
 
   const holdPieceBtn = new g.FilledRect({
-    scene, parent: layer.ui,
+    scene, parent: ui,
     cssColor: "gray",
     width: 190, height: 190,
     x: g.game.width - (190 + 30), y: g.game.height - (190 + 30),
     touchable: true, hidden: true,
   });
   const checkFitBtn = new g.FilledRect({
-    scene, parent: layer.ui,
+    scene, parent: ui,
     cssColor: "yellow",
     width: 300, height: 100,
     x: 950, y: 385,
     touchable: true, hidden: true,
   });
   const zoomInBtn = new g.FilledRect({
-    scene, parent: layer.ui,
+    scene, parent: ui,
     cssColor: "#00F",
     x: 950, y: 470,
     width: 100, height: 100,
     touchable: true, hidden: true,
   });
   const zoomOutBtn = new g.FilledRect({
-    scene, parent: layer.ui,
+    scene, parent: ui,
     cssColor: "#00F8",
     x: 950, y: 590,
     width: 100, height: 100,
@@ -113,7 +113,7 @@ function createUi(state: InputSystemState) {
   });
 
   const pad = createPad({
-    scene, parent: layer.ui,
+    scene, parent: ui,
     cursorArea: {
       left: 320,
       top: 180,
@@ -159,9 +159,9 @@ function createUi(state: InputSystemState) {
       hidden: true,
     });
 
-  layer.ui.append(pieMenu.entity);
+  ui.append(pieMenu.entity);
   const pieMenuToggle = new g.FilledRect({
-    scene, parent: layer.ui,
+    scene, parent: ui,
     cssColor: "yellow",
     width: 200, height: 100,
     x: 40, y: 300,
@@ -208,7 +208,7 @@ function setCursorColor(pad: Pad, playingState: PlayingState) {
   pad.cursor.cssColor =
     playingState.holdState != null
       ? "rgba(255,0,0,0.4)"
-      : playingState.getPieceFromScreenPx(pad.cursor.x, pad.cursor.y) != null
+      : playingState.getPieceFromScreenPx(pad.cursor.x, pad.cursor.y, true) != null
         ? "red"
         : "yellow";
 }

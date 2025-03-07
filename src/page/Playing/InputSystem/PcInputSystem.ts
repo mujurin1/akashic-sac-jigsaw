@@ -2,19 +2,19 @@ import { InputSystem, InputSystemState } from "./InputSystem";
 
 export function PcInputSystem(state: InputSystemState): InputSystem {
   const { playingState } = state;
-  const { client, layer } = playingState;
-  const { camerable } = layer.playArea;
+  const { client, playArea } = playingState;
+  const { camerable } = playArea;
   const { scene } = client.env;
 
   const icons = createIcons(state);
 
   const moveCamera = (e: g.PointMoveEvent) => {
-    if (playingState.holdState != null || e.target !== layer.bg) return;
+    if (playingState.holdState != null || e.target !== playArea.bg) return;
     camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
     camerable.modified();
   };
   const pieceTouch = (e: g.PointDownEvent) => {
-    if (e.target !== layer.bg) return;
+    if (e.target !== playArea.bg) return;
     state.hold(e.point.x, e.point.y);
   };
   const pieceMove = (e: g.PointMoveEvent) => {
@@ -53,7 +53,7 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
 }
 
 function createIcons(state: InputSystemState) {
-  const layer = state.playingState.layer;
+  const { ui } = state.playingState;
 
   const deviceBtn = createIcon("ico_device", 0, 2);
   const visibleBtn = createIcon("ico_visible", 1, 2);
@@ -100,7 +100,7 @@ function createIcons(state: InputSystemState) {
     const baseY = 600;
 
     const back = new g.FilledRect({
-      scene, parent: layer.ui,
+      scene, parent: ui,
       cssColor: "rgba(255,255,255,0.3)",
       width: 90, height: 90,
       x: baseX - 105 * x,

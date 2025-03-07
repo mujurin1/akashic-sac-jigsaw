@@ -1,10 +1,12 @@
 import { GameStart } from "../../event/TitleEvent";
 import { CustomSprite } from "../../util/CustomSprite";
-import { calcAnswerXY, GameState } from "./pieceUtil";
+import { calcAnswerXY } from "./pieceUtil";
+import { PlayingState } from "./Playing";
 
 export interface Piece extends CustomSprite {
   tag: PieceTag;
   children: Piece[] | undefined;
+  parent: g.E;
 }
 
 export interface PieceTag {
@@ -12,14 +14,13 @@ export interface PieceTag {
   index: number;
   fitted: boolean;
   parent?: Piece;
-  /** 自分以外のプレイヤーが持っているときだけフィールドが存在する */
   holdPlayerId?: string;
 }
 
 export const Piece = {
+  _state: null! as PlayingState,
   _pieceParent: null! as g.E,
-  opacity: { default: 1, holded: 0.4 },
-  // touchableAll: true,
+
   /**
    * プレイ画面座標からその座標のピースを取得する\
    * 子の場合は親ピースを返す
@@ -55,10 +56,11 @@ export const Piece = {
 
     return undefined;
   },
-  getFromPoint(x: number, y: number): Piece | undefined {
+  getFromPoint(x: number, y: number, canHold = false): Piece | undefined {
     for (let pieceId = Piece._pieceParent.children!.length - 1; pieceId >= 0; pieceId--) {
       const piece = Piece._pieceParent.children![pieceId];
       if (!Piece.isPiece(piece)) continue;
+      if (canHold && !Piece.canHold(piece)) continue;
 
       const px = piece.x + piece.width;
       const py = piece.y + piece.height;
@@ -69,6 +71,7 @@ export const Piece = {
       if (piece.children == null) continue;
 
       for (const childPiece of piece.children) {
+        if (canHold && !Piece.canHold(piece)) continue;
         const px = piece.x + childPiece.x + childPiece.width;
         const py = piece.y + childPiece.y + childPiece.height;
         if (
@@ -90,29 +93,30 @@ export const Piece = {
   /**
    * ピースの親要素に必要な設定を行う
    */
-  pieceParentSetting(pieceParent: g.E) {
-    Piece._pieceParent = pieceParent;
+  pieceParentSetting(state: PlayingState) {
+    Piece._state = state;
+    Piece._pieceParent = Piece._state.playArea.pieceParent;
   },
   hold(piece: Piece, playerId: string) {
+    shiftTop(piece);
     piece.tag.holdPlayerId = playerId;
-    piece.opacity = Piece.opacity.holded;
-    piece.modified();
+    setOpacity(piece, false);
   },
   release(piece: Piece) {
-    delete piece.tag.holdPlayerId;
-    piece.opacity = Piece.opacity.default;
-    piece.modified();
+    piece.tag.holdPlayerId = undefined;
+    setOpacity(piece, true);
   },
-  fit(piece: Piece, gameState: GameState) {
+  fit(piece: Piece) {
     piece.tag.fitted = true;
     delete piece.tag.holdPlayerId;
 
-    piece.opacity = Piece.opacity.default;
-    const pos = calcAnswerXY(piece.tag.index, gameState);
-    piece.moveTo(pos.x, pos.y);
-    piece.modified();
+    const pos = calcAnswerXY(piece.tag.index, Piece._state.gameState);
+    shiftBottom(piece);
+    setOpacityPos(piece, true, pos);
+
   },
   connect(parent: Piece, child: Piece, gameStart: GameStart) {
+    shiftTop(parent);
     Piece.release(parent);
     Piece.release(child);
     normalizeConnectPieceAll(parent, child, gameStart);
@@ -122,7 +126,7 @@ export const Piece = {
   },
   canHold(piece: g.E): piece is Piece {
     return Piece.isPiece(piece) &&
-      piece.opacity === Piece.opacity.default &&
+      piece.tag.holdPlayerId == null &&
       !piece.tag.fitted;
   },
   setTag(e: g.E, index: number) {
@@ -133,6 +137,27 @@ export const Piece = {
     } satisfies PieceTag;
   },
 };
+
+function shiftTop(piece: Piece): void {
+  if (Piece._state.holdState != null) {
+    piece.parent.insertBefore(piece, Piece._state.holdState.piece);
+  } else {
+    piece.parent.append(piece);
+  }
+}
+function shiftBottom(piece: Piece): void {
+  piece.parent.insertBefore(piece, Piece._pieceParent.children![0]);
+}
+
+function setOpacity(piece: Piece, isDefault: boolean): void {
+  piece.opacity = isDefault ? 1 : 0.4;
+  piece.modified();
+}
+function setOpacityPos(piece: Piece, isDefault: boolean, pos: g.CommonOffset): void {
+  piece.opacity = isDefault ? 1 : 0.4;
+  piece.moveTo(pos.x, pos.y);
+  piece.modified();
+}
 
 function normalizeConnectPieceAll(parent: Piece, child: Piece, gameStart: GameStart) {
   const children = child.children?.slice(0);

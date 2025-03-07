@@ -1,4 +1,4 @@
-import { ForceReleasePiece, HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
+import { HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
 import { Piece } from "../Piece";
 import { PlayingState } from "../Playing";
 import { MobileInputSystem } from "./MobileInputSystem";
@@ -19,7 +19,7 @@ export interface InputSystemControl {
  * デバイス毎の操作方法の管理を行う
  */
 export function inputSystemControl(state: PlayingState): InputSystemControl {
-  const { client, layer: { playArea: { camerable } } } = state;
+  const { client, playArea: { camerable } } = state;
 
   const sendMoveCount = 5;
   let sendMoveCounter = 0;
@@ -45,24 +45,6 @@ export function inputSystemControl(state: PlayingState): InputSystemControl {
     }
   };
 
-  const clientEventKeys = [
-    // 自分が持っているピースを他人が操作した
-    HoldPiece.receive(client, ({ pieceIndex, playerId }) => {
-      if (playerId == null || playerId === g.game.selfId) return;
-      if (pieceIndex !== state.holdState?.piece?.tag.index) return;
-
-      Piece.hold(state.pieces[pieceIndex], playerId);
-      state.holdState = undefined;
-    }),
-    // 自分が持っているピースを強制開放
-    ForceReleasePiece.receive(client, ({ pieceIndex }) => {
-      if (state.holdState?.piece?.tag.index !== pieceIndex) return;
-
-      state.holdState = undefined;
-      state.pieceOperatorControl.current.forceRelease();
-    }),
-  ];
-
   const inputSystems = {
     "pc": PcInputSystem(inputSystemState),
     "mobile": MobileInputSystem(inputSystemState),
@@ -81,7 +63,6 @@ export function inputSystemControl(state: PlayingState): InputSystemControl {
       inputSystems[type].toggleFeature(true);
     },
     destroy() {
-      client.removeEventSets(clientEventKeys);
       for (const type of InputSystemType) {
         inputSystems[type].destroy();
       }
@@ -93,12 +74,12 @@ export function inputSystemControl(state: PlayingState): InputSystemControl {
   return control;
 
   function hold(x: number, y: number): boolean {
-    state.holdState = state.getPieceFromScreenPx(x, y);
+    state.holdState = state.getPieceFromScreenPx(x, y, true);
     if (state.holdState == null) return false;
 
     sendMoveCounter = 0;
     const piece = state.holdState.piece;
-    piece.parent!.append(piece);
+    piece.parent.append(piece);
     client.sendEvent(new HoldPiece(piece.tag.index));
     return true;
   }

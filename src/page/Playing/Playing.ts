@@ -13,18 +13,38 @@ import { createGameState, GameState } from "./pieceUtil";
 export interface PlayingState {
   readonly client: SacClient;
   readonly gameState: GameState;
-  readonly layer: {
+  /**
+   * 階層
+   * ```
+   * scene
+   * |-bg
+   * |-camerable
+   *    |-pieceLimitArea
+   *    |-board
+   *    |  |-boardPreview
+   *    |  |-boardPieceFrame
+   *    |-pieceParent
+   *       |-Pieces[]
+   * ```
+   */
+  readonly playArea: {
+    /** 常に画面に固定の背景 */
     readonly bg: g.FilledRect;
-    // readonly playAreaCamera: CamerableE;
-    readonly playArea: {
-      readonly camerable: CamerableE;
-      readonly movePieceArea: g.CommonArea;
-      readonly board: g.E;
-      readonly boardPreview: g.E;
-      readonly boardFrame: g.E;
-    };
-    readonly ui: g.E;
+    /** ピースやボードの存在する本当のプレイエリア */
+    readonly camerable: CamerableE;
+    /** ピースの移動可能な領域 */
+    readonly pieceLimitArea: g.CommonArea;
+    /** ピースをハメるボード */
+    readonly board: g.E;
+    /** ボードに表示する完成画像 */
+    readonly boardPreview: g.E;
+    /** ボードに表示するピース枠線 */
+    readonly boardPieceFrame: g.E;
+    /** ピースの親 */
+    readonly pieceParent: g.E;
   };
+  readonly ui: g.E;
+
   /**
    * 元画像の左上位置のピースから順にインデックス付けられている\
    * この順序を変えてはならない
@@ -34,20 +54,25 @@ export interface PlayingState {
   readonly isJoined: () => boolean;
 
   /**
-   * 画面上の座標をピースエリア座標に変換する
+   * ゲームスクリーン座標をピースエリア座標に変換する
    */
   readonly toPieceArea: (x: number, y: number) => g.CommonOffset;
 
   /**
-   * 画面上の座標を元にその場所に存在するピースを取得する
-   * @param x 画面上のX座標
-   * @param y 画面上のY座標
+   * ゲームスクリーン座標を元にその場所に存在するピースを取得する  
+   * `canHoldOnly:true`の場合は掴めないピースが上にあってもそれを取得します
+   * @param x ゲームスクリーンX座標
+   * @param y ゲームスクリーンY座標
+   * @param canHoldOnly 対象をホールド可能なピースに限定するか @default false
    * @returns `[ピース, 引数(x,y)とピース座標のズレ(ピースエリア座標)]`
    */
-  readonly getPieceFromScreenPx: (x: number, y: number) => { piece: Piece, offset: g.CommonOffset; } | undefined;
+  readonly getPieceFromScreenPx: (x: number, y: number, canHoldOnly?: boolean) => { piece: Piece, offset: g.CommonOffset; } | undefined;
 
   pieceOperatorControl: InputSystemControl;
 
+  /**
+   * 自分が掴んでいるピースの情報
+   */
   holdState: {
     piece: Piece;
     /** ピースを掴んだときのピース座標との誤差 (ピースエリア座標) */
@@ -64,13 +89,19 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
   const eventKeys = [
     HoldPiece.receive(client, ({ playerId, pieceIndex }) => {
       if (playerId == null || playerId === g.game.selfId) return;
+      // ピースを他人が掴んだ
 
       const piece = state.pieces[pieceIndex];
       Piece.hold(piece, playerId);
+
+      if (pieceIndex === state.holdState?.piece.tag.index) {
+        state.holdState = undefined;
+      }
     }),
     MovePiece.receive(client, ({ playerId, pieceIndex, point }) => {
       if (g.game.isSkipping) return;
       if (playerId == null || playerId === g.game.selfId) return;
+      // ピースを他人が動かした
 
       const piece = state.pieces[pieceIndex];
       piece.moveTo(point.x, point.y);
@@ -83,20 +114,27 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
       piece.moveTo(point.x, point.y);
       piece.modified();
     }),
+    // 指定したピースを強制開放
     ForceReleasePiece.receive(client, ({ pieceIndex }) => {
+      // if (state.holdState?.piece?.tag.index !== pieceIndex) return;
+
+      // state.holdState = undefined;
+      // state.pieceOperatorControl.current.forceRelease();
+
       const piece = state.pieces[pieceIndex];
       Piece.release(piece);
+      state.pieceOperatorControl.current.forceRelease();
     }),
     FitPiece.receive(client, ({ playerId, pieceIndex }) => {
       const piece = state.pieces[pieceIndex];
-      Piece.fit(piece, state.gameState);
+      Piece.fit(piece);
     }),
     ConnectPiece.receive(client, ({ playerId, parentIndex, childIndex }) => {
       const parent = state.pieces[parentIndex];
       const child = state.pieces[childIndex];
       Piece.connect(parent, child, gameStart);
       if (g.game.selfId === playerId)
-        parent.parent!.append(parent);
+        parent.parent.append(parent);
     }),
   ];
 
@@ -126,7 +164,7 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
   });
 
   const playAreaCamera = new CamerableE({ scene, parent: scene });
-  const movePieceArea = new g.FilledRect({
+  const pieceLimitArea = new g.FilledRect({
     scene, parent: playAreaCamera,
     cssColor: "#f008",
     width: gameState.movePieceArea.width,
@@ -148,14 +186,16 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
     width: preview.width, height: preview.height,
     opacity: 0.5,
   });
-  board.append(piecesResult.frame);
+  const boardPieceFrame = piecesResult.frame;
+  board.append(boardPieceFrame);
+  const pieceParent = new g.E({ scene, parent: playAreaCamera });
   //#endregion Entity の作成
 
   // ピースを配置
   for (let i = 0; i < piecesResult.pieces.length; i++) {
     const piece = piecesResult.pieces[i];
     const position = gameState.piecePositions[i];
-    playAreaCamera.append(piece);
+    pieceParent.append(piece);
     piece.moveTo(position.x, position.y);
     piece.modified();
   }
@@ -167,30 +207,29 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
     pieces: piecesResult.pieces,
     client,
     gameState,
-    layer: {
+    playArea: {
       bg,
-      playArea: {
-        camerable: playAreaCamera,
-        movePieceArea,
-        board,
-        boardPreview,
-        boardFrame: piecesResult.frame,
-      },
-      ui: new g.E({ scene, parent: scene }),
+      camerable: playAreaCamera,
+      pieceLimitArea,
+      board,
+      boardPreview,
+      boardPieceFrame,
+      pieceParent,
     },
+    ui: new g.E({ scene, parent: scene }),
 
     isJoined: () => playerManager.has(g.game.selfId),
     toPieceArea: (x, y) => ({
       x: playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HALF),
       y: playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HALF),
     }),
-    getPieceFromScreenPx(x, y) {
+    getPieceFromScreenPx: (x, y, canHold = false) => {
       if (!state.isJoined()) return;
 
       const playAreaX = playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HALF);
       const playAreaY = playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HALF);
-      const piece = Piece.getParentOrSelf(Piece.getFromPoint(playAreaX, playAreaY));
-      if (piece == null || !Piece.canHold(piece)) return;
+      const piece = Piece.getParentOrSelf(Piece.getFromPoint(playAreaX, playAreaY, canHold));
+      if (piece == null) return;
 
       return {
         piece,
@@ -203,7 +242,7 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
     finishTime: undefined,
   };
 
-  Piece.pieceParentSetting(state.layer.playArea.camerable);
+  Piece.pieceParentSetting(state);
   state.pieceOperatorControl = inputSystemControl(state);
 
   const parts = createParts(state);
@@ -215,7 +254,7 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
  * プレビューやランキングなどのパーツを作る
  */
 function createParts(state: PlayingState) {
-  const { client, layer: { playArea: { camerable }, ui } } = state;
+  const { client, playArea: { camerable }, ui } = state;
   const { scene } = client.env;
   const font = createFont({ size: 50 });
 
@@ -248,7 +287,7 @@ function createParts(state: PlayingState) {
     join.onPointDown.add(sendJoin);
     change.onPointDown.add(() => state.pieceOperatorControl.toggle());
 
-    const { board } = state.layer.playArea;
+    const { board } = state.playArea;
     camerable.moveTo(
       board.x + board.width / 2 + 500,
       board.y + board.height / 2,
