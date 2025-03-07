@@ -1,10 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2015",
-    "lib": [
-      "ES2019",
-      "DOM"
-    ],
+    "lib": [ "ES2019", "DOM" ],
     "module": "commonjs",
     "outDir": "script",
     // "strict": true,

@@ -1,34 +1,27 @@
 {
-  "name": "new-jigsaw-v2",
-  "private": false,
-  "version": "0.1.0",
-  "description": "",
   "scripts": {
-    "nico": "npm run build && akashic serve -s nicolive",
-    "watch": "node watch-script.js",
-    "usac": "akashic install ../akashic-sac/akashic-sac-0.2.3.tgz",
+    "dev:watch": "concurrently \"npm run tsc -w\" \"akashic serve -p 3300 -s nicolive -w -B\"",
     "export": "npm run build:scan && akashic export zip -f -o ./game.zip --nicolive --minify",
-    "build": "tsc",
-    "build:scan": "npm run build && akashic-cli-scan asset script",
     "scan": "akashic scan asset",
-    "eslint": "eslint src/**/*",
-    "export_html": "npm run build && rimraf game.zip && akashic export html -o ./game.zip",
+
+    "build:scan": "tsc && akashic-cli-scan asset script",
     "update": "akashic-cli-scan asset && akashic-cli-scan globalScripts",
-    "lint": "eslint -c .eslintrc.js \"src/**/*.ts\" --fix",
-    "start": "akashic-sandbox .",
-    "zip": "npm run build && npm run build && rimraf game.zip && akashic export zip -o ./game.zip -s"
+    "nico": "tsc && akashic serve -p 3300 -s nicolive",
+    "usac": "akashic install ../akashic-sac/akashic-sac-0.2.3.tgz",
+
+    "export_html": "tsc && rimraf game.zip && akashic export html -o ./game.zip",
+    "start": "akashic-sandbox ."
   },
-  "author": "",
-  "license": "",
   "devDependencies": {
     "@akashic/akashic-cli-export": "^1.9.21",
     "@akashic/akashic-cli-scan": "^0.17.7",
     "@akashic/akashic-engine": "^3.20.2",
-    "@akashic/akashic-sandbox": "^0.28.26",
+    "@akashic/akashic-sandbox": "^0.28.27",
     "@akashic/headless-akashic": "^4.7.0",
+    "concurrently": "^9.1.2",
     "globals": "^15.15.0",
     "rimraf": "^6.0.1",
-    "typescript": "^5.7.3"
+    "typescript": "^5.8.2"
   },
   "dependencies": {
     "@akashic-extension/akashic-label": "^3.1.0",
