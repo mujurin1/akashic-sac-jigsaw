@@ -54,7 +54,7 @@ function createUi(state: TitleState) {
   setSprite(preview, previewsInfo[state.puzzleIndex].imageAsset);
   //#endregion 画像プレビュー
 
-  //#region 右側のUI
+  //#region タイトル・参加数・参加ボタン
   const titleBack = new g.Sprite({
     scene, parent: scene, src: scene.asset.getImageById("title_back"),
     x: 850, y: 35,
@@ -106,9 +106,36 @@ function createUi(state: TitleState) {
     sankaNinText.text = `${playerManager.length}`;
     sankaNinText.invalidate();
   });
+  //#endregion タイトル・参加数・参加ボタン
 
-  //#region ホスト専用UI
+  //#region レベル・ピース数
+  const levelTextBack = new g.FilledRect({
+    scene, parent: scene,
+    cssColor: "white",
+    x: 25, y: 510,
+    width: 770, height: 70,
+  });
+  const levelNumText = new Label({
+    scene, parent: levelTextBack,
+    y: 5,
+    font: fontN,
+    text: "レベル 50",
+    width: 300,
+  });
+  const pieceNumText = new Label({
+    scene, parent: levelTextBack,
+    x: 0,
+    y: 5,
+    font: fontN,
+    text: "??x??  0000枚",
+    textAlign: "right",
+    width: levelTextBack.width - 5,
+  });
+  //#endregion レベル・ピース数
+
+  //#region ホスト専用
   if (client.env.isHost) {
+    //#region パズル変更
     const left = createButton({
       scene, parent: scene,
       x: titleBack.x, y: 580, text: "←",
@@ -137,36 +164,9 @@ function createUi(state: TitleState) {
       state.pieceSize,
       state.pieceWH,
     )));
-  }
-  //#endregion ホスト専用UI
-  //#endregion 右側のUI
+    //#endregion パズル変更
 
-  //#region レベルUI
-  const levelTextBack = new g.FilledRect({
-    scene, parent: scene,
-    cssColor: "white",
-    x: 25, y: 510,
-    width: 770, height: 70,
-  });
-  const levelNumText = new Label({
-    scene, parent: levelTextBack,
-    y: 5,
-    font: fontN,
-    text: "レベル 50",
-    width: 300,
-  });
-  const pieceNumText = new Label({
-    scene, parent: levelTextBack,
-    x: 0,
-    y: 5,
-    font: fontN,
-    text: "??x??   0000 枚",
-    textAlign: "right",
-    width: levelTextBack.width - 5,
-  });
-
-  //#region ホスト専用UI
-  if (g.game.env.isHost) {
+    //#region レベル変更
     const levelSlider = new Slider({
       scene, parent: scene,
       width: levelTextBack.width, height: 80,
@@ -178,16 +178,24 @@ function createUi(state: TitleState) {
       client.sendEvent(new ChangeLevel(newLevel));
     });
 
+    let flag = false;
     levelSlider.onValueChange.add(value => {
       const newLevel = Math.round(value);
       if (newLevel === state.level) return;
 
       setChangeLevel(newLevel);
       sendChangeLevel.do(newLevel);
+
+      if (!flag && value === 100) {
+        flag = true;
+        setTimeout(() => {
+          levelSlider.setOverLimitPer(1.3);
+        }, 1000);
+      }
     });
+    //#endregion レベル変更
   }
-  //#endregion ホスト専用UI
-  //#endregion レベルUI
+  //#endregion ホスト専用
 
   const setChangeLevel = (level: number) => {
     state.level = level;
@@ -196,7 +204,7 @@ function createUi(state: TitleState) {
 
     if (state.puzzleIndex === -1) {
       // TODO
-      pieceNumText.text = `??x??   ??? 枚`;
+      pieceNumText.text = `??x??  ???枚`;
       pieceNumText.invalidate();
     } else {
       const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
@@ -212,7 +220,7 @@ function createUi(state: TitleState) {
         y: Math.floor((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
       };
 
-      pieceNumText.text = `${state.pieceWH.height}x${state.pieceWH.width}   ${state.pieceWH.height * state.pieceWH.width} 枚`;
+      pieceNumText.text = `${state.pieceWH.height}x${state.pieceWH.width}  ${state.pieceWH.height * state.pieceWH.width}枚`;
       pieceNumText.invalidate();
     }
   };

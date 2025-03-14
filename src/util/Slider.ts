@@ -4,7 +4,7 @@ export interface SliderParams extends Omit<g.EParameterObject, "touchable"> {
   per?: number;
   min?: number;
   max: number;
-  /** 初期値 50 */
+  /** @default 50 */
   gripWidth?: number;
   width: number;
   height: number;
@@ -16,12 +16,13 @@ export interface SliderParams extends Omit<g.EParameterObject, "touchable"> {
 }
 
 export class Slider extends g.FilledRect {
-  public onBarDown: g.Trigger<number> = new g.Trigger();
-  public onSliderMove: g.Trigger<number> = new g.Trigger();
-  public onSliderUp: g.Trigger<number> = new g.Trigger();
-  public onValueChange: g.Trigger<number> = new g.Trigger();
-  private bar: g.FilledRect;
-  private grip: g.FilledRect;
+  public onBarDown = new g.Trigger<number>();
+  public onSliderMove = new g.Trigger<number>();
+  public onSliderUp = new g.Trigger<number>();
+  public onValueChange = new g.Trigger<number>();
+
+  public readonly bar: g.FilledRect;
+  public readonly grip: g.FilledRect;
 
   /** スライダーの上昇量曲線 */
   public quadratic: number;
@@ -29,7 +30,21 @@ export class Slider extends g.FilledRect {
   public per: number;
   public min: number;
   public max: number;
+  /** min~max の間のスライダーの値 (小数点有) */
   public value: number;
+
+  /** スライダーの本当の上限値 (%) */
+  private _overLimitPer = 1;
+
+  public setOverLimitPer(per: number): void {
+    this._overLimitPer = per;
+    if (this.per <= this._overLimitPer) return;
+
+    this.per = this._overLimitPer;
+    this.grip.x = this.bar.width * this.per;
+    this.grip.modified();
+    this.value = (this.max - this.min) * Math.pow(this.per, this.quadratic) + this.min;
+  }
 
   constructor(_param: SliderParams) {
     const param = {
@@ -77,17 +92,12 @@ export class Slider extends g.FilledRect {
     });
 
     this.bar.onPointDown.add(e => {
-      if (e.point.x < this.grip.x) {
-        this.per = this.per - 0.1;
-        if (this.per < 0) this.per = 0;
-      }
-      else {
-        this.per = this.per + 0.1;
-        if (this.per > 1) this.per = 1;
-      }
-      this.grip.x = this.bar.width * this.per;
-      this.grip.modified();
-      this.value = (this.max - this.min) * this.per + this.min;
+      this.gripMoveTo(e.point.x);
+      this.onBarDown.fire(this.value);
+      this.onValueChange.fire(this.value);
+    });
+    this.bar.onPointMove.add(e => {
+      this.gripMoveTo(e.point.x + e.startDelta.x);
       this.onBarDown.fire(this.value);
       this.onValueChange.fire(this.value);
     });
@@ -103,16 +113,20 @@ export class Slider extends g.FilledRect {
   }
 
   private gripMoveBy(x: number) {
-    this.grip.x += x;
-    if (this.grip.x < 0) {
-      this.grip.x = 0;
-      this.per = 0;
-    } else if (this.grip.x > this.bar.width) {
-      this.grip.x = this.bar.width;
-      this.per = 1;
-    } else {
-      this.per = this.grip.x / this.bar.width;
+    this.gripMoveTo(this.grip.x + x);
+  }
+
+  private gripMoveTo(x: number) {
+    const relativeX = x - this.x + this.grip.width / 2;
+    if (x <= 0) this.per = 0;
+    // else if (!this.overLimit && x >= this.bar.width) this.per = 1;
+    else this.per = relativeX / this.bar.width;
+
+    if (this.per > this._overLimitPer) {
+      this.per = this._overLimitPer;
     }
+
+    this.grip.x = this.bar.width * this.per;
     this.grip.modified();
     this.value = (this.max - this.min) * Math.pow(this.per, this.quadratic) + this.min;
   }
@@ -128,7 +142,5 @@ export class Slider extends g.FilledRect {
     this.onSliderMove = null!;
     this.onSliderUp = null!;
     this.onValueChange = null!;
-    this.bar = null!;
-    this.grip = null!;
   }
 }

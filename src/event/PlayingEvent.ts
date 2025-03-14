@@ -4,16 +4,21 @@ import { PlayerManager } from "../util/PlayerManager";
 import { GameStart } from "./TitleEvent";
 
 export class HoldPiece extends SacEvent {
-  constructor(readonly pieceIndex: number) { super(); }
+  constructor(
+    /** 必ず親を持たないピース */
+    readonly pieceIndex: number
+  ) { super(); }
 }
 export class MovePiece extends SacEvent {
   constructor(
+    /** 必ず親を持たないピース */
     readonly pieceIndex: number,
     readonly point: g.CommonOffset,
   ) { super(); }
 }
 export class ReleasePiece extends SacEvent {
   constructor(
+    /** 必ず親を持たないピース */
     readonly pieceIndex: number,
     readonly point: g.CommonOffset,
   ) { super(); }
@@ -68,7 +73,7 @@ interface PieceState {
   /** ハマっているか */
   fitted: boolean;
   /**
-   * 自分が子になっている場合にくっついている場合の親ピースIndex
+   * くっついている親ピースIndex
    * * ピースの親は必ず自分より若い番号
    * * ピースの関係は親子まで. 2つの親子がくっついた場合は一番若い番号が親になる
    */
@@ -145,10 +150,15 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
   const eventKeys = [
     HoldPiece.receive(server, data => {
       const { playerId, pieceIndex } = data;
-      const piece = state.pieces[pieceIndex];
-      if (piece.fitted || piece.parentId != null) return;
+      // ゲームに参加していないプレイヤー
       if (!playerManager.has(playerId)) return;
+      const piece = state.pieces[pieceIndex];
+      // ハマっている or 親がいる
+      if (piece.fitted || piece.parentId != null) return;
+      // 他のプレイヤーが持っている
       if (piece.holderId != null) return;
+
+      // 既に持っているピースを放す
       const oldHold = holders.get(playerId);
       if (oldHold != null) {
         state.deleteHolder(playerId);
@@ -161,9 +171,12 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
     }),
     MovePiece.receive(server, data => {
       const { playerId, pieceIndex, point: position } = data;
-      const piece = state.pieces[pieceIndex];
-      if (piece.fitted || piece.parentId != null) return;
+      // ゲームに参加していないプレイヤー
       if (!playerManager.has(playerId)) return;
+      const piece = state.pieces[pieceIndex];
+      // ハマっている or 親がいる
+      if (piece.fitted || piece.parentId != null) return;
+      // そのプレイヤーが持っていないピース
       if (holders.get(playerId)?.pieceIndex !== pieceIndex) return;
 
       piece.pos = position;
@@ -172,14 +185,17 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
     }),
     ReleasePiece.receive(server, data => {
       const { playerId, pieceIndex, point } = data;
-      const piece = state.pieces[pieceIndex];
-      if (piece.fitted || piece.parentId != null) return;
+      // ゲームに参加していないプレイヤー
       if (!playerManager.has(playerId)) return;
+      const piece = state.pieces[pieceIndex];
+      // ハマっている or 親がいる
+      if (piece.fitted || piece.parentId != null) return;
+      // そのプレイヤーが持っていないピース
       if (holders.get(playerId)?.pieceIndex !== pieceIndex) return;
 
       piece.pos = point;
       state.deleteHolder(playerId);
-      if (!checkFitAndConnect(data.pieceIndex)) {
+      if (!checkAndDoFitAndConnect(data.pieceIndex)) {
         server.broadcast(data);
       }
     }),
@@ -212,10 +228,10 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
 
 /**
  * ピースが盤面にハマる/くっつくかをチェックしその後処理を行う
- * @param pieceIndex
+ * @param pieceIndex 必ず親を持たないピース
  * @returns ハマったまたはくっついた
  */
-function checkFitAndConnect(pieceIndex: number): boolean {
+function checkAndDoFitAndConnect(pieceIndex: number): boolean {
   const piece = state.pieces[pieceIndex];
 
   // ピースがくっつくかチェックする
@@ -240,6 +256,7 @@ function checkFitAndConnect(pieceIndex: number): boolean {
 
 /**
  * ピースがハマるかチェックする
+ * @param piece 必ず親を持たないピース
  */
 function checkFitPiece(piece: PieceState): boolean {
   piece = piece.parentId == null ? piece : state.pieces[piece.parentId];
@@ -275,6 +292,7 @@ function checkConnectPieceAll(piece: PieceState): PieceState | undefined {
 /**
  * ピースがくっつくかチェックする\
  * 直接くっつく相手が親を持つ場合、その親ピースを返す
+ * @param piece 必ず親を持たないピース
  * @returns くっつく相手ピース. 必ず親を持たないピース
  */
 function checkConnectPiece(piece: PieceState): PieceState | undefined {
@@ -286,10 +304,11 @@ function checkConnectPiece(piece: PieceState): PieceState | undefined {
     const pair = state.pieces[pairIndex];
 
     if (
-      pair.fitted ||
-      pair.holderId != null ||
-      pair.parentId === piece.index ||
-      pair.index === piece.parentId ||
+      pair.fitted || // 既にハマっている (除外済み)
+      pair.holderId != null || // 誰かに持たれている (除外済み)
+      // 親子関係にある
+      pair.parentId === piece.index || pair.index === piece.parentId ||
+      // 同じ親の子
       pair.parentId != null && pair.parentId === piece.parentId
     ) continue;
     if (checkConnect(piece, pair, dir)) {
@@ -373,10 +392,21 @@ function calcConnectPieceIndexes({ index }: PieceState): Record<Dir, number | un
     left: undefined,
   };
 
-  if (row > 0) record.top = index - width;
-  if (col > 0) record.left = index - 1;
-  if (col < width - 1) record.right = index + 1;
-  if (row < height - 1) record.bottom = index + width;
+  // 上段
+  if (row === 0) record.bottom = index + width;
+  else {
+    record.top = index - width;
+    // 下端以外
+    if (row < height - 1) record.bottom = index + width;
+  }
+
+  // 左端
+  if (col === 0) record.right = index + 1;
+  else {
+    record.left = index - 1;
+    // 右端以外
+    if (col < width - 1) record.right = index + 1;
+  }
 
   return record;
 }

@@ -256,11 +256,6 @@
 			"path": "script/event/TitleEvent.js",
 			"global": true
 		},
-		"lineupPiece": {
-			"type": "script",
-			"path": "script/page/Playing/lineupPiece.js",
-			"global": true
-		},
 		"createButton": {
 			"type": "script",
 			"path": "script/util/createButton.js",
@@ -336,11 +331,6 @@
 			"path": "script/util/CustomSprite.js",
 			"global": true
 		},
-		"MouseWheel": {
-			"type": "script",
-			"path": "script/util/MouseWheel.js",
-			"global": true
-		},
 		"Pad": {
 			"type": "script",
 			"path": "script/util/Pad.js",
@@ -354,6 +344,16 @@
 		"pieceUtil": {
 			"type": "script",
 			"path": "script/page/Playing/pieceUtil.js",
+			"global": true
+		},
+		"index": {
+			"type": "script",
+			"path": "script/util/StateMachine/index.js",
+			"global": true
+		},
+		"types": {
+			"type": "script",
+			"path": "script/util/StateMachine/types.js",
 			"global": true
 		}
 	}
