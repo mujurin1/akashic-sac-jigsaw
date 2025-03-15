@@ -1,5 +1,5 @@
 import { SacEvent, SacServer } from "akashic-sac";
-import { PlayerManager } from "../common/PlayerManager";
+import { PlayerManager } from "../util/PlayerManager";
 import { GameStart } from "./TitleEvent";
 import { createPlayingState } from "./server/ServerState";
 
@@ -97,19 +97,22 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
     }),
     ReleasePiece.receive(server, data => {
       const { playerId, pieceIndex, point } = data;
+      const player = playerManager.get(playerId);
       // ゲームに参加していないプレイヤー
-      if (!playerManager.has(playerId)) return;
+      if (player == null) return;
       const piece = state.pieces[pieceIndex];
       // ハマっている or 親がいる
       if (piece.fitted || piece.parentId != null) return;
       // そのプレイヤーが持っていないピース
-      if (holders.get(playerId)?.pieceIndex !== pieceIndex) return;
+      if (holders.get(player.id)?.pieceIndex !== pieceIndex) return;
 
       piece.pos = point;
-      state.deleteHolder(playerId);
       if (!state.checkAndDoFitAndConnect(data.pieceIndex)) {
+        player.score += 1;
+        playerManager.updateScore();
         server.broadcast(data);
       }
+      state.deleteHolder(player.id);
     }),
     // TODO: ホストがピースを[指定して/全て]放す機能は未実装
     ForceReleasePiece.receive(server, data => {

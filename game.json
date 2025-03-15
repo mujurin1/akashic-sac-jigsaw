@@ -256,24 +256,9 @@
 			"path": "script/event/TitleEvent.js",
 			"global": true
 		},
-		"createButton": {
-			"type": "script",
-			"path": "script/util/createButton.js",
-			"global": true
-		},
 		"readAssets": {
 			"type": "script",
 			"path": "script/util/readAssets.js",
-			"global": true
-		},
-		"Slider": {
-			"type": "script",
-			"path": "script/util/Slider.js",
-			"global": true
-		},
-		"timeFlowController": {
-			"type": "script",
-			"path": "script/util/timeFlowController.js",
 			"global": true
 		},
 		"main": {
@@ -301,24 +286,9 @@
 			"path": "script/page/Playing/Piece.js",
 			"global": true
 		},
-		"Playing": {
-			"type": "script",
-			"path": "script/page/Playing/Playing.js",
-			"global": true
-		},
-		"share": {
-			"type": "script",
-			"path": "script/page/share.js",
-			"global": true
-		},
 		"Title": {
 			"type": "script",
 			"path": "script/page/Title/Title.js",
-			"global": true
-		},
-		"server": {
-			"type": "script",
-			"path": "script/server.js",
 			"global": true
 		},
 		"createPieces": {
@@ -326,49 +296,9 @@
 			"path": "script/util/createPieces.js",
 			"global": true
 		},
-		"CustomSprite": {
-			"type": "script",
-			"path": "script/util/CustomSprite.js",
-			"global": true
-		},
-		"Pad": {
-			"type": "script",
-			"path": "script/util/Pad.js",
-			"global": true
-		},
-		"PieMenu": {
-			"type": "script",
-			"path": "script/util/PieMenu.js",
-			"global": true
-		},
-		"pieceUtil": {
-			"type": "script",
-			"path": "script/page/Playing/pieceUtil.js",
-			"global": true
-		},
-		"index": {
-			"type": "script",
-			"path": "script/util/StateMachine/index.js",
-			"global": true
-		},
-		"types": {
-			"type": "script",
-			"path": "script/util/StateMachine/types.js",
-			"global": true
-		},
 		"server_client": {
 			"type": "script",
 			"path": "script/server_client.js",
-			"global": true
-		},
-		"func": {
-			"type": "script",
-			"path": "script/event/func.js",
-			"global": true
-		},
-		"checkAndDoFitAndConnect": {
-			"type": "script",
-			"path": "script/event/func/checkAndDoFitAndConnect.js",
 			"global": true
 		},
 		"ServerState": {
@@ -384,6 +314,56 @@
 		"FitAndConnectCalc": {
 			"type": "script",
 			"path": "script/event/server/FitAndConnectCalc.js",
+			"global": true
+		},
+		"createButton": {
+			"type": "script",
+			"path": "script/common/createButton.js",
+			"global": true
+		},
+		"CustomSprite": {
+			"type": "script",
+			"path": "script/common/CustomSprite.js",
+			"global": true
+		},
+		"func": {
+			"type": "script",
+			"path": "script/common/func.js",
+			"global": true
+		},
+		"Pad": {
+			"type": "script",
+			"path": "script/common/Pad.js",
+			"global": true
+		},
+		"PieMenu": {
+			"type": "script",
+			"path": "script/common/PieMenu.js",
+			"global": true
+		},
+		"Slider": {
+			"type": "script",
+			"path": "script/common/Slider.js",
+			"global": true
+		},
+		"StateMachine": {
+			"type": "script",
+			"path": "script/common/StateMachine/StateMachine.js",
+			"global": true
+		},
+		"types": {
+			"type": "script",
+			"path": "script/common/StateMachine/types.js",
+			"global": true
+		},
+		"timeFlowController": {
+			"type": "script",
+			"path": "script/common/timeFlowController.js",
+			"global": true
+		},
+		"GameState": {
+			"type": "script",
+			"path": "script/util/GameState.js",
 			"global": true
 		}
 	}

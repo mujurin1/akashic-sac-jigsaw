@@ -1,9 +1,9 @@
 import { resolvePlayerInfo } from "@akashic-extension/resolve-player-info";
 import { SacClient, SacServer } from "akashic-sac";
-import { PlayerManager } from "./common/PlayerManager";
 import { JoinPlayer } from "./event/Events";
 import { serverTitle } from "./event/TitleEvent";
 import { Title } from "./page/Title/Title";
+import { PlayerManager } from "./util/PlayerManager";
 
 export function serverStart(server: SacServer) {
   const { serverDI } = g.game.serverEnv;

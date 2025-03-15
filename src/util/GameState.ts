@@ -103,7 +103,7 @@ function lineupPiece(
       count.h -= 1;
       if (count.h === -1) {
         dir = "right";
-        count = { w: 0, h: 0 };
+        count.w = 0; count.h = 0;
         if (i >= pieceCount) break;
         lineup.w += 2;
         lineup.h += 2;

@@ -39,14 +39,14 @@ export function createCheckAndDoFitAndConnect(
       const [parent, child] = toParentChild(piece, pair);
       normalizeConnectPieceAll(parent, child);
 
-      server.broadcast(new ConnectPiece(parent.index, child.index));
+      server.broadcast(new ConnectPiece(parent.index, child.index), piece.holderId);
       return true;
     }
 
     // ピースがハマるかチェックする
     if (checkFitPiece(piece)) {
       piece.fitted = true;
-      server.broadcast(new FitPiece(piece.index));
+      server.broadcast(new FitPiece(piece.index), piece.holderId);
       return true;
     }
 
@@ -230,5 +230,4 @@ export function createCheckAndDoFitAndConnect(
       y: coordB.y - coordA.y,
     };
   }
-
 }

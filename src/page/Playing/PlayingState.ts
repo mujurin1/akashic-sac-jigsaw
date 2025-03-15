@@ -1,11 +1,11 @@
 import { Label } from "@akashic-extension/akashic-label";
 import { CamerableE, createFont, SacClient } from "akashic-sac";
-import { PlayerManager } from "../../common/PlayerManager";
 import { ConnectPiece, FitPiece, ForceReleasePiece, HoldPiece, MovePiece, ReleasePiece } from "../../event/PlayingEvent";
 import { GameStart } from "../../event/TitleEvent";
 import { sendJoin } from "../../server_client";
 import { createPieces } from "../../util/createPieces";
 import { createGameState, GameState } from "../../util/GameState";
+import { Player, PlayerManager } from "../../util/PlayerManager";
 import { PreviewInfo } from "../../util/readAssets";
 import { InputSystemControl, inputSystemControl } from "./InputSystem/InputSystem";
 import { Piece } from "./Piece";
@@ -70,26 +70,28 @@ export interface ClientPlayingState {
 
   pieceOperatorControl: InputSystemControl;
 
-  /**
-   * 自分が掴んでいるピースの情報
-   */
+  /** 自分が掴んでいるピースの情報 */
   holdState: {
     piece: Piece;
     /** ピースを掴んだときのピース座標との誤差 (ピースエリア座標) */
     offset: g.CommonOffset;
   } | undefined;
+  /** 累計スコア */
+  totalScore: number;
+  /** ゲーム終了時刻 */
   finishTime: number | undefined;
 }
 
 export async function Playing(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]) {
   const unlockEvent = client.lockEvent();
   const state = await createPlayingState(client, gameStart, previewsInfo);
+  const playerManager = client.env.clientDI.get(PlayerManager);
 
   // TODO: client.removeEventSets(eventKeys);
   const eventKeys = [
     HoldPiece.receive(client, ({ playerId, pieceIndex }) => {
-      if (playerId == null || playerId === g.game.selfId) return;
       // ピースを他人が掴んだ
+      if (playerId == null || playerId === g.game.selfId) return;
 
       const piece = state.pieces[pieceIndex];
       Piece.hold(piece, playerId);
@@ -100,8 +102,8 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
     }),
     MovePiece.receive(client, ({ playerId, pieceIndex, point }) => {
       if (g.game.isSkipping) return;
-      if (playerId == null || playerId === g.game.selfId) return;
       // ピースを他人が動かした
+      if (playerId == null || playerId === g.game.selfId) return;
 
       const piece = state.pieces[pieceIndex];
       piece.moveTo(point.x, point.y);
@@ -128,18 +130,28 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
     FitPiece.receive(client, ({ playerId, pieceIndex }) => {
       const piece = state.pieces[pieceIndex];
       Piece.fit(piece);
+      updateScore(playerId!);
     }),
     ConnectPiece.receive(client, ({ playerId, parentIndex, childIndex }) => {
       const parent = state.pieces[parentIndex];
       const child = state.pieces[childIndex];
       Piece.connect(parent, child, gameStart);
-      if (g.game.selfId === playerId)
-        parent.parent.append(parent);
+      if (g.game.selfId === playerId) parent.parent.append(parent);
+      updateScore(playerId!);
     }),
   ];
 
   // アンロックは一番最後
   unlockEvent();
+
+  function updateScore(playerId: string) {
+    const player = playerManager.get(playerId);
+    if (player == null) return;
+    state.totalScore += 1;
+    player.score += 1;
+    playerManager.updateScore();
+    // console.log(playerManager.players.map(p => `R:${p.rank}  S:${p.score}  ${p.id}`));
+  }
 }
 
 
@@ -239,6 +251,8 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
 
     pieceOperatorControl: null!,
     holdState: undefined,
+
+    totalScore: 0,
     finishTime: undefined,
   };
 
@@ -246,13 +260,12 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
   state.pieceOperatorControl = inputSystemControl(state);
 
   const parts = createParts(state);
+  setPartsEvent(state, parts);
 
   return state;
 }
 
-/**
- * プレビューやランキングなどのパーツを作る
- */
+/** プレビューやランキングなどのパーツを作る */
 function createParts(state: ClientPlayingState) {
   const { client, playArea: { camerable }, ui } = state;
   const { scene } = client.env;
@@ -323,9 +336,9 @@ function createParts(state: ClientPlayingState) {
     fitCount: new Label({
       scene, parent: infoPanel,
       font: textFont, text: "1000/1000",
-      textAlign: "center",
+      textAlign: "right",
       width: 180,
-      x: 120, y: 60,
+      x: 100, y: 60,
     }),
     time: new Label({
       scene, parent: infoPanel,
@@ -334,15 +347,145 @@ function createParts(state: ClientPlayingState) {
       width: 280,
       x: 0, y: 100,
     }),
-    players: [0, 1, 2, 3, 4].map(i => new Label({
-      scene, parent: infoPanel,
-      font: textFont, text: `GUEST00${i}    0`,
-      // textAlign: "right",
-      width: 280,
-      x: 10, y: 150 + i * 40,
-    })),
+    players: [0, 1, 2, 3, 4].map(i => {
+      const y = 150 + i * 40;
+      return [
+        new Label({
+          scene, parent: infoPanel,
+          font: textFont, text: `GUEST00${i}`,
+          textAlign: "left",
+          lineBreak: false,
+          width: 200,
+          x: 10, y,
+        }),
+        new Label({
+          scene, parent: infoPanel,
+          font: textFont, text: `2000`,
+          textAlign: "right",
+          width: 80,
+          x: 210, y,
+        }),
+      ] as const;
+    }),
   } as const;
   //#endregion 右上のやつ
 
-  return { infoPanel };
+  return { infoPanel, infoPart };
+}
+
+/**
+ * プレビューやランキングなどの更新
+ * @returns 終了後の削除関数
+ */
+function setPartsEvent(
+  state: ClientPlayingState,
+  { infoPanel, infoPart }: ReturnType<typeof createParts>,
+) {
+  const { clientDI, scene } = state.client.env;
+  const playerManager = clientDI.get(PlayerManager);
+
+  let counter = g.game.fps;
+  let lastUpdatedPiece = -1;
+  scene.onUpdate.add(update);
+
+  // 通常は毎秒/スキップ中は5分毎
+  const updateCountNormal = g.game.fps;
+  const updateCountSkipping = g.game.fps * 300;
+
+  return () => {
+    scene.onUpdate.remove(update);
+  };
+
+  function update() {
+    if (!infoPanel.visible()) return;
+
+    counter += 1;
+    const updateCount = g.game.isSkipping ? updateCountSkipping : updateCountNormal;
+    if (counter < updateCount) return;
+    counter = 0;
+
+    // 累計スコアが更新された時のみ更新
+    if (lastUpdatedPiece !== state.pieces.length) {
+      lastUpdatedPiece = state.totalScore;
+      updateScore();
+      updatePlayer();
+    }
+    updateTime();
+  }
+
+  /** 完成率/ピース数表記 */
+  function updateScore() {
+    const per = Math.round(state.totalScore / state.pieces.length);
+    infoPart.percent.text = `${per}%`;
+    infoPart.percent.invalidate();
+
+    infoPart.fitCount.text = `${state.totalScore}/${state.pieces.length}`;
+    infoPart.fitCount.invalidate();
+  }
+  /** 時刻 */
+  function updateTime() {
+    infoPart.time.text = createElapsedTimeText(state.gameState.startTime);
+    infoPart.time.invalidate();
+  }
+  /** プレイヤー */
+  function updatePlayer() {
+    let players: Player[];
+    if (playerManager.players.length <= 5) {
+      players = playerManager.players;
+    } else {
+      players = playerManager.players.slice(0, 5);
+      if (
+        players.every(p => p.id !== g.game.selfId) &&
+        playerManager.has(g.game.selfId)
+      ) {
+        players[4] = playerManager.get(g.game.selfId)!;
+      }
+    }
+
+    // プレイヤー毎に予め名前テキストを作りすげ替えると効率が上がる
+    // 便利に作るにはキャッシュ強化版Labelを作ると良いが面倒なので‥
+    for (let i = 0; i < players.length; i++) {
+      const p = players[i];
+      const isSelf = p.id === g.game.selfId;
+      // const color = isSelf ? "#7345ff" : "black";
+      const color = isSelf ? "blue" : "black";
+      const [name, score] = infoPart.players[i];
+      if (name.text != p.name) {
+        name.text = p.name;
+        name.textColor = color;
+        name.invalidate();
+      }
+      // if (score.text != p.score as unknown as string) {
+      score.text = p.score + "";
+      score.textColor = color;
+      score.invalidate();
+      // }
+    }
+  }
+}
+
+const inv3600 = 1 / 3600;
+const inv60 = 1 / 60;
+
+/**
+ * `startTime`から現在時刻までの経過時間をテキストで返す
+ * @param startTime 開始時刻
+ */
+function createElapsedTimeText(startTime: number): string {
+  // scene.local が `interpolate-local` のため正確でないことがある
+  // 最後に受信したイベント以降はローカルの経過tick数で計算されるため
+  // (新しくイベントを受信すれば正しい時刻になる)
+  let time = Math.floor((g.game.getCurrentTime() - startTime) / 1000);
+  // const hour = Math.floor(time / 3600);
+  // const minute = Math.floor(time / 60) % 60;
+  // const second = time % 60;
+  const hour = (time * inv3600) | 0;
+  time -= hour * 3600;  // 残り秒数から時間分を差し引く
+  const minute = (time * inv60) | 0;
+  const second = time - minute * 60;
+
+  if (hour === 0) {
+    return `${minute}分${second}秒`;
+  }
+  return `${hour}時${minute}分${second}秒`;
 }

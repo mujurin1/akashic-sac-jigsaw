@@ -1,11 +1,11 @@
 import { Label } from "@akashic-extension/akashic-label";
 import { SacClient, createFont } from "akashic-sac";
-import { PlayerManager } from "../../common/PlayerManager";
 import { Slider } from "../../common/Slider";
 import { createButton } from "../../common/createButton";
 import { timeFlowController } from "../../common/timeFlowController";
 import { ChangeLevel, ChangePuzzle, GameStart } from "../../event/TitleEvent";
 import { sendJoin } from "../../server_client";
+import { PlayerManager } from "../../util/PlayerManager";
 import { readAssets } from "../../util/readAssets";
 import { Playing } from "../Playing/PlayingState";
 
@@ -93,7 +93,7 @@ function createUi(state: TitleState) {
   });
 
   joinBtn.onPointDown.add(sendJoin);
-  const removePmKey = playerManager.onUpdate.on(({ id, realName }) => {
+  const removePmKey = playerManager.onJoined.on(({ id, realName }) => {
     if (id === g.game.selfId) {
       if (realName) {
         joinBtn.destroy();
@@ -227,7 +227,7 @@ function createUi(state: TitleState) {
   const eventKeys: number[] = [
     GameStart.receive(client, data => {
       client.removeEventSets(eventKeys);
-      playerManager.onUpdate.off(removePmKey);
+      playerManager.onJoined.off(removePmKey);
 
       const children = [...scene.children];
       for (const child of children) {
