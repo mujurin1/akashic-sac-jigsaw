@@ -1,6 +1,6 @@
 import { HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
 import { Piece } from "../Piece";
-import { PlayingState } from "../Playing";
+import { ClientPlayingState } from "../PlayingState";
 import { MobileInputSystem } from "./MobileInputSystem";
 import { PcInputSystem } from "./PcInputSystem";
 
@@ -18,7 +18,7 @@ export interface InputSystemControl {
 /**
  * デバイス毎の操作方法の管理を行う
  */
-export function inputSystemControl(state: PlayingState): InputSystemControl {
+export function inputSystemControl(state: ClientPlayingState): InputSystemControl {
   const { client, playArea: { camerable } } = state;
 
   const sendMoveCount = 5;
@@ -156,7 +156,7 @@ export interface InputSystem {
  * `InputSystem`側でピース領域スケールへ変換する
  */
 export interface InputSystemState {
-  readonly playingState: PlayingState;
+  readonly playingState: ClientPlayingState;
 
   /**
    * 指定座標に存在するピースを持つ

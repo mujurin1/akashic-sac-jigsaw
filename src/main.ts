@@ -1,6 +1,5 @@
 import { createFont, DragDrop, fileToImageDataUrl, imageDataUtil, SacClient, SacEvent, sacInitialize, SacInitializedValue, SacServer, SacSnapshotSaveData, ShareBigText } from "akashic-sac";
-import { clientStart } from "./page/share";
-import { serverStart } from "./server";
+import { clientStart, serverStart } from "./server_client";
 
 export = (gameMainParam: g.GameMainParameterObject) => {
   sacInitialize({

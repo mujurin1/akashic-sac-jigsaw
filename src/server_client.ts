@@ -1,8 +1,24 @@
 import { resolvePlayerInfo } from "@akashic-extension/resolve-player-info";
-import { SacClient } from "akashic-sac";
-import { JoinPlayer } from "../event/Events";
-import { PlayerManager } from "../util/PlayerManager";
-import { Title } from "./Title/Title";
+import { SacClient, SacServer } from "akashic-sac";
+import { PlayerManager } from "./common/PlayerManager";
+import { JoinPlayer } from "./event/Events";
+import { serverTitle } from "./event/TitleEvent";
+import { Title } from "./page/Title/Title";
+
+export function serverStart(server: SacServer) {
+  const { serverDI } = g.game.serverEnv;
+  const playerManager = serverDI.get(PlayerManager);
+
+  JoinPlayer.receive(server, data => {
+    if (data.playerId == null) return;
+
+    playerManager.upsert(data.playerId, data.name, data.realName);
+    server.broadcast(data);
+  });
+
+  serverTitle(server);
+}
+
 
 export function clientStart(client: SacClient) {
   const { clientDI } = client.env;

@@ -355,6 +355,36 @@
 			"type": "script",
 			"path": "script/util/StateMachine/types.js",
 			"global": true
+		},
+		"server_client": {
+			"type": "script",
+			"path": "script/server_client.js",
+			"global": true
+		},
+		"func": {
+			"type": "script",
+			"path": "script/event/func.js",
+			"global": true
+		},
+		"checkAndDoFitAndConnect": {
+			"type": "script",
+			"path": "script/event/func/checkAndDoFitAndConnect.js",
+			"global": true
+		},
+		"ServerState": {
+			"type": "script",
+			"path": "script/event/server/ServerState.js",
+			"global": true
+		},
+		"PlayingState": {
+			"type": "script",
+			"path": "script/page/Playing/PlayingState.js",
+			"global": true
+		},
+		"FitAndConnectCalc": {
+			"type": "script",
+			"path": "script/event/server/FitAndConnectCalc.js",
+			"global": true
 		}
 	}
 }

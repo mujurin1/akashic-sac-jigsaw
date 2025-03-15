@@ -1,5 +1,5 @@
 import { SacEvent } from "akashic-sac";
-import { GameStart } from "../../event/TitleEvent";
+import { GameStart } from "../event/TitleEvent";
 
 /**
  * プレビューサイズ基準でのピースを動かせる領域のサイズ\
@@ -121,6 +121,14 @@ function lineupPiece(
   return [positions, { width: lineup.w, height: lineup.h }];
 }
 
+export type Dir = "top" | "left" | "right" | "bottom";
+export const Dirs = ["top", "left", "right", "bottom"] as const;
+export const DirR = {
+  top: "bottom",
+  bottom: "top",
+  left: "right",
+  right: "left",
+} as const satisfies Record<Dir, Dir>;
 
 /**
  * ピースの正解座標を計算する\

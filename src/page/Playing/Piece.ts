@@ -1,7 +1,7 @@
+import { CustomSprite } from "../../common/CustomSprite";
 import { GameStart } from "../../event/TitleEvent";
-import { CustomSprite } from "../../util/CustomSprite";
-import { calcAnswerXY } from "./pieceUtil";
-import { PlayingState } from "./Playing";
+import { calcAnswerXY } from "../../util/GameState";
+import { ClientPlayingState } from "./PlayingState";
 
 export interface Piece extends CustomSprite {
   tag: PieceTag;
@@ -18,7 +18,7 @@ export interface PieceTag {
 }
 
 export const Piece = {
-  _state: null! as PlayingState,
+  _state: null! as ClientPlayingState,
   _pieceParent: null! as g.E,
 
   /**
@@ -93,7 +93,7 @@ export const Piece = {
   /**
    * ピースの親要素に必要な設定を行う
    */
-  pieceParentSetting(state: PlayingState) {
+  pieceParentSetting(state: ClientPlayingState) {
     Piece._state = state;
     Piece._pieceParent = Piece._state.playArea.pieceParent;
   },

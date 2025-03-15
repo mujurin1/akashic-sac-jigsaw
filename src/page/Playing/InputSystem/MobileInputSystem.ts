@@ -1,6 +1,6 @@
-import { createPad, Pad } from "../../../util/Pad";
-import { pieMenuBuilder } from "../../../util/PieMenu";
-import { PlayingState } from "../Playing";
+import { createPad, Pad } from "../../../common/Pad";
+import { pieMenuBuilder } from "../../../common/PieMenu";
+import { ClientPlayingState } from "../PlayingState";
 import { InputSystem, InputSystemState } from "./InputSystem";
 
 export function MobileInputSystem(state: InputSystemState): InputSystem {
@@ -204,7 +204,7 @@ function createUi(state: InputSystemState) {
   }
 }
 
-function setCursorColor(pad: Pad, playingState: PlayingState) {
+function setCursorColor(pad: Pad, playingState: ClientPlayingState) {
   pad.cursor.cssColor =
     playingState.holdState != null
       ? "rgba(255,0,0,0.4)"

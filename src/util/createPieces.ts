@@ -1,7 +1,7 @@
 import { imageDataUtil } from "akashic-sac";
+import { CustomSprite } from "../common/CustomSprite";
 import { Piece } from "../page/Playing/Piece";
-import { GameState } from "../page/Playing/pieceUtil";
-import { CustomSprite } from "./CustomSprite";
+import { GameState } from "./GameState";
 
 /**
  * ピース枠の仕様

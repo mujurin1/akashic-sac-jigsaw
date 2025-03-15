@@ -1,13 +1,13 @@
 import { Label } from "@akashic-extension/akashic-label";
 import { SacClient, createFont } from "akashic-sac";
+import { PlayerManager } from "../../common/PlayerManager";
+import { Slider } from "../../common/Slider";
+import { createButton } from "../../common/createButton";
+import { timeFlowController } from "../../common/timeFlowController";
 import { ChangeLevel, ChangePuzzle, GameStart } from "../../event/TitleEvent";
-import { PlayerManager } from "../../util/PlayerManager";
-import { Slider } from "../../util/Slider";
-import { createButton } from "../../util/createButton";
+import { sendJoin } from "../../server_client";
 import { readAssets } from "../../util/readAssets";
-import { timeFlowController } from "../../util/timeFlowController";
-import { Playing } from "../Playing/Playing";
-import { sendJoin } from "../share";
+import { Playing } from "../Playing/PlayingState";
 
 interface TitleState {
   client: SacClient;
@@ -178,7 +178,6 @@ function createUi(state: TitleState) {
       client.sendEvent(new ChangeLevel(newLevel));
     });
 
-    let flag = false;
     levelSlider.onValueChange.add(value => {
       const newLevel = Math.round(value);
       if (newLevel === state.level) return;
@@ -186,12 +185,11 @@ function createUi(state: TitleState) {
       setChangeLevel(newLevel);
       sendChangeLevel.do(newLevel);
 
-      if (!flag && value === 100) {
-        flag = true;
-        setTimeout(() => {
-          levelSlider.setOverLimitPer(1.3);
-        }, 1000);
-      }
+      // if (!flag && value === 100) {
+      //   setTimeout(() => {
+      //     levelSlider.setOverLimitPer(1.3);
+      //   }, 1000);
+      // }
     });
     //#endregion レベル変更
   }

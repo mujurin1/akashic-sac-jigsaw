@@ -1,16 +1,16 @@
 import { Label } from "@akashic-extension/akashic-label";
 import { CamerableE, createFont, SacClient } from "akashic-sac";
+import { PlayerManager } from "../../common/PlayerManager";
 import { ConnectPiece, FitPiece, ForceReleasePiece, HoldPiece, MovePiece, ReleasePiece } from "../../event/PlayingEvent";
 import { GameStart } from "../../event/TitleEvent";
-import { PlayerManager } from "../../util/PlayerManager";
+import { sendJoin } from "../../server_client";
 import { createPieces } from "../../util/createPieces";
+import { createGameState, GameState } from "../../util/GameState";
 import { PreviewInfo } from "../../util/readAssets";
-import { sendJoin } from "../share";
 import { InputSystemControl, inputSystemControl } from "./InputSystem/InputSystem";
 import { Piece } from "./Piece";
-import { createGameState, GameState } from "./pieceUtil";
 
-export interface PlayingState {
+export interface ClientPlayingState {
   readonly client: SacClient;
   readonly gameState: GameState;
   /**
@@ -143,7 +143,7 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
 }
 
 
-async function createPlayingState(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]): Promise<PlayingState> {
+async function createPlayingState(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]): Promise<ClientPlayingState> {
   const { scene, clientDI } = client.env;
   const playerManager = clientDI.get(PlayerManager);
   const gameState = createGameState(gameStart);
@@ -203,7 +203,7 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
   const CAMERABLE_W_HALF = playAreaCamera.width / 2;
   const CAMERABLE_H_HALF = playAreaCamera.height / 2;
 
-  const state: PlayingState = {
+  const state: ClientPlayingState = {
     pieces: piecesResult.pieces,
     client,
     gameState,
@@ -253,7 +253,7 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
 /**
  * プレビューやランキングなどのパーツを作る
  */
-function createParts(state: PlayingState) {
+function createParts(state: ClientPlayingState) {
   const { client, playArea: { camerable }, ui } = state;
   const { scene } = client.env;
   const font = createFont({ size: 50 });

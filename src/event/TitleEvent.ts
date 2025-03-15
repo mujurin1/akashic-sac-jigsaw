@@ -29,9 +29,6 @@ export class GameStart extends SacEvent {
   ) { super(); }
 }
 
-
-
-
 export function serverTitle(server: SacServer): void {
   const previewInfo = readAssets(server.env.scene);
   const puzzleMaxIndex = previewInfo.length - 1;
