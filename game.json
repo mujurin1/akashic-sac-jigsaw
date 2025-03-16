@@ -190,10 +190,6 @@
 			"width": 1920,
 			"height": 1280
 		},
-		"assets/!.txt": {
-			"type": "text",
-			"path": "assets/!.txt"
-		},
 		"ico_ban": {
 			"type": "image",
 			"path": "image/ico_ban.png",
@@ -364,6 +360,21 @@
 		"GameState": {
 			"type": "script",
 			"path": "script/util/GameState.js",
+			"global": true
+		},
+		"createUi": {
+			"type": "script",
+			"path": "script/page/Playing/createUi.js",
+			"global": true
+		},
+		"PlayingUi": {
+			"type": "script",
+			"path": "script/page/Playing/PlayingUi.js",
+			"global": true
+		},
+		"type": {
+			"type": "script",
+			"path": "script/common/type.js",
 			"global": true
 		}
 	}

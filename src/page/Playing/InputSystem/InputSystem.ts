@@ -1,6 +1,6 @@
 import { HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
 import { Piece } from "../Piece";
-import { ClientPlayingState } from "../PlayingState";
+import { BACKGROUND_COLOR, ClientPlayingState } from "../PlayingState";
 import { MobileInputSystem } from "./MobileInputSystem";
 import { PcInputSystem } from "./PcInputSystem";
 
@@ -19,7 +19,8 @@ export interface InputSystemControl {
  * デバイス毎の操作方法の管理を行う
  */
 export function inputSystemControl(state: ClientPlayingState): InputSystemControl {
-  const { client, playArea: { camerable } } = state;
+  const { client, playArea, playUi } = state;
+  const { camerable } = playArea;
 
   const sendMoveCount = 5;
   let sendMoveCounter = 0;
@@ -35,10 +36,19 @@ export function inputSystemControl(state: ClientPlayingState): InputSystemContro
 
     toggle: {
       device: () => control.toggle(),
-      info: () => { },
+      info: () => {
+        if (playUi.info.panel.visible()) {
+          playUi.info.panel.hide();
+        } else {
+          playUi.info.panel.show();
+        }
+      },
       preview: () => { },
       color: () => {
-        return "blue";
+        const nextColor = BACKGROUND_COLOR.getNext(playArea.bg.cssColor);
+        playArea.bg.cssColor = nextColor;
+        playArea.bg.modified();
+        return BACKGROUND_COLOR.nextIconBg[nextColor];
       },
       visible: () => { },
       ranking: () => { },
@@ -57,10 +67,10 @@ export function inputSystemControl(state: ClientPlayingState): InputSystemContro
       if (type == null) type = control.currentType === "mobile" ? "pc" : "mobile";
       if (type === control.currentType) return;
       inputSystemState.release();
-      inputSystems[control.currentType].toggleFeature(false);
+      inputSystems[control.currentType].disable();
 
       control.currentType = type;
-      inputSystems[type].toggleFeature(true);
+      inputSystems[type].enable(createNewUiState());
     },
     destroy() {
       for (const type of InputSystemType) {
@@ -68,8 +78,8 @@ export function inputSystemControl(state: ClientPlayingState): InputSystemContro
       }
     },
   };
+  inputSystems.pc.enable(createNewUiState());
 
-  control.current.toggleFeature(true);
 
   return control;
 
@@ -129,15 +139,29 @@ export function inputSystemControl(state: ClientPlayingState): InputSystemContro
     camerable.scale(per);
     camerable.modified();
   }
+
+  function createNewUiState(): NewUiState {
+    return {
+      nextBgColor: BACKGROUND_COLOR.nextIconBg[playArea.bg.cssColor],
+    };
+  }
+}
+
+interface NewUiState {
+  readonly nextBgColor: string;
 }
 
 
 export interface InputSystem {
   /**
-   * この操作モードが有効/無効になったことを伝える
-   * @param enable 
+   * このモードが無効になったことを伝える
    */
-  toggleFeature: (enable: boolean) => void;
+  disable: () => void;
+  /**
+   * このモードが有効になったことを伝える
+   * @param newUiState 新しいUIの状態
+   */
+  enable: (newUiState: NewUiState) => void;
   /**
    * 今持っているピースを強制的に放す
    */

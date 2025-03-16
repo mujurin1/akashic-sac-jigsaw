@@ -50,7 +50,7 @@ export class FitPiece extends SacEvent {
 }
 
 // MS * COUNT = ピースを保持出来る時間
-const PIECE_RELEASE_MS = 10_0000;
+const PIECE_RELEASE_MS = 10_000;
 const PIECE_RELEASE_COUNT = 3;
 
 export function serverPlaying(server: SacServer, gameStart: GameStart): void {

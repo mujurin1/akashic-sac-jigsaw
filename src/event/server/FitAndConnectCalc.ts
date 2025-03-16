@@ -13,7 +13,7 @@ type CheckAndDoFitAndConnect = (pieceIndex: number) => boolean;
 export function createCheckAndDoFitAndConnect(
   state: ServerPlayingState,
 ): CheckAndDoFitAndConnect {
-  const { gameState, server, } = state;
+  const { gameState, server } = state;
 
   const fitMargin = (gameState.pieceSize.width + gameState.pieceSize.height) / 8;
   const dirOffset = {

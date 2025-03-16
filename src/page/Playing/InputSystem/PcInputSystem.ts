@@ -6,7 +6,7 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
   const { camerable } = playArea;
   const { scene } = client.env;
 
-  const icons = createIcons(state);
+  const pcUi = createIcons(state);
 
   const moveCamera = (e: g.PointMoveEvent) => {
     if (playingState.holdState != null || e.target !== playArea.bg) return;
@@ -27,25 +27,25 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
   };
 
   const result: InputSystem = {
-    toggleFeature(enable) {
-      if (icons[0].visible() === enable) return;
-      if (enable) {
-        for (const icon of icons) icon.show();
-        scene.onPointMoveCapture.add(moveCamera);
-        scene.onPointDownCapture.add(pieceTouch);
-        scene.onPointMoveCapture.add(pieceMove);
-        scene.onPointUpCapture.add(pieceRelease);
-      } else {
-        for (const icon of icons) icon.hide();
-        scene.onPointMoveCapture.remove(moveCamera);
-        scene.onPointDownCapture.remove(pieceTouch);
-        scene.onPointMoveCapture.remove(pieceMove);
-        scene.onPointUpCapture.remove(pieceRelease);
-      }
+    disable: () => {
+      if (!pcUi.visible()) return;
+      pcUi.hide();
+      scene.onPointMoveCapture.remove(moveCamera);
+      scene.onPointDownCapture.remove(pieceTouch);
+      scene.onPointMoveCapture.remove(pieceMove);
+      scene.onPointUpCapture.remove(pieceRelease);
+    },
+    enable: (newUiState) => {
+      if (pcUi.visible()) return;
+      pcUi.show(newUiState.nextBgColor);
+      scene.onPointMoveCapture.add(moveCamera);
+      scene.onPointDownCapture.add(pieceTouch);
+      scene.onPointMoveCapture.add(pieceMove);
+      scene.onPointUpCapture.add(pieceRelease);
     },
     forceRelease() { },
     destroy() {
-      result.toggleFeature(false);
+      result.disable();
     },
   };
 
@@ -53,59 +53,72 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
 }
 
 function createIcons(state: InputSystemState) {
-  const { ui } = state.playingState;
+  const { client: { env: { scene } } } = state.playingState;
 
-  const deviceBtn = createIcon("ico_device", 0, 2);
-  const visibleBtn = createIcon("ico_visible", 1, 2);
-  const rankingBtn = createIcon("ico_ranking", 2, 2);
-  const infoBtn = createIcon("ico_info", 0, 1);
-  const previewBtn = createIcon("ico_preview", 1, 1);
-  const colorBtn = createIcon(undefined, 2, 1);
-
-  const icons = [deviceBtn, visibleBtn, rankingBtn, infoBtn, previewBtn, colorBtn] as const;
-
-  colorBtn.cssColor = "red";
-  colorBtn.modified();
-
-  deviceBtn.onPointDown.add(() => state.toggle.device());
-  visibleBtn.onPointDown.add(() => state.toggle.visible());
-  rankingBtn.onPointDown.add(() => state.toggle.ranking());
-  infoBtn.onPointDown.add(() => state.toggle.info());
-  previewBtn.onPointDown.add(() => state.toggle.preview());
-  colorBtn.onPointDown.add(() => {
-    colorBtn.cssColor = state.toggle.color();
-    colorBtn.modified();
+  const pcUiParent = new g.E({
+    scene, parent: state.playingState.display,
+    hidden: true,
   });
 
-  const moreBtn = createIcon("ico_more", 0, 0);
+  const pcUiParts = {
+    deviceBtn: createIcon("ico_device", [0, 2]),
+    visibleBtn: createIcon("ico_visible", [1, 2]),
+    rankingBtn: createIcon("ico_ranking", [2, 2]),
+    infoBtn: createIcon("ico_info", [0, 1]),
+    previewBtn: createIcon("ico_preview", [1, 1]),
+    colorBtn: createIcon(undefined, [2, 1]),
+  } as const;
+
+  pcUiParts.deviceBtn.onPointDown.add(() => state.toggle.device());
+  pcUiParts.visibleBtn.onPointDown.add(() => state.toggle.visible());
+  pcUiParts.rankingBtn.onPointDown.add(() => state.toggle.ranking());
+  pcUiParts.infoBtn.onPointDown.add(() => state.toggle.info());
+  pcUiParts.previewBtn.onPointDown.add(() => state.toggle.preview());
+  pcUiParts.colorBtn.onPointDown.add(() => {
+    pcUiParts.colorBtn.cssColor = state.toggle.color();
+    pcUiParts.colorBtn.modified();
+  });
+
+  const moreBtn = createIcon("ico_more", [0, 0]);
   moreBtn.opacity = 0.7;
   moreBtn.modified();
 
   moreBtn.onPointDown.add(() => {
-    if (icons[0].visible()) for (const icon of icons) icon.hide();
-    else for (const icon of icons) icon.show();
+    pcUiParent.hide();
+    pcUiParent.show();
   });
 
-  return [moreBtn, ...icons] as const;
+
+  return {
+    show: (nextBgColor: string) => {
+      pcUiParent.show();
+      pcUiParts.colorBtn.cssColor = nextBgColor;
+      pcUiParts.colorBtn.modified();
+    },
+    hide: () => {
+      pcUiParent.hide();
+    },
+    visible: () => pcUiParent.visible(),
+  };
+  // return [moreBtn, ...icons] as const;
 
   /**
-   * 
    * @param iconName アイコンの名前
-   * @param x 右からのインデックス
-   * @param y 下からのインデックス
+   * @param param1 右下から左上に向けての位置
+   * @returns 
    */
-  function createIcon(iconName: string | undefined, x: number, y: number): g.FilledRect {
+  function createIcon(iconName: string | undefined, [x, y]: [x: number, y: number]): g.FilledRect {
     const scene = g.game.env.scene;
     const baseX = g.game.width - (90 + 30);
     const baseY = 600;
 
     const back = new g.FilledRect({
-      scene, parent: ui,
-      cssColor: "rgba(255,255,255,0.3)",
+      scene, parent: pcUiParent,
+      cssColor: "rgba(255, 255, 255, 0.3)",
       width: 90, height: 90,
       x: baseX - 105 * x,
       y: baseY - 105 * y,
-      touchable: true, hidden: true,
+      touchable: true,
     });
 
     if (iconName != null) {

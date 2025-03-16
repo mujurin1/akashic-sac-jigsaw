@@ -1,4 +1,5 @@
 import { SacServer } from "akashic-sac";
+import { Mutable } from "../../common/type";
 import { GameState, createGameState } from "../../util/GameState";
 import { GameStart } from "../TitleEvent";
 import { createCheckAndDoFitAndConnect } from "./FitAndConnectCalc";
@@ -66,7 +67,7 @@ export function createPlayingState(
     deleteHolder,
     checkAndDoFitAndConnect: null!,
   };
-  (<any>state).checkAndDoFitAndConnect = createCheckAndDoFitAndConnect(state);
+  (<Mutable<ServerPlayingState>>state).checkAndDoFitAndConnect = createCheckAndDoFitAndConnect(state);
 
   return state;
 

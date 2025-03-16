@@ -9,30 +9,29 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
   const { camerable } = playArea;
   const { scene } = client.env;
 
-  const mobileUi = createUi(state);
+  const mobileUi = createMobileUi(state);
 
-  let enabled = false;
-  return { toggleFeature, forceRelease, destroy };
-
-  function toggleFeature(enable: boolean) {
-    if (enabled === enable) return;
-    enabled = enable;
-    if (enable) {
-      scene.onPointMoveCapture.add(moveCamera);
-      mobileUi.show();
-    } else {
+  const result: InputSystem = {
+    disable: () => {
+      if (!mobileUi.visible()) return;
       scene.onPointMoveCapture.remove(moveCamera);
       mobileUi.hide();
-    }
-  }
-  function forceRelease() {
-    mobileUi.pad.cursor.cssColor = "red";
-    mobileUi.pad.cursor.modified();
-  }
-  function destroy() {
-    toggleFeature(false);
-    mobileUi.destroy();
-  }
+    },
+    enable: (newUiState) => {
+      if (mobileUi.visible()) return;
+      scene.onPointMoveCapture.add(moveCamera);
+      mobileUi.show(newUiState.nextBgColor);
+    },
+    forceRelease: () => {
+      mobileUi.pad.cursor.cssColor = "red";
+      mobileUi.pad.cursor.modified();
+    },
+    destroy: () => {
+      result.disable();
+    },
+  };
+
+  return result;
 
   function moveCamera(e: g.PointMoveEvent) {
     if (e.target !== playArea.bg) return;
@@ -48,42 +47,47 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
   }
 }
 
-function createUi(state: InputSystemState) {
+function createMobileUi(state: InputSystemState) {
   const { playingState } = state;
-  const { client, playArea, ui } = playingState;
-  const { camerable } = playArea;
-  const { scene } = client.env;
+  const { client: { env: { scene } }, playArea: { camerable } } = playingState;
 
-  const holdPieceBtn = new g.FilledRect({
-    scene, parent: ui,
-    cssColor: "gray",
-    width: 190, height: 190,
-    x: g.game.width - (190 + 30), y: g.game.height - (190 + 30),
-    touchable: true, hidden: true,
-  });
-  const checkFitBtn = new g.FilledRect({
-    scene, parent: ui,
-    cssColor: "yellow",
-    width: 300, height: 100,
-    x: 950, y: 385,
-    touchable: true, hidden: true,
-  });
-  const zoomInBtn = new g.FilledRect({
-    scene, parent: ui,
-    cssColor: "#00F",
-    x: 950, y: 470,
-    width: 100, height: 100,
-    touchable: true, hidden: true,
-  });
-  const zoomOutBtn = new g.FilledRect({
-    scene, parent: ui,
-    cssColor: "#00F8",
-    x: 950, y: 590,
-    width: 100, height: 100,
-    touchable: true, hidden: true,
+  const mobileUiParent = new g.E({
+    scene, parent: playingState.display,
+    hidden: true,
   });
 
-  holdPieceBtn.onPointDown.add(() => {
+  const mobileUiParts = {
+    holdPieceBtn: new g.FilledRect({
+      scene, parent: mobileUiParent,
+      cssColor: "gray",
+      width: 190, height: 190,
+      x: g.game.width - (190 + 30), y: g.game.height - (190 + 30),
+      touchable: true,
+    }),
+    checkFitBtn: new g.FilledRect({
+      scene, parent: mobileUiParent,
+      cssColor: "yellow",
+      width: 300, height: 100,
+      x: 950, y: 385,
+      touchable: true,
+    }),
+    zoomInBtn: new g.FilledRect({
+      scene, parent: mobileUiParent,
+      cssColor: "#00F",
+      x: 950, y: 470,
+      width: 100, height: 100,
+      touchable: true,
+    }),
+    zoomOutBtn: new g.FilledRect({
+      scene, parent: mobileUiParent,
+      cssColor: "#00F8",
+      x: 950, y: 590,
+      width: 100, height: 100,
+      touchable: true,
+    }),
+  } as const;
+
+  mobileUiParts.holdPieceBtn.onPointDown.add(() => {
     if (playingState.holdState == null) {
       if (state.hold(pad.cursor.x, pad.cursor.y)) {
         pad.cursor.cssColor = "rgba(255,0,0,0.4)";
@@ -96,16 +100,16 @@ function createUi(state: InputSystemState) {
       }
     }
   });
-  checkFitBtn.onPointDown.add(() => {
+  mobileUiParts.checkFitBtn.onPointDown.add(() => {
     state.checkFit();
   });
-  zoomInBtn.onPointDown.add(() => {
+  mobileUiParts.zoomInBtn.onPointDown.add(() => {
     state.scale(0.9);
     if (playingState.holdState != null) {
       state.move(pad.cursor.x, pad.cursor.y);
     }
   });
-  zoomOutBtn.onPointDown.add(() => {
+  mobileUiParts.zoomOutBtn.onPointDown.add(() => {
     state.scale(1.1);
     if (playingState.holdState != null) {
       state.move(pad.cursor.x, pad.cursor.y);
@@ -113,7 +117,7 @@ function createUi(state: InputSystemState) {
   });
 
   const pad = createPad({
-    scene, parent: ui,
+    scene, parent: mobileUiParent,
     cursorArea: {
       left: 320,
       top: 180,
@@ -122,7 +126,6 @@ function createUi(state: InputSystemState) {
     },
     x: 40, y: g.game.height - (200 + 40),
     cursorSpeed: 17,
-    hidden: true,
   });
   pad.onMoving.add(({ padDir, moved, cursorRest }) => {
     if (pieMenu.entity.visible()) {
@@ -151,21 +154,22 @@ function createUi(state: InputSystemState) {
     .addIcon("ico_ranking", state.toggle.ranking)
     .addIcon("ico_device", state.toggle.device)
     .addIcon_Rect("color", "blue", e => {
-      const nextColor = state.toggle.color();
+      pieMenu.icons.color.cssColor = state.toggle.color();
+      pieMenu.icons.color.modified();
     })
     .build({
+      parent: mobileUiParent,
       x: g.game.width / 2,
       y: g.game.height / 2,
       hidden: true,
     });
 
-  ui.append(pieMenu.entity);
   const pieMenuToggle = new g.FilledRect({
-    scene, parent: ui,
+    scene, parent: mobileUiParent,
     cssColor: "yellow",
     width: 200, height: 100,
     x: 40, y: 300,
-    touchable: true, hidden: true,
+    touchable: true,
   });
   pieMenuToggle.onPointDown.add(() => {
     pieMenuVisible(!pieMenu.entity.visible());
@@ -186,22 +190,19 @@ function createUi(state: InputSystemState) {
   }
   //#endregion PieMenu
 
-  const showHideDestroyParts = [holdPieceBtn, checkFitBtn, zoomInBtn, zoomOutBtn, pieMenuToggle, pad] as const;
-
-  return { pad, show, hide, destroy };
-
-  function show() {
-    for (const part of showHideDestroyParts) part.show();
-  }
-  function hide() {
-    for (const part of showHideDestroyParts) part.hide();
-    pieMenu.entity.hide();
-    pad.cursorLock = false;
-  }
-  function destroy() {
-    for (const part of showHideDestroyParts) part.destroy();
-    pieMenu.entity.destroy();
-  }
+  return {
+    pad,
+    show: (nextBgColor: string) => {
+      mobileUiParent.show();
+      pieMenu.icons.color.cssColor = nextBgColor;
+      pieMenu.icons.color.modified();
+    },
+    hide: () => {
+      mobileUiParent.hide();
+      pieMenuVisible(false);
+    },
+    visible: () => mobileUiParent.visible(),
+  };
 }
 
 function setCursorColor(pad: Pad, playingState: ClientPlayingState) {
@@ -211,4 +212,5 @@ function setCursorColor(pad: Pad, playingState: ClientPlayingState) {
       : playingState.getPieceFromScreenPx(pad.cursor.x, pad.cursor.y, true) != null
         ? "red"
         : "yellow";
+  pad.cursor.modified();
 }

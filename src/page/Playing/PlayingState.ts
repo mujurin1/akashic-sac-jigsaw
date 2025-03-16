@@ -1,18 +1,42 @@
-import { Label } from "@akashic-extension/akashic-label";
-import { CamerableE, createFont, SacClient } from "akashic-sac";
+import { CamerableE, SacClient } from "akashic-sac";
+import { Mutable } from "../../common/type";
 import { ConnectPiece, FitPiece, ForceReleasePiece, HoldPiece, MovePiece, ReleasePiece } from "../../event/PlayingEvent";
 import { GameStart } from "../../event/TitleEvent";
-import { sendJoin } from "../../server_client";
 import { createPieces } from "../../util/createPieces";
 import { createGameState, GameState } from "../../util/GameState";
-import { Player, PlayerManager } from "../../util/PlayerManager";
+import { PlayerManager } from "../../util/PlayerManager";
 import { PreviewInfo } from "../../util/readAssets";
 import { InputSystemControl, inputSystemControl } from "./InputSystem/InputSystem";
 import { Piece } from "./Piece";
+import { createUi, PlayingUi as PlayUi, setPartsEvent } from "./PlayingUi";
+
+export const BACKGROUND_COLOR = (() => {
+  const colors = [
+    "#0087CC", "#A900CC", "#CC4300", "#22CC00",
+    "#3D738E", "#813D8E", "#8E583D", "#4A8E3D", "transparent",
+  ] as const;
+  const next = Object.fromEntries(
+    colors.map((c, i) => [c, colors[(i + 1) % colors.length]])
+  );
+
+  return {
+    colors,
+    next,
+    /** 次の背景色を表示するアイコン用. 透明を半透明で可視化する */
+    nextIconBg: { ...next, "#4A8E3D": "rgba(255, 255, 255, 0.5)" } as Record<string, string>,
+    getNext: (color: string) => next[color] ?? colors[0],
+  } as const;
+})();
 
 export interface ClientPlayingState {
   readonly client: SacClient;
   readonly gameState: GameState;
+
+  /**
+   * プレイ中の全エンティティの親
+   */
+  readonly display: g.E;
+  readonly playUi: PlayUi;
   /**
    * 階層
    * ```
@@ -43,7 +67,6 @@ export interface ClientPlayingState {
     /** ピースの親 */
     readonly pieceParent: g.E;
   };
-  readonly ui: g.E;
 
   /**
    * 元画像の左上位置のピースから順にインデックス付けられている\
@@ -155,7 +178,11 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
 }
 
 
-async function createPlayingState(client: SacClient, gameStart: GameStart, previewsInfo: PreviewInfo[]): Promise<ClientPlayingState> {
+async function createPlayingState(
+  client: SacClient,
+  gameStart: GameStart,
+  previewsInfo: PreviewInfo[],
+): Promise<ClientPlayingState> {
   const { scene, clientDI } = client.env;
   const playerManager = clientDI.get(PlayerManager);
   const gameState = createGameState(gameStart);
@@ -167,18 +194,20 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
   );
   const { preview } = piecesResult;
 
+  const display = new g.E({ scene, parent: scene });
+
   //#region Entity の作成
   const bg = new g.FilledRect({
-    scene, parent: scene,
-    cssColor: "#0087cc",
+    scene, parent: display,
+    cssColor: BACKGROUND_COLOR.colors[0],
     width: g.game.width, height: g.game.height,
     touchable: true,
   });
 
-  const playAreaCamera = new CamerableE({ scene, parent: scene });
+  const playAreaCamera = new CamerableE({ scene, parent: display });
   const pieceLimitArea = new g.FilledRect({
     scene, parent: playAreaCamera,
-    cssColor: "#f008",
+    cssColor: "#883f5f",
     width: gameState.movePieceArea.width,
     height: gameState.movePieceArea.height,
   });
@@ -219,6 +248,7 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
     pieces: piecesResult.pieces,
     client,
     gameState,
+    display,
     playArea: {
       bg,
       camerable: playAreaCamera,
@@ -228,7 +258,7 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
       boardPieceFrame,
       pieceParent,
     },
-    ui: new g.E({ scene, parent: scene }),
+    playUi: null!,
 
     isJoined: () => playerManager.has(g.game.selfId),
     toPieceArea: (x, y) => ({
@@ -256,236 +286,11 @@ async function createPlayingState(client: SacClient, gameStart: GameStart, previ
     finishTime: undefined,
   };
 
+  (<Mutable<ClientPlayingState>>state).playUi = createUi(state);
+  setPartsEvent(state);
+
   Piece.pieceParentSetting(state);
   state.pieceOperatorControl = inputSystemControl(state);
 
-  const parts = createParts(state);
-  setPartsEvent(state, parts);
-
   return state;
-}
-
-/** プレビューやランキングなどのパーツを作る */
-function createParts(state: ClientPlayingState) {
-  const { client, playArea: { camerable }, ui } = state;
-  const { scene } = client.env;
-  const font = createFont({ size: 50 });
-
-  /** 左上の仮UI */
-  {
-    const zoomIn = new g.Label({
-      scene, parent: ui, font, text: "In",
-      x: 10, y: 10, touchable: true,
-    });
-    const zoomOut = new g.Label({
-      scene, parent: ui, font, text: "Out",
-      x: 90, y: 10, touchable: true,
-    });
-    const join = new g.Label({
-      scene, parent: ui, font, text: "参加",
-      x: 210, y: 10, touchable: true,
-    });
-    const change = new g.Label({
-      scene, parent: ui, font, text: "変更",
-      x: 330, y: 10, touchable: true,
-    });
-    zoomIn.onPointDown.add(() => {
-      camerable.scale(camerable.scaleX * 0.9);
-      camerable.modified();
-    });
-    zoomOut.onPointDown.add(() => {
-      camerable.scale(camerable.scaleX * 1.1);
-      camerable.modified();
-    });
-    join.onPointDown.add(sendJoin);
-    change.onPointDown.add(() => state.pieceOperatorControl.toggle());
-
-    const { board } = state.playArea;
-    camerable.moveTo(
-      board.x + board.width / 2 + 500,
-      board.y + board.height / 2,
-    );
-    camerable.scale(3);
-    camerable.modified();
-  }
-
-  //#region 右上のやつ
-  const infoPanel = new g.FilledRect({
-    scene, parent: scene,
-    cssColor: "rgba(255,255,255,0.5)",
-    width: 300, height: 360,
-    x: 950, y: 10,
-  });
-  const textFont = createFont({ size: 30 });
-  const infoPart = {
-    title: new Label({
-      scene, parent: infoPanel,
-      font: createFont({ size: 40 }),
-      text: "タイトル",
-      textAlign: "center",
-      width: infoPanel.width,
-      x: 0, y: 10,
-    }),
-    percent: new Label({
-      scene, parent: infoPanel,
-      font: textFont, text: "100%",
-      textAlign: "right",
-      width: 100,
-      x: 0, y: 60,
-    }),
-    fitCount: new Label({
-      scene, parent: infoPanel,
-      font: textFont, text: "1000/1000",
-      textAlign: "right",
-      width: 180,
-      x: 100, y: 60,
-    }),
-    time: new Label({
-      scene, parent: infoPanel,
-      font: textFont, text: "5時55分55秒",
-      textAlign: "right",
-      width: 280,
-      x: 0, y: 100,
-    }),
-    players: [0, 1, 2, 3, 4].map(i => {
-      const y = 150 + i * 40;
-      return [
-        new Label({
-          scene, parent: infoPanel,
-          font: textFont, text: `GUEST00${i}`,
-          textAlign: "left",
-          lineBreak: false,
-          width: 200,
-          x: 10, y,
-        }),
-        new Label({
-          scene, parent: infoPanel,
-          font: textFont, text: `2000`,
-          textAlign: "right",
-          width: 80,
-          x: 210, y,
-        }),
-      ] as const;
-    }),
-  } as const;
-  //#endregion 右上のやつ
-
-  return { infoPanel, infoPart };
-}
-
-/**
- * プレビューやランキングなどの更新
- * @returns 終了後の削除関数
- */
-function setPartsEvent(
-  state: ClientPlayingState,
-  { infoPanel, infoPart }: ReturnType<typeof createParts>,
-) {
-  const { clientDI, scene } = state.client.env;
-  const playerManager = clientDI.get(PlayerManager);
-
-  let counter = g.game.fps;
-  let lastUpdatedPiece = -1;
-  scene.onUpdate.add(update);
-
-  // 通常は毎秒/スキップ中は5分毎
-  const updateCountNormal = g.game.fps;
-  const updateCountSkipping = g.game.fps * 300;
-
-  return () => {
-    scene.onUpdate.remove(update);
-  };
-
-  function update() {
-    if (!infoPanel.visible()) return;
-
-    counter += 1;
-    const updateCount = g.game.isSkipping ? updateCountSkipping : updateCountNormal;
-    if (counter < updateCount) return;
-    counter = 0;
-
-    // 累計スコアが更新された時のみ更新
-    if (lastUpdatedPiece !== state.pieces.length) {
-      lastUpdatedPiece = state.totalScore;
-      updateScore();
-      updatePlayer();
-    }
-    updateTime();
-  }
-
-  /** 完成率/ピース数表記 */
-  function updateScore() {
-    const per = Math.round(state.totalScore / state.pieces.length);
-    infoPart.percent.text = `${per}%`;
-    infoPart.percent.invalidate();
-
-    infoPart.fitCount.text = `${state.totalScore}/${state.pieces.length}`;
-    infoPart.fitCount.invalidate();
-  }
-  /** 時刻 */
-  function updateTime() {
-    infoPart.time.text = createElapsedTimeText(state.gameState.startTime);
-    infoPart.time.invalidate();
-  }
-  /** プレイヤー */
-  function updatePlayer() {
-    let players: Player[];
-    if (playerManager.players.length <= 5) {
-      players = playerManager.players;
-    } else {
-      players = playerManager.players.slice(0, 5);
-      if (
-        players.every(p => p.id !== g.game.selfId) &&
-        playerManager.has(g.game.selfId)
-      ) {
-        players[4] = playerManager.get(g.game.selfId)!;
-      }
-    }
-
-    // プレイヤー毎に予め名前テキストを作りすげ替えると効率が上がる
-    // 便利に作るにはキャッシュ強化版Labelを作ると良いが面倒なので‥
-    for (let i = 0; i < players.length; i++) {
-      const p = players[i];
-      const isSelf = p.id === g.game.selfId;
-      // const color = isSelf ? "#7345ff" : "black";
-      const color = isSelf ? "blue" : "black";
-      const [name, score] = infoPart.players[i];
-      if (name.text != p.name) {
-        name.text = p.name;
-        name.textColor = color;
-        name.invalidate();
-      }
-      // if (score.text != p.score as unknown as string) {
-      score.text = p.score + "";
-      score.textColor = color;
-      score.invalidate();
-      // }
-    }
-  }
-}
-
-const inv3600 = 1 / 3600;
-const inv60 = 1 / 60;
-
-/**
- * `startTime`から現在時刻までの経過時間をテキストで返す
- * @param startTime 開始時刻
- */
-function createElapsedTimeText(startTime: number): string {
-  // scene.local が `interpolate-local` のため正確でないことがある
-  // 最後に受信したイベント以降はローカルの経過tick数で計算されるため
-  // (新しくイベントを受信すれば正しい時刻になる)
-  let time = Math.floor((g.game.getCurrentTime() - startTime) / 1000);
-  // const hour = Math.floor(time / 3600);
-  // const minute = Math.floor(time / 60) % 60;
-  // const second = time % 60;
-  const hour = (time * inv3600) | 0;
-  time -= hour * 3600;  // 残り秒数から時間分を差し引く
-  const minute = (time * inv60) | 0;
-  const second = time - minute * 60;
-
-  if (hour === 0) {
-    return `${minute}分${second}秒`;
-  }
-  return `${hour}時${minute}分${second}秒`;
 }

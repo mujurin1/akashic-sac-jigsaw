@@ -1,5 +1,5 @@
 import { SacEvent, SacServer } from "akashic-sac";
-import { readAssets } from "../util/readAssets";
+import { JigsawAssets } from "../util/readAssets";
 import { serverPlaying } from "./PlayingEvent";
 
 export class ChangePuzzle extends SacEvent {
@@ -30,9 +30,7 @@ export class GameStart extends SacEvent {
 }
 
 export function serverTitle(server: SacServer): void {
-  const previewInfo = readAssets(server.env.scene);
-  const puzzleMaxIndex = previewInfo.length - 1;
-
+  const puzzleMaxIndex = JigsawAssets.length - 1;
 
   const eventKeys = [
     ChangePuzzle.receive(server, data => {
