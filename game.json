@@ -362,11 +362,6 @@
 			"path": "script/util/GameState.js",
 			"global": true
 		},
-		"createUi": {
-			"type": "script",
-			"path": "script/page/Playing/createUi.js",
-			"global": true
-		},
 		"PlayingUi": {
 			"type": "script",
 			"path": "script/page/Playing/PlayingUi.js",
@@ -375,6 +370,11 @@
 		"type": {
 			"type": "script",
 			"path": "script/common/type.js",
+			"global": true
+		},
+		"index": {
+			"type": "script",
+			"path": "script/util/StateMachine/index.js",
 			"global": true
 		}
 	}
