@@ -10,9 +10,9 @@ export function serverStart(server: SacServer) {
   const playerManager = serverDI.get(PlayerManager);
 
   JoinPlayer.receive(server, data => {
-    if (data.playerId == null) return;
+    if (data.pId == null) return;
 
-    playerManager.upsert(data.playerId, data.name, data.realName);
+    playerManager.upsert(data.pId, data.name, data.realName);
     server.broadcast(data);
   });
 
@@ -25,9 +25,9 @@ export function clientStart(client: SacClient) {
   const playerManager = clientDI.get(PlayerManager);
 
   JoinPlayer.receive(client, data => {
-    if (data.playerId == null) return;
+    if (data.pId == null) return;
 
-    playerManager.upsert(data.playerId, data.name, data.realName);
+    playerManager.upsert(data.pId, data.name, data.realName);
   });
 
   Title(client);

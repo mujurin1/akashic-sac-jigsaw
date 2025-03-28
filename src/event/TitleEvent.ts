@@ -2,19 +2,19 @@ import { SacEvent, SacServer } from "akashic-sac";
 import { JigsawAssets } from "../util/readAssets";
 import { serverPlaying } from "./PlayingEvent";
 
-export class ChangePuzzle extends SacEvent {
+export class ChangePuzzle extends SacEvent() {
   constructor(
     /** 0 ~ パズルの枚数-1 OR -1 (ユーザー投稿) */
     readonly index: number,
   ) { super(); }
 }
-export class ChangeLevel extends SacEvent {
+export class ChangeLevel extends SacEvent() {
   constructor(
     /** 0 ~ 100 */
     readonly level: number,
   ) { super(); }
 }
-export class GameStart extends SacEvent {
+export class GameStart extends SacEvent() {
   constructor(
     readonly seed: number,
     /** `1970-01-01T00:00:00Z`からのミリ秒での経過時刻 */
@@ -34,7 +34,7 @@ export function serverTitle(server: SacServer): void {
 
   const eventKeys = [
     ChangePuzzle.receive(server, data => {
-      if (data.playerId !== g.game.env.hostId) return;
+      if (data.pId !== g.game.env.hostId) return;
       // -1 はカスタム画像
       let puzzleIndex = data.index;
 
@@ -44,11 +44,11 @@ export function serverTitle(server: SacServer): void {
       server.broadcast(new ChangePuzzle(puzzleIndex));
     }),
     ChangeLevel.receive(server, data => {
-      if (data.playerId !== g.game.env.hostId) return;
+      if (data.pId !== g.game.env.hostId) return;
       server.broadcast(data);
     }),
     GameStart.receive(server, data => {
-      if (data.playerId !== g.game.env.hostId) return;
+      if (data.pId !== g.game.env.hostId) return;
 
       server.broadcast(data);
       server.removeEventSets(eventKeys);

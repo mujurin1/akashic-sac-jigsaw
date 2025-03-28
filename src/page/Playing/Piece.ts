@@ -97,9 +97,9 @@ export const Piece = {
     Piece._state = state;
     Piece._pieceParent = Piece._state.playArea.pieceParent;
   },
-  hold(piece: Piece, playerId: string) {
+  hold(piece: Piece, pId: string) {
     shiftTop(piece);
-    piece.tag.holdPlayerId = playerId;
+    piece.tag.holdPlayerId = pId;
     setOpacity(piece, false);
   },
   release(piece: Piece) {

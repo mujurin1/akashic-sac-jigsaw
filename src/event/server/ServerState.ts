@@ -31,7 +31,7 @@ export interface ServerPlayingState {
 
   clearTime: number | undefined;
 
-  /** `{ [playerId]: VALUE }` */
+  /** `{ [pId]: VALUE }` */
   readonly holders: Map<string, {
     pieceIndex: number,
     releaseCounter: number,
@@ -39,8 +39,8 @@ export interface ServerPlayingState {
 
   readonly pieces: ServerPieceState[];
 
-  readonly setHolder: (playerId: string, piece: ServerPieceState) => void;
-  readonly deleteHolder: (playerId: string) => void;
+  readonly setHolder: (pId: string, piece: ServerPieceState) => void;
+  readonly deleteHolder: (pId: string) => void;
 
   /**
    * ピースが盤面にハマる/くっつくかをチェックしその後処理を行う
@@ -71,15 +71,15 @@ export function createPlayingState(
 
   return state;
 
-  function setHolder(playerId: string, piece: ServerPieceState) {
-    state.holders.set(playerId, { pieceIndex: piece.index, releaseCounter: 0 });
-    piece.holderId = playerId;
+  function setHolder(pId: string, piece: ServerPieceState) {
+    state.holders.set(pId, { pieceIndex: piece.index, releaseCounter: 0 });
+    piece.holderId = pId;
   }
-  function deleteHolder(playerId: string) {
-    const holdState = state.holders.get(playerId);
+  function deleteHolder(pId: string) {
+    const holdState = state.holders.get(pId);
     if (holdState == null) return;
 
-    state.holders.delete(playerId);
+    state.holders.delete(pId);
     state.pieces[holdState.pieceIndex].holderId = undefined;
   }
 }

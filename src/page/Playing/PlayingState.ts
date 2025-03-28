@@ -112,21 +112,21 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
 
   // TODO: client.removeEventSets(eventKeys);
   const eventKeys = [
-    HoldPiece.receive(client, ({ playerId, pieceIndex }) => {
+    HoldPiece.receive(client, ({ pId, pieceIndex }) => {
       // ピースを他人が掴んだ
-      if (playerId == null || playerId === g.game.selfId) return;
+      if (pId == null || pId === g.game.selfId) return;
 
       const piece = state.pieces[pieceIndex];
-      Piece.hold(piece, playerId);
+      Piece.hold(piece, pId);
 
       if (pieceIndex === state.holdState?.piece.tag.index) {
         state.holdState = undefined;
       }
     }),
-    MovePiece.receive(client, ({ playerId, pieceIndex, point }) => {
+    MovePiece.receive(client, ({ pId, pieceIndex, point }) => {
       if (g.game.isSkipping) return;
       // ピースを他人が動かした
-      if (playerId == null || playerId === g.game.selfId) return;
+      if (pId == null || pId === g.game.selfId) return;
 
       const piece = state.pieces[pieceIndex];
       piece.moveTo(point.x, point.y);
@@ -150,25 +150,25 @@ export async function Playing(client: SacClient, gameStart: GameStart, previewsI
       Piece.release(piece);
       state.pieceOperatorControl.current.forceRelease();
     }),
-    FitPiece.receive(client, ({ playerId, pieceIndex }) => {
+    FitPiece.receive(client, ({ pId, pieceIndex }) => {
       const piece = state.pieces[pieceIndex];
       Piece.fit(piece);
-      updateScore(playerId!);
+      updateScore(pId!);
     }),
-    ConnectPiece.receive(client, ({ playerId, parentIndex, childIndex }) => {
+    ConnectPiece.receive(client, ({ pId, parentIndex, childIndex }) => {
       const parent = state.pieces[parentIndex];
       const child = state.pieces[childIndex];
       Piece.connect(parent, child, gameStart);
-      if (g.game.selfId === playerId) parent.parent.append(parent);
-      updateScore(playerId!);
+      if (g.game.selfId === pId) parent.parent.append(parent);
+      updateScore(pId!);
     }),
   ];
 
   // アンロックは一番最後
   unlockEvent();
 
-  function updateScore(playerId: string) {
-    const player = playerManager.get(playerId);
+  function updateScore(pId: string) {
+    const player = playerManager.get(pId);
     if (player == null) return;
     state.totalScore += 1;
     player.score += 1;
