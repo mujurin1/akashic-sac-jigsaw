@@ -7,29 +7,13 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
   const { scene } = client.env;
 
   const pcUi = createIcons(state);
-
-  const moveCamera = (e: g.PointMoveEvent) => {
-    if (playingState.holdState != null || e.target !== playArea.bg) return;
-    camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
-    camerable.modified();
-  };
-  const pieceTouch = (e: g.PointDownEvent) => {
-    if (e.target !== playArea.bg) return;
-    state.hold(e.point.x, e.point.y);
-  };
-  const pieceMove = (e: g.PointMoveEvent) => {
-    if (playingState.holdState == null) return;
-    state.move(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
-  };
-  const pieceRelease = (e: g.PointUpEvent) => {
-    if (playingState.holdState == null) return;
-    state.release(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
-  };
+  const eventManager = customWheelEvent(state);
 
   const result: InputSystem = {
     disable: () => {
       if (!pcUi.visible()) return;
       pcUi.hide();
+      eventManager.disable();
       scene.onPointMoveCapture.remove(moveCamera);
       scene.onPointDownCapture.remove(pieceTouch);
       scene.onPointMoveCapture.remove(pieceMove);
@@ -38,6 +22,7 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
     enable: (newUiState) => {
       if (pcUi.visible()) return;
       pcUi.show(newUiState.nextBgColor);
+      eventManager.enable();
       scene.onPointMoveCapture.add(moveCamera);
       scene.onPointDownCapture.add(pieceTouch);
       scene.onPointMoveCapture.add(pieceMove);
@@ -50,6 +35,24 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
   };
 
   return result;
+
+  function moveCamera(e: g.PointMoveEvent) {
+    if (playingState.holdState != null || e.target !== playArea.bg) return;
+    camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
+    camerable.modified();
+  }
+  function pieceTouch(e: g.PointDownEvent) {
+    if (e.target !== playArea.bg) return;
+    state.hold(e.point.x, e.point.y);
+  }
+  function pieceMove(e: g.PointMoveEvent) {
+    if (playingState.holdState == null) return;
+    state.move(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
+  }
+  function pieceRelease(e: g.PointUpEvent) {
+    if (playingState.holdState == null) return;
+    state.release(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
+  }
 }
 
 function createIcons(state: InputSystemState) {
@@ -100,7 +103,6 @@ function createIcons(state: InputSystemState) {
     },
     visible: () => pcUiParent.visible(),
   };
-  // return [moreBtn, ...icons] as const;
 
   /**
    * @param iconName アイコンの名前
@@ -132,5 +134,32 @@ function createIcons(state: InputSystemState) {
     }
 
     return back;
+  }
+}
+
+function customWheelEvent(
+  state: InputSystemState
+) {
+
+  return {
+    enable: () => {
+      if (!g.game.env.hasClient) return;
+      g.game.env.view.addEventListener("wheel", wheelEvent, { passive: false });
+    },
+    disable: () => {
+      if (!g.game.env.hasClient) return;
+      g.game.env.view.removeEventListener("wheel", wheelEvent);
+    },
+  };
+
+  function wheelEvent(e: WheelEvent) {
+    e.preventDefault();
+
+    const scale = e.deltaY < 0
+      ? e.ctrlKey ? 0.8 : 0.9
+      : e.ctrlKey ? 1.2 : 1.1;
+    const pos = { x: e.offsetX, y: e.offsetY };
+
+    state.scale(scale, { pos });
   }
 }

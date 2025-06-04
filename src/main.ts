@@ -1,28 +1,70 @@
-import { createFont,DragDrop,fileToImageDataUrl,imageDataUtil,SacClient,SacEvent,sacInitialize,SacInitializedValue,SacServer,SacSnapshotSaveData,ShareBigText } from "akashic-sac";
+import { createFont, DragDrop, fileToImageDataUrl, imageDataUtil, SacClient, SacEvent, sacInitialize, SacInitializedValue, SacServer, SacSnapshotSaveData, ShareBigText } from "akashic-sac";
+import { clientStart, serverStart } from "./server_client";
 
 export = (gameMainParam: g.GameMainParameterObject) => {
   sacInitialize({
     gameMainParam,
     // initialized: () => { throw new Error("さいしょ"); },
-    // serverStart: serverStart,
-    // clientStart: clientStart,
+    serverStart: serverStart,
+    clientStart: clientStart,
+    // serverStart: _minimalServer,
+    // clientStart: _minimalClient,
     // serverStart: _changeSceneServer,
     // clientStart: _changeSceneClient,
     // serverStart: _imageShareServer,
     // clientStart: _imageShareSample,
-    serverStart: exampleServer,
-    clientStart: exampleClient,
+    // serverStart: exampleServer,
+    // clientStart: exampleClient,
     options: {
       sceneParam: {
         assetIds: [
-          "default_frame","title_back","sanka_nin",
-          "ico_ban","ico_device","ico_info","ico_preview","ico_ranking","ico_more","ico_visible",
+          "default_frame", "title_back", "sanka_nin",
+          "ico_ban", "ico_device", "ico_info", "ico_preview", "ico_ranking", "ico_more", "ico_visible",
         ],
         assetPaths: ["/assets/**/*"],
       }
     }
   });
 };
+
+//#region 最小限のサンプル
+
+class ClickedEvent extends SacEvent() { }
+
+function _minimalServer(server: SacServer) {
+  ClickedEvent.receive(server, onEvent);
+
+  function onEvent(data: ClickedEvent) {
+    console.log("送信者ID", data.pId);
+    server.broadcast(data);
+  }
+}
+
+function _minimalClient(client: SacClient) {
+  const scene = g.game.env.scene;
+
+  const lastClickPlayerId = new g.Label({
+    scene, parent: scene,
+    text: "クリックしたプレイヤーのID: --",
+    font: createFont({ size: 20 }),
+    x: 10, y: 10,
+  });
+
+  scene.onPointDownCapture.add((e) => {
+    console.log(e.button);
+    client.sendEvent(new ClickedEvent());
+  });
+
+  ClickedEvent.receive(client, onEvent);
+
+  function onEvent(data: ClickedEvent) {
+    const playerId = data.pId;
+    if (playerId == null) return;
+    lastClickPlayerId.text = `クリックしたプレイヤーのID: ${playerId}`;
+    lastClickPlayerId.invalidate();
+  }
+}
+//#endregion 最小限のサンプル
 
 
 //#region シーン切り替え・スナップショット
@@ -37,40 +79,40 @@ interface SnapshotData extends SacSnapshotSaveData {
 
 function _changeSceneServer(server: SacServer) {
   let isFirstScene = true;
-  ChangeScene__test.receive(server,data => {
-    console.log("receive!",data._);
+  ChangeScene__test.receive(server, data => {
+    console.log("receive!", data._);
     isFirstScene = !isFirstScene;
     server.broadcast(data);
   });
-  RequestSnapShot.receive(server,() => {
+  RequestSnapShot.receive(server, () => {
     server.requestSaveSnapshot<SnapshotData>(() => {
       return {
-        snapshot: { hostId: g.game.env.hostId,isFirstScene }
+        snapshot: { hostId: g.game.env.hostId, isFirstScene }
       };
     });
   });
 }
 
-function _changeSceneClient(client: SacClient,initializedValue: SacInitializedValue) {
+function _changeSceneClient(client: SacClient, initializedValue: SacInitializedValue) {
   let isFirstScene = true;
 
-  changeSceneBtn(client.env.scene,"red");
+  changeSceneBtn(client.env.scene, "red");
   saveBtn(client.env.scene);
   const blueScene = new g.Scene({
-    game: g.game,tickGenerationMode: "manual",local: "interpolate-local",
+    game: g.game, tickGenerationMode: "manual", local: "interpolate-local",
   });
   blueScene.onLoad.add(() => {
-    changeSceneBtn(blueScene,"blue");
+    changeSceneBtn(blueScene, "blue");
     saveBtn(blueScene);
   });
 
   const snapshot = initializedValue.gameMainParam.snapshot as SnapshotData;
   if (snapshot != null) {
-    console.log("has snapshot",snapshot);
+    console.log("has snapshot", snapshot);
     if (!snapshot.isFirstScene) switchScene();
   }
 
-  ChangeScene__test.receive(client,switchScene);
+  ChangeScene__test.receive(client, switchScene);
 
   function switchScene() {
     isFirstScene = !isFirstScene;
@@ -78,12 +120,12 @@ function _changeSceneClient(client: SacClient,initializedValue: SacInitializedVa
     else g.game.pushScene(blueScene);
   }
 
-  function changeSceneBtn(scene: g.Scene,cssColor: string) {
+  function changeSceneBtn(scene: g.Scene, cssColor: string) {
     const btn = new g.FilledRect({
-      scene,parent: scene,
+      scene, parent: scene,
       cssColor,
-      x: 100,y: 100,
-      width: 100,height: 100,
+      x: 100, y: 100,
+      width: 100, height: 100,
       touchable: true,
     });
     btn.onPointDown.add(() => {
@@ -93,10 +135,10 @@ function _changeSceneClient(client: SacClient,initializedValue: SacInitializedVa
 
   function saveBtn(scene: g.Scene) {
     const btn = new g.FilledRect({
-      scene,parent: scene,
+      scene, parent: scene,
       cssColor: "gray",
-      x: 300,y: 100,
-      width: 100,height: 100,
+      x: 300, y: 100,
+      width: 100, height: 100,
       touchable: true,
     });
     btn.onPointDown.add(() => {
@@ -115,10 +157,10 @@ class ChangeColor extends SacEvent() {
 }
 
 function _imageShareServer(server: SacServer) {
-  ShareBigText.waitingFromSingleUser("IMAGE",g.game.env.hostId,() => true);
+  ShareBigText.waitingFromSingleUser("IMAGE", g.game.env.hostId, () => true);
 
   const _eventKeys = [
-    ChangeColor.receive(server,data => {
+    ChangeColor.receive(server, data => {
       server.broadcast(data);
       throw new Error("えらー！");
     }),
@@ -130,16 +172,16 @@ function _imageShareSample(client: SacClient) {
   const font = createFont({ size: 20 });
 
   new g.FilledRect({
-    scene,parent: scene,
+    scene, parent: scene,
     cssColor: "green",
     width: g.game.width,
     height: g.game.height,
   });
 
   const rect = new g.FilledRect({
-    scene,parent: scene,
-    x: 10,y: 10,
-    width: 100,height: 100,
+    scene, parent: scene,
+    x: 10, y: 10,
+    width: 100, height: 100,
     cssColor: "red",
     touchable: g.game.env.isHost,
   });
@@ -147,7 +189,7 @@ function _imageShareSample(client: SacClient) {
   rect.onPointDown.add(() => {
     client.sendEvent(new ChangeColor("purple"));
   });
-  ChangeColor.receive(client,data => {
+  ChangeColor.receive(client, data => {
     rect.cssColor = data.color;
     rect.modified();
   });
@@ -165,7 +207,7 @@ function _imageShareSample(client: SacClient) {
       DragDrop.unhook();
 
       const imageDataUrl = await fileToImageDataUrl(file);
-      ShareBigText.send("IMAGE",imageDataUrl);
+      ShareBigText.send("IMAGE", imageDataUrl);
     });
   }
 
@@ -180,11 +222,11 @@ function _imageShareSample(client: SacClient) {
         imageDataUtil.toSprite(
           imageData,
           {
-            scene,parent: g.game.env.scene,
+            scene, parent: g.game.env.scene,
             x: 110,
           });
 
-        ChangeColor.receive(client,data => {
+        ChangeColor.receive(client, data => {
           rect.cssColor = data.color;
           rect.modified();
         });
@@ -192,7 +234,7 @@ function _imageShareSample(client: SacClient) {
       })
       .catch(e => {
         new g.Label({
-          scene,parent: scene,
+          scene, parent: scene,
           text: (e ? "不明なエラー" : e + ""),
           font,
           x: 100,
@@ -224,23 +266,24 @@ interface Snapshot { endGame: EndGame; }
 function exampleServer(server: SacServer) {
   const hostId = g.game.env.hostId;
 
-  PlayGame.receive(server,data => {
+  PlayGame.receive(server, data => {
     if (data.pId !== hostId) return;
 
     server.broadcast(data);
     g.game.env.scene.setTimeout(() => {
       const endGame = new EndGame();
       server.requestSaveSnapshot<Snapshot>(() => ({
-        snapshot: { hostId,endGame }
+        snapshot: { hostId, endGame }
       }));
-      server.broadcast(endGame,hostId);
-    },5000);
+      server.broadcast(endGame, hostId);
+    }, 5000);
   });
-  ScoreUp.receive(server,server.broadcast_bind);
+  ScoreUp.receive(server, server.broadcast_bind);
 }
 
-function exampleClient(client: SacClient,initializedValue: SacInitializedValue) {
+function exampleClient(client: SacClient, initializedValue: SacInitializedValue) {
   const snapshot = initializedValue.gameMainParam.snapshot;
+
   if (hasSnapshot(snapshot)) {
     console.log(snapshot);
     gameFinish(snapshot.endGame);
@@ -248,7 +291,7 @@ function exampleClient(client: SacClient,initializedValue: SacInitializedValue) 
   }
 
   const eventKeys: number[] = [
-    PlayGame.receive(client,() => {
+    PlayGame.receive(client, () => {
       client.removeEventSets(eventKeys);
       gameStart();
     }),
@@ -266,8 +309,8 @@ function gameStart() {
   playerManager.reset();
 
   const eventKeys: number[] = [
-    ScoreUp.receive(client,playerManager.scoreUp),
-    EndGame.receive(client,data => {
+    ScoreUp.receive(client, playerManager.scoreUp),
+    EndGame.receive(client, data => {
       client.removeEventSets(eventKeys);
       gameFinish(data);
     })
@@ -280,10 +323,10 @@ function gameStart() {
 
 function gameFinish(endGame: EndGame) {
   const client = g.game.clientEnv.client;
-  console.log("優勝者は ",endGame.pId!);
+  console.log("優勝者は ", endGame.pId!);
 
   const eventKeys: number[] = [
-    PlayGame.receive(client,() => {
+    PlayGame.receive(client, () => {
       client.removeEventSets(eventKeys);
       gameStart();
     }),
@@ -306,4 +349,3 @@ class PlayerManager {
   public reset(): void { }
 }
 //#endregion 実践的な例
-

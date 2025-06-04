@@ -204,7 +204,7 @@ async function createPlayingState(
     touchable: true,
   });
 
-  const playAreaCamera = new CamerableE({ scene, parent: display });
+  const playAreaCamera = new CamerableE({ scene, parent: display, anchorX: 0, anchorY: 0 });
   const pieceLimitArea = new g.FilledRect({
     scene, parent: playAreaCamera,
     cssColor: "#883f5f",
@@ -241,9 +241,6 @@ async function createPlayingState(
     piece.modified();
   }
 
-  const CAMERABLE_W_HALF = playAreaCamera.width / 2;
-  const CAMERABLE_H_HALF = playAreaCamera.height / 2;
-
   const state: ClientPlayingState = {
     pieces: piecesResult.pieces,
     client,
@@ -262,14 +259,14 @@ async function createPlayingState(
 
     isJoined: () => playerManager.has(g.game.selfId),
     toPieceArea: (x, y) => ({
-      x: playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HALF),
-      y: playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HALF),
+      x: playAreaCamera.x + playAreaCamera.scaleX * x,
+      y: playAreaCamera.y + playAreaCamera.scaleY * y,
     }),
     getPieceFromScreenPx: (x, y, canHold = false) => {
       if (!state.isJoined()) return;
 
-      const playAreaX = playAreaCamera.x + playAreaCamera.scaleX * (x - CAMERABLE_W_HALF);
-      const playAreaY = playAreaCamera.y + playAreaCamera.scaleY * (y - CAMERABLE_H_HALF);
+      const playAreaX = playAreaCamera.x + playAreaCamera.scaleX * x;
+      const playAreaY = playAreaCamera.y + playAreaCamera.scaleY * y;
       const piece = Piece.getParentOrSelf(Piece.getFromPoint(playAreaX, playAreaY, canHold));
       if (piece == null) return;
 
@@ -291,6 +288,14 @@ async function createPlayingState(
 
   Piece.pieceParentSetting(state);
   state.pieceOperatorControl = inputSystemControl(state);
+
+  // カメラの位置を調整
+  const { playArea: { camerable } } = state;
+  camerable.moveTo(
+    board.x + (board.width / 2) - (camerable.width / 2) + 500,
+    board.y + (board.height / 2) - (camerable.height / 2),
+  );
+  state.pieceOperatorControl.inputSystemState.scale(3);
 
   return state;
 }

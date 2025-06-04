@@ -49,23 +49,13 @@ export function createUi(state: ClientPlayingState): PlayingUi {
       x: 330, y: 10, touchable: true,
     });
     zoomIn.onPointDown.add(() => {
-      camerable.scale(camerable.scaleX * 0.9);
-      camerable.modified();
+      state.pieceOperatorControl.inputSystemState.scale(0.9);
     });
     zoomOut.onPointDown.add(() => {
-      camerable.scale(camerable.scaleX * 1.1);
-      camerable.modified();
+      state.pieceOperatorControl.inputSystemState.scale(1.1);
     });
     join.onPointDown.add(sendJoin);
     change.onPointDown.add(() => state.pieceOperatorControl.toggle());
-
-    const { board } = state.playArea;
-    camerable.moveTo(
-      board.x + board.width / 2 + 500,
-      board.y + board.height / 2,
-    );
-    camerable.scale(3);
-    camerable.modified();
   }
 
   //#region 右上のやつ

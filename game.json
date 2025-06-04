@@ -39,6 +39,7 @@
 		"node_modules/akashic-sac/lib/impl/DIContainer.js",
 		"node_modules/akashic-sac/lib/impl/EventTrigger.js",
 		"node_modules/akashic-sac/lib/impl/IgnoreCameraE.js",
+		"node_modules/akashic-sac/lib/impl/OperationPluginBase.js",
 		"node_modules/akashic-sac/lib/sac/AkashicEngine.js",
 		"node_modules/akashic-sac/lib/sac/Environment.js",
 		"node_modules/akashic-sac/lib/sac/SacClient.js",

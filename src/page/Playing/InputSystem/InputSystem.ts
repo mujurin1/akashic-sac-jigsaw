@@ -9,10 +9,12 @@ export const InputSystemType = ["pc", "mobile"] as const;
 export type InputSystemType = typeof InputSystemType[number];
 
 export interface InputSystemControl {
-  currentType: InputSystemType;
-  current: InputSystem;
-  toggle: (type?: InputSystemType) => void;
-  destroy: () => void;
+  readonly currentType: InputSystemType;
+  readonly current: InputSystem;
+  readonly inputSystemState: InputSystemState;
+
+  toggle(type?: InputSystemType): void;
+  destroy(): void;
 }
 
 /**
@@ -55,21 +57,23 @@ export function inputSystemControl(state: ClientPlayingState): InputSystemContro
     }
   };
 
+  let currentType: InputSystemType = "pc";
   const inputSystems = {
     "pc": PcInputSystem(inputSystemState),
     "mobile": MobileInputSystem(inputSystemState),
   } as const satisfies Record<InputSystemType, InputSystem>;
 
   const control: InputSystemControl = {
-    currentType: "pc" as InputSystemType,
-    get current() { return inputSystems[control.currentType]; },
+    get currentType() { return currentType; },
+    get current() { return inputSystems[currentType]; },
+    inputSystemState,
     toggle(type?: InputSystemType) {
-      if (type == null) type = control.currentType === "mobile" ? "pc" : "mobile";
-      if (type === control.currentType) return;
+      if (type == null) type = currentType === "mobile" ? "pc" : "mobile";
+      if (type === currentType) return;
       inputSystemState.release();
-      inputSystems[control.currentType].disable();
+      inputSystems[currentType].disable();
 
-      control.currentType = type;
+      currentType = type;
       inputSystems[type].enable(createNewUiState());
     },
     destroy() {
@@ -134,9 +138,22 @@ export function inputSystemControl(state: ClientPlayingState): InputSystemContro
   function checkFit() {
     // ピースを離さずにハマるかチェックし、ハマるならハメる
   }
-  function scale(_per: number, isAbsolute = false) {
-    const per = isAbsolute ? _per : camerable.scaleX * _per;
-    camerable.scale(per);
+  function scale(_per: number, options?: ScaleOptions) {
+    const scale = options?.isAbsolute ? _per : camerable.scaleX * _per;
+    const posX = options?.pos?.x ?? g.game.width * 0.5;
+    const posY = options?.pos?.y ?? g.game.height * 0.5;
+
+    const prevScale = camerable.scaleX;
+    camerable.scale(scale);
+
+    const cx = posX / g.game.width;
+    const cy = posY / g.game.height;
+    const scaleW = camerable.width * prevScale;
+    const scaleH = camerable.height * prevScale;
+    const offsetX = cx * scaleW * (1 - scale / prevScale);
+    const offsetY = cy * scaleH * (1 - scale / prevScale);
+    camerable.moveBy(offsetX, offsetY);
+
     camerable.modified();
   }
 
@@ -212,10 +229,9 @@ export interface InputSystemState {
   /**
    * 拡大縮小 相対指定
    * @param per 拡大縮小率
-   * @param isAbsolute 絶対値指定なら`true` @default `false`
+   * @param options オプション
    */
-  scale: (per: number, isAbsolute?: boolean) => void;
-
+  scale: (per: number, options?: ScaleOptions) => void;
 
   toggle: {
     device: () => void;
@@ -226,4 +242,18 @@ export interface InputSystemState {
     visible: () => void;
     ranking: () => void;
   };
+}
+
+interface ScaleOptions {
+  /**
+   * 絶対値指定なら`true`
+   * @default `false`
+   */
+  isAbsolute?: boolean;
+
+  /**
+   * 拡大/縮小の中心座標 (画面上の座標)
+   * @default 画面中央
+   */
+  pos: { x: number; y: number; };
 }
