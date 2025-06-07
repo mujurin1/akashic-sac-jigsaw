@@ -62,41 +62,51 @@ function createIcons(state: InputSystemState) {
     scene, parent: state.playingState.display,
     hidden: true,
   });
-
-  const pcUiParts = {
-    deviceBtn: createIcon("ico_device", [0, 2]),
-    visibleBtn: createIcon("ico_visible", [1, 2]),
-    rankingBtn: createIcon("ico_ranking", [2, 2]),
-    infoBtn: createIcon("ico_info", [0, 1]),
-    previewBtn: createIcon("ico_preview", [1, 1]),
-    colorBtn: createIcon(undefined, [2, 1]),
-  } as const;
-
-  pcUiParts.deviceBtn.onPointDown.add(() => state.toggle.device());
-  pcUiParts.visibleBtn.onPointDown.add(() => state.toggle.visible());
-  pcUiParts.rankingBtn.onPointDown.add(() => state.toggle.ranking());
-  pcUiParts.infoBtn.onPointDown.add(() => state.toggle.info());
-  pcUiParts.previewBtn.onPointDown.add(() => state.toggle.preview());
-  pcUiParts.colorBtn.onPointDown.add(() => {
-    pcUiParts.colorBtn.cssColor = state.toggle.color();
-    pcUiParts.colorBtn.modified();
+  const iconParent = new g.E({
+    scene, parent: pcUiParent,
   });
 
-  const moreBtn = createIcon("ico_more", [0, 0]);
-  moreBtn.opacity = 0.7;
-  moreBtn.modified();
+  const icons = {
+    deviceIcon: createIcon("ico_device", [0, 2]),
+    optionIcon: createIcon("ico_setting", [1, 2]),
+    rankingIcon: createIcon("ico_ranking", [2, 2]),
+    infoIcon: createIcon("ico_info", [0, 1]),
+    previewIcon: createIcon("ico_preview", [1, 1]),
+    colorIcon: createIcon(undefined, [2, 1]),
+  } as const;
 
-  moreBtn.onPointDown.add(() => {
-    pcUiParent.hide();
-    pcUiParent.show();
+  icons.deviceIcon.onPointDown.add(() => state.toggle.device());
+  icons.optionIcon.onPointDown.add(() => state.toggle.option());
+  icons.rankingIcon.onPointDown.add(() => state.toggle.ranking());
+  icons.infoIcon.onPointDown.add(() => state.toggle.info());
+  icons.previewIcon.onPointDown.add(() => state.toggle.preview());
+  icons.colorIcon.onPointDown.add(() => {
+    icons.colorIcon.cssColor = state.toggle.color();
+    icons.colorIcon.modified();
+  });
+
+  const moreIcon = createIcon("ico_more", [0, 0]);
+  pcUiParent.append(moreIcon);
+  moreIcon.opacity = 1;
+  moreIcon.modified();
+
+  moreIcon.onPointDown.add(() => {
+    if (iconParent.visible()) {
+      iconParent.hide();
+      moreIcon.opacity = 0.7;
+    } else {
+      iconParent.show();
+      moreIcon.opacity = 1;
+    }
+    moreIcon.modified();
   });
 
 
   return {
     show: (nextBgColor: string) => {
       pcUiParent.show();
-      pcUiParts.colorBtn.cssColor = nextBgColor;
-      pcUiParts.colorBtn.modified();
+      icons.colorIcon.cssColor = nextBgColor;
+      icons.colorIcon.modified();
     },
     hide: () => {
       pcUiParent.hide();
@@ -115,7 +125,7 @@ function createIcons(state: InputSystemState) {
     const baseY = 600;
 
     const back = new g.FilledRect({
-      scene, parent: pcUiParent,
+      scene, parent: iconParent,
       cssColor: "rgba(255, 255, 255, 0.3)",
       width: 90, height: 90,
       x: baseX - 105 * x,
@@ -153,6 +163,8 @@ function customWheelEvent(
   };
 
   function wheelEvent(e: WheelEvent) {
+    if (state.playingState.option.visible) return;
+
     e.preventDefault();
 
     const scale = e.deltaY < 0

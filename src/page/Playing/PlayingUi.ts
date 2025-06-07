@@ -60,7 +60,7 @@ export function createUi(state: ClientPlayingState): PlayingUi {
 
   //#region 右上のやつ
   const panel = new g.FilledRect({
-    scene, parent: scene,
+    scene, parent: display,
     cssColor: "rgba(255,255,255,0.5)",
     width: 300, height: 360,
     x: 950, y: 10,

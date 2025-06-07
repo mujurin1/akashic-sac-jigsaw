@@ -4,6 +4,74 @@ import { BACKGROUND_COLOR, ClientPlayingState } from "../PlayingState";
 import { MobileInputSystem } from "./MobileInputSystem";
 import { PcInputSystem } from "./PcInputSystem";
 
+/**
+ * 各InputSystem (PC,Mobile) に渡す値
+ * 
+ * ピースに対する操作は画面上の座標で行う\
+ * `InputSystem`側でピース領域スケールへ変換する
+ */
+export interface InputSystemState {
+  readonly playingState: ClientPlayingState;
+
+  /**
+   * 指定座標に存在するピースを持つ
+   * @returns ピースを持つことが出来たか
+   */
+  hold: (x: number, y: number) => boolean;
+  /**
+   * ピースを絶対値で動かす
+   * @param x 絶対移動量
+   * @param y 絶対移動量
+   * @returns ピースを動かす事が出来たか
+   */
+  move: (x: number, y: number) => boolean;
+  /**
+   * ピースを放す\
+   * x,yを指定しない場合は今のピースの座標で離す
+   * @param x 絶対移動量
+   * @param y 絶対移動量
+   * @returns ピースを放したか (持っている状態から持っていない状態に遷移したか)
+   */
+  release(x: number, y: number): boolean;
+  release(): boolean;
+  /**
+   * 持っているピースがくっつく/ハマるかを判定する (離さない)\
+   * TODO: 判定が`true`ならくっつけるのか?
+   */
+  checkFit: () => void;
+
+  /**
+   * 拡大縮小 相対指定
+   * @param per 拡大縮小率
+   * @param options オプション
+   */
+  scale: (per: number, options?: ScaleOptions) => void;
+
+  toggle: {
+    device: () => void;
+    info: () => void;
+    preview: () => void;
+    /** @returns 次の背景色 */
+    color: () => string;
+    option: () => void;
+    ranking: () => void;
+  };
+}
+
+interface ScaleOptions {
+  /**
+   * 絶対値指定なら`true`
+   * @default `false`
+   */
+  isAbsolute?: boolean;
+
+  /**
+   * 拡大/縮小の中心座標 (画面上の座標)
+   * @default 画面中央
+   */
+  pos: { x: number; y: number; };
+}
+
 /** 入力方式の種類 */
 export const InputSystemType = ["pc", "mobile"] as const;
 export type InputSystemType = typeof InputSystemType[number];
@@ -52,7 +120,9 @@ export function inputSystemControl(state: ClientPlayingState): InputSystemContro
         playArea.bg.modified();
         return BACKGROUND_COLOR.nextIconBg[nextColor];
       },
-      visible: () => { },
+      option: () => {
+        state.option.show();
+      },
       ranking: () => { },
     }
   };
@@ -67,6 +137,7 @@ export function inputSystemControl(state: ClientPlayingState): InputSystemContro
     get currentType() { return currentType; },
     get current() { return inputSystems[currentType]; },
     inputSystemState,
+
     toggle(type?: InputSystemType) {
       if (type == null) type = currentType === "mobile" ? "pc" : "mobile";
       if (type === currentType) return;
@@ -83,7 +154,6 @@ export function inputSystemControl(state: ClientPlayingState): InputSystemContro
     },
   };
   inputSystems.pc.enable(createNewUiState());
-
 
   return control;
 
@@ -188,72 +258,4 @@ export interface InputSystem {
    * 全てのイベントを解除して機能を停止する
    */
   destroy: () => void;
-}
-
-/**
- * 各InputSystem (PC,Mobile) に渡す値
- * 
- * ピースに対する操作は画面上の座標で行う\
- * `InputSystem`側でピース領域スケールへ変換する
- */
-export interface InputSystemState {
-  readonly playingState: ClientPlayingState;
-
-  /**
-   * 指定座標に存在するピースを持つ
-   * @returns ピースを持つことが出来たか
-   */
-  hold: (x: number, y: number) => boolean;
-  /**
-   * ピースを絶対値で動かす
-   * @param x 絶対移動量
-   * @param y 絶対移動量
-   * @returns ピースを動かす事が出来たか
-   */
-  move: (x: number, y: number) => boolean;
-  /**
-   * ピースを放す\
-   * x,yを指定しない場合は今のピースの座標で離す
-   * @param x 絶対移動量
-   * @param y 絶対移動量
-   * @returns ピースを放したか (持っている状態から持っていない状態に遷移したか)
-   */
-  release(x: number, y: number): boolean;
-  release(): boolean;
-  /**
-   * 持っているピースがくっつく/ハマるかを判定する (離さない)\
-   * TODO: 判定が`true`ならくっつけるのか?
-   */
-  checkFit: () => void;
-
-  /**
-   * 拡大縮小 相対指定
-   * @param per 拡大縮小率
-   * @param options オプション
-   */
-  scale: (per: number, options?: ScaleOptions) => void;
-
-  toggle: {
-    device: () => void;
-    info: () => void;
-    preview: () => void;
-    /** @returns 次の背景色 */
-    color: () => string;
-    visible: () => void;
-    ranking: () => void;
-  };
-}
-
-interface ScaleOptions {
-  /**
-   * 絶対値指定なら`true`
-   * @default `false`
-   */
-  isAbsolute?: boolean;
-
-  /**
-   * 拡大/縮小の中心座標 (画面上の座標)
-   * @default 画面中央
-   */
-  pos: { x: number; y: number; };
 }

@@ -150,7 +150,7 @@ function createMobileUi(state: InputSystemState) {
   )
     .addIcon("ico_info", state.toggle.info)
     .addIcon("ico_preview", state.toggle.preview)
-    .addIcon("ico_visible", state.toggle.visible)
+    .addIcon("ico_setting", state.toggle.option)
     .addIcon("ico_ranking", state.toggle.ranking)
     .addIcon("ico_device", state.toggle.device)
     .addIcon_Rect("color", "blue", e => {

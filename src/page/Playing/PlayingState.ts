@@ -7,6 +7,7 @@ import { createGameState, GameState } from "../../util/GameState";
 import { PlayerManager } from "../../util/PlayerManager";
 import { PreviewInfo } from "../../util/readAssets";
 import { InputSystemControl, inputSystemControl } from "./InputSystem/InputSystem";
+import { createOptionUi, OptionState } from "./InputSystem/ui/Option";
 import { Piece } from "./Piece";
 import { createUi, PlayingUi as PlayUi, setPartsEvent } from "./PlayingUi";
 
@@ -31,6 +32,7 @@ export const BACKGROUND_COLOR = (() => {
 export interface ClientPlayingState {
   readonly client: SacClient;
   readonly gameState: GameState;
+  readonly option: OptionState;
 
   /**
    * プレイ中の全エンティティの親
@@ -245,6 +247,7 @@ async function createPlayingState(
     pieces: piecesResult.pieces,
     client,
     gameState,
+    option: null!,
     display,
     playArea: {
       bg,
@@ -288,6 +291,8 @@ async function createPlayingState(
 
   Piece.pieceParentSetting(state);
   state.pieceOperatorControl = inputSystemControl(state);
+
+  (<Mutable<ClientPlayingState>>state).option = createOptionUi(state);
 
   // カメラの位置を調整
   const { playArea: { camerable } } = state;

@@ -377,6 +377,17 @@
 			"type": "script",
 			"path": "script/util/StateMachine/index.js",
 			"global": true
+		},
+		"Option": {
+			"type": "script",
+			"path": "script/page/Playing/InputSystem/ui/Option.js",
+			"global": true
+		},
+		"ico_setting": {
+			"type": "image",
+			"path": "image/ico_setting.png",
+			"width": 96,
+			"height": 96
 		}
 	}
 }
