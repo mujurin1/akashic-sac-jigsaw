@@ -1,128 +1,84 @@
 import { Label } from "@akashic-extension/akashic-label";
-import { createFont } from "akashic-sac";
-import { sendJoin } from "../../server_client";
-import { Player, PlayerManager } from "../../util/PlayerManager";
-import { JigsawAssets } from "../../util/readAssets";
-import { ClientPlayingState } from "./PlayingState";
+import { createFont, SacClient } from "akashic-sac";
+import { toggleVisibleTo } from "../../../common/func";
+import { Player, PlayerManager } from "../../../util/PlayerManager";
+import { JigsawAssets } from "../../../util/readAssets";
+import { ClientPlaying } from "./ClientPlaying";
+import { PlayState } from "./PlayState";
 
-export interface PlayingUi {
+export interface InfoGroup {
+  readonly panel: g.FilledRect;
+  // readonly title: Label;
+  // readonly percent: Label;
+  // readonly fitCount: Label;
+  // readonly time: Label;
+  // readonly players: (readonly [name: Label, score: Label])[];
+
   /**
-   * 階層
-   * ```
-   * panel > 他
-   * ```
+   * 表示を切り替える
+   * 
+   * 非表示の場合、内容の自動更新は行わない
    */
-  readonly info: {
-    readonly panel: g.FilledRect;
-    readonly title: Label;
-    readonly percent: Label;
-    readonly fitCount: Label;
-    readonly time: Label;
-    readonly players: (readonly [name: Label, score: Label])[];
-  };
+  toggle(visibleTo?: boolean): void;
 }
 
 /**
  * プレビューやランキングなどのパーツを作る
  */
-export function createUi(state: ClientPlayingState): PlayingUi {
-  const { client, playArea: { camerable }, display } = state;
+export function createInfoGroup(clientPlaying: ClientPlaying): InfoGroup {
+  const { client, playState } = clientPlaying;
   const { scene } = client.env;
   const font = createFont({ size: 50 });
 
+  const ___display = client.env.scene;
   /** 左上の仮UI */
   {
     const zoomIn = new g.Label({
-      scene, parent: display, font, text: "In",
+      scene, parent: ___display, font, text: "In",
       x: 10, y: 10, touchable: true,
     });
     const zoomOut = new g.Label({
-      scene, parent: display, font, text: "Out",
+      scene, parent: ___display, font, text: "Out",
       x: 90, y: 10, touchable: true,
     });
     const join = new g.Label({
-      scene, parent: display, font, text: "参加",
+      scene, parent: ___display, font, text: "参加",
       x: 210, y: 10, touchable: true,
     });
     const change = new g.Label({
-      scene, parent: display, font, text: "変更",
+      scene, parent: ___display, font, text: "変更",
       x: 330, y: 10, touchable: true,
     });
-    zoomIn.onPointDown.add(() => {
-      state.pieceOperatorControl.inputSystemState.scale(0.9);
-    });
-    zoomOut.onPointDown.add(() => {
-      state.pieceOperatorControl.inputSystemState.scale(1.1);
-    });
-    join.onPointDown.add(sendJoin);
-    change.onPointDown.add(() => state.pieceOperatorControl.toggle());
+    // zoomIn.onPointDown.add(() => {
+    //   state.pieceOperatorControl.inputSystemState.scale(0.9);
+    // });
+    // zoomOut.onPointDown.add(() => {
+    //   state.pieceOperatorControl.inputSystemState.scale(1.1);
+    // });
+    // join.onPointDown.add(sendJoin);
+    // change.onPointDown.add(() => state.pieceOperatorControl.toggle());
   }
 
-  //#region 右上のやつ
-  const panel = new g.FilledRect({
-    scene, parent: display,
-    cssColor: "rgba(255,255,255,0.5)",
-    width: 300, height: 360,
-    x: 950, y: 10,
-  });
   const textFont = createFont({ size: 30 });
-  const info = {
-    panel,
-    title: new Label({
-      scene, parent: panel,
-      font: createFont({ size: 40 }),
-      text: JigsawAssets[state.gameState.puzzleIndex].title,
-      textAlign: "center",
-      width: panel.width,
-      x: 0, y: 10,
-    }),
-    percent: new Label({
-      scene, parent: panel,
-      font: textFont, text: "",
-      textAlign: "right",
-      width: 100,
-      x: 0, y: 60,
-    }),
-    fitCount: new Label({
-      scene, parent: panel,
-      font: textFont, text: "",
-      textAlign: "right",
-      width: 180,
-      x: 100, y: 60,
-    }),
-    time: new Label({
-      scene, parent: panel,
-      font: textFont, text: "",
-      textAlign: "right",
-      width: 280,
-      x: 0, y: 100,
-    }),
-    players: [0, 1, 2, 3, 4].map(i => {
-      const y = 150 + i * 40;
-      return [
-        new Label({
-          scene, parent: panel,
-          // font: textFont, text: `GUEST00${i}`,
-          font: textFont, text: "",
-          textAlign: "left",
-          lineBreak: false,
-          width: 200,
-          x: 10, y,
-        }),
-        new Label({
-          scene, parent: panel,
-          // font: textFont, text: `2000`,
-          font: textFont, text: "",
-          textAlign: "right",
-          width: 80,
-          x: 210, y,
-        }),
-      ] as readonly [name: Label, score: Label];
-    }),
-  } as const;
-  //#endregion 右上のやつ
 
-  return { info };
+  const panel = createUi.panel(clientPlaying.display);
+  const title = createUi.title(panel, JigsawAssets[playState.gameState.puzzleIndex].title);
+  const percent = createUi.percent(panel, textFont);
+  const fitCount = createUi.fitCount(panel, textFont);
+  const time = createUi.time(panel, textFont);
+  const players = [0, 1, 2, 3, 4].map(i => createUi.player(panel, textFont, i));
+
+  const info: InfoGroup = {
+    panel,
+    toggle,
+  };
+
+  return info;
+
+  function toggle(visibleTo?: boolean): void {
+    toggleVisibleTo(info.panel, visibleTo);
+
+  }
 }
 
 /**
@@ -130,10 +86,11 @@ export function createUi(state: ClientPlayingState): PlayingUi {
  * @returns 終了後の削除関数
  */
 export function setPartsEvent(
-  state: ClientPlayingState,
+  client: SacClient,
+  state: PlayState,
 ): () => void {
-  const { clientDI, scene } = state.client.env;
-  const { info } = state.playUi;
+  const { clientDI, scene } = client.env;
+  const { info } = null! as any;// state.playUi;
   const playerManager = clientDI.get(PlayerManager);
 
   let counter = g.game.fps;
@@ -241,3 +198,61 @@ function createElapsedTimeText(startTime: number): string {
   }
   return `${hour}時${minute}分${second}秒`;
 }
+
+const createUi = {
+  panel: (parent: g.E) => new g.FilledRect({
+    scene: parent.scene, parent,
+    cssColor: "rgba(255,255,255,0.5)",
+    width: 300, height: 360,
+    x: 950, y: 10,
+  }),
+  title: (parent: g.E, text: string) => new Label({
+    scene: parent.scene, parent: parent,
+    font: createFont({ size: 40 }),
+    text,
+    textAlign: "center",
+    width: parent.width,
+    x: 0, y: 10,
+  }),
+  percent: (parent: g.E, font: g.Font) => new Label({
+    scene: parent.scene, parent,
+    font, text: "",
+    textAlign: "right",
+    width: 100,
+    x: 0, y: 60,
+  }),
+  fitCount: (parent: g.E, font: g.Font) => new Label({
+    scene: parent.scene, parent,
+    font, text: "",
+    textAlign: "right",
+    width: 180,
+    x: 100, y: 60,
+  }),
+  time: (parent: g.E, font: g.Font) => new Label({
+    scene: parent.scene, parent,
+    font, text: "",
+    textAlign: "right",
+    width: 280,
+    x: 0, y: 100,
+  }),
+  player: (parent: g.E, font: g.Font, index: number) => {
+    const y = 150 + index * 40;
+    return [
+      new Label({
+        scene: parent.scene, parent,
+        font, text: "",
+        textAlign: "left",
+        lineBreak: false,
+        width: 200,
+        x: 10, y,
+      }),
+      new Label({
+        scene: parent.scene, parent,
+        font, text: "",
+        textAlign: "right",
+        width: 80,
+        x: 210, y,
+      }),
+    ] as const;
+  },
+} as const;

@@ -358,11 +358,6 @@
 			"path": "script/common/timeFlowController.js",
 			"global": true
 		},
-		"GameState": {
-			"type": "script",
-			"path": "script/util/GameState.js",
-			"global": true
-		},
 		"PlayingUi": {
 			"type": "script",
 			"path": "script/page/Playing/PlayingUi.js",
@@ -388,6 +383,46 @@
 			"path": "image/ico_setting.png",
 			"width": 96,
 			"height": 96
+		},
+		"PlayingClientConst": {
+			"type": "script",
+			"path": "script/page/Playing/PlayingClientConst.js",
+			"global": true
+		},
+		"BgGroup": {
+			"type": "script",
+			"path": "script/page/Playing/State/BgGroup.js",
+			"global": true
+		},
+		"ClientPlayingState": {
+			"type": "script",
+			"path": "script/page/Playing/State/ClientPlayingState.js",
+			"global": true
+		},
+		"InfoGroup": {
+			"type": "script",
+			"path": "script/page/Playing/State/InfoGroup.js",
+			"global": true
+		},
+		"PieceGroup": {
+			"type": "script",
+			"path": "script/page/Playing/State/PieceGroup.js",
+			"global": true
+		},
+		"PlayState": {
+			"type": "script",
+			"path": "script/page/Playing/State/PlayState.js",
+			"global": true
+		},
+		"GameState": {
+			"type": "script",
+			"path": "script/share/GameState.js",
+			"global": true
+		},
+		"ClientPlaying": {
+			"type": "script",
+			"path": "script/page/Playing/State/ClientPlaying.js",
+			"global": true
 		}
 	}
 }

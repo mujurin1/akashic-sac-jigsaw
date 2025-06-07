@@ -1,7 +1,6 @@
 import { CustomSprite } from "../../common/CustomSprite";
-import { GameStart } from "../../event/TitleEvent";
-import { calcAnswerXY } from "../../util/GameState";
-import { ClientPlayingState } from "./PlayingState";
+import { calcAnswerXY, GameState } from "../../share/GameState";
+import { ClientPlaying } from "./State/ClientPlaying";
 
 export interface Piece extends CustomSprite {
   tag: PieceTag;
@@ -18,7 +17,7 @@ export interface PieceTag {
 }
 
 export const Piece = {
-  _state: null! as ClientPlayingState,
+  _cientPlaying: null! as ClientPlaying,
   _pieceParent: null! as g.E,
 
   /**
@@ -93,9 +92,9 @@ export const Piece = {
   /**
    * ピースの親要素に必要な設定を行う
    */
-  pieceParentSetting(state: ClientPlayingState) {
-    Piece._state = state;
-    Piece._pieceParent = Piece._state.playArea.pieceParent;
+  pieceParentSetting(cientPlaying: ClientPlaying) {
+    Piece._cientPlaying = cientPlaying;
+    Piece._pieceParent = Piece._cientPlaying.uiGroups.piece.pieceParent;
   },
   hold(piece: Piece, pId: string) {
     shiftTop(piece);
@@ -110,16 +109,15 @@ export const Piece = {
     piece.tag.fitted = true;
     delete piece.tag.holdPlayerId;
 
-    const pos = calcAnswerXY(piece.tag.index, Piece._state.gameState);
+    const pos = calcAnswerXY(piece.tag.index, Piece._cientPlaying.playState.gameState);
     shiftBottom(piece);
     setOpacityPos(piece, true, pos);
-
   },
-  connect(parent: Piece, child: Piece, gameStart: GameStart) {
+  connect(parent: Piece, child: Piece, gameState: GameState) {
     shiftTop(parent);
     Piece.release(parent);
     Piece.release(child);
-    normalizeConnectPieceAll(parent, child, gameStart);
+    normalizeConnectPieceAll(parent, child, gameState);
   },
   isPiece(piece: g.E): piece is Piece {
     return (<PieceTag | undefined>piece.tag)?.type === "piece";
@@ -139,8 +137,8 @@ export const Piece = {
 };
 
 function shiftTop(piece: Piece): void {
-  if (Piece._state.holdState != null) {
-    piece.parent.insertBefore(piece, Piece._state.holdState.piece);
+  if (Piece._cientPlaying.playState.holdState != null) {
+    piece.parent.insertBefore(piece, Piece._cientPlaying.playState.holdState.piece);
   } else {
     piece.parent.append(piece);
   }
@@ -159,21 +157,21 @@ function setOpacityPos(piece: Piece, isDefault: boolean, pos: g.CommonOffset): v
   piece.modified();
 }
 
-function normalizeConnectPieceAll(parent: Piece, child: Piece, gameStart: GameStart) {
+function normalizeConnectPieceAll(parent: Piece, child: Piece, gameState: GameState) {
   const children = child.children?.slice(0);
-  normalizeConnectPiece(parent, child, gameStart);
+  normalizeConnectPiece(parent, child, gameState);
 
   if (children != null) {
     for (const childPiece of children) {
-      normalizeConnectPiece(parent, childPiece, gameStart);
+      normalizeConnectPiece(parent, childPiece, gameState);
     }
   }
 }
-function normalizeConnectPiece(parent: Piece, child: Piece, gameStart: GameStart): void {
+function normalizeConnectPiece(parent: Piece, child: Piece, gameState: GameState): void {
   child.tag.parent = parent;
-  const pos = calcRelativePosAtoB(parent.tag.index, child.tag.index, gameStart.pieceWH.width);
-  child.x = pos.x * gameStart.pieceSize.width;
-  child.y = pos.y * gameStart.pieceSize.height;
+  const pos = calcRelativePosAtoB(parent.tag.index, child.tag.index, gameState.pieceWH.width);
+  child.x = pos.x * gameState.pieceSize.width;
+  child.y = pos.y * gameState.pieceSize.height;
   child.modified();
   parent.append(child);
 }

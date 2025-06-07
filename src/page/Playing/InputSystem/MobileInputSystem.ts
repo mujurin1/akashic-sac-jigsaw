@@ -1,15 +1,19 @@
 import { createPad, Pad } from "../../../common/Pad";
 import { pieMenuBuilder } from "../../../common/PieMenu";
-import { ClientPlayingState } from "../PlayingState";
-import { InputSystem, InputSystemState } from "./InputSystem";
+import { ClientPlaying } from "../State/ClientPlaying";
+import { InputSystem } from "./InputSystem";
 
-export function MobileInputSystem(state: InputSystemState): InputSystem {
-  const { playingState } = state;
-  const { client, playArea } = playingState;
-  const { camerable } = playArea;
-  const { scene } = client.env;
+export function MobileInputSystem(
+  clientPlaying: ClientPlaying,
+  inputUiParent: g.E,
+): InputSystem {
+  const scene = g.game.env.scene;
+  // const { playingState } = clientPlaying.playState;
+  // const { client, playArea } = playingState;
+  // const { camerable } = playArea;
+  // const { scene } = client.env;
 
-  const mobileUi = createMobileUi(state);
+  const mobileUi = createMobileUi(clientPlaying, inputUiParent);
 
   const result: InputSystem = {
     disable: () => {
@@ -34,25 +38,30 @@ export function MobileInputSystem(state: InputSystemState): InputSystem {
   return result;
 
   function moveCamera(e: g.PointMoveEvent) {
-    if (e.target !== playArea.bg) return;
+    if (e.target !== clientPlaying.uiGroups.bg.color) return;
 
+    const camerable = clientPlaying.uiGroups.piece.camerable;
     camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
     camerable.modified();
 
-    if (playingState.holdState == null) {
-      setCursorColor(mobileUi.pad, playingState);
+    if (clientPlaying.playState.holdState == null) {
+      setCursorColor(mobileUi.pad, clientPlaying);
     } else {
-      state.move(mobileUi.pad.cursor.x, mobileUi.pad.cursor.y);
+      clientPlaying.playState.move(mobileUi.pad.cursor.x, mobileUi.pad.cursor.y);
     }
   }
 }
 
-function createMobileUi(state: InputSystemState) {
-  const { playingState } = state;
-  const { client: { env: { scene } }, playArea: { camerable } } = playingState;
+function createMobileUi(
+  clientPlaying: ClientPlaying,
+  inputUiParent: g.E,
+) {
+  const scene = g.game.env.scene;
+  // const { playingState } = clientPlaying.playState;
+  // const { client: { env: { scene } }, playArea: { camerable } } = playingState;
 
   const mobileUiParent = new g.E({
-    scene, parent: playingState.display,
+    scene, parent: inputUiParent,
     hidden: true,
   });
 
@@ -88,31 +97,31 @@ function createMobileUi(state: InputSystemState) {
   } as const;
 
   mobileUiParts.holdPieceBtn.onPointDown.add(() => {
-    if (playingState.holdState == null) {
-      if (state.hold(pad.cursor.x, pad.cursor.y)) {
+    if (clientPlaying.playState.holdState == null) {
+      if (clientPlaying.playState.hold(pad.cursor.x, pad.cursor.y)) {
         pad.cursor.cssColor = "rgba(255,0,0,0.4)";
         pad.cursor.modified();
       }
     } else {
-      if (state.release()) {
+      if (clientPlaying.playState.release()) {
         pad.cursor.cssColor = "red";
         pad.cursor.modified();
       }
     }
   });
   mobileUiParts.checkFitBtn.onPointDown.add(() => {
-    state.checkFit();
+    clientPlaying.playState.checkFit();
   });
   mobileUiParts.zoomInBtn.onPointDown.add(() => {
-    state.scale(0.9);
-    if (playingState.holdState != null) {
-      state.move(pad.cursor.x, pad.cursor.y);
+    clientPlaying.playState.scale(0.9);
+    if (clientPlaying.playState.holdState != null) {
+      clientPlaying.playState.move(pad.cursor.x, pad.cursor.y);
     }
   });
   mobileUiParts.zoomOutBtn.onPointDown.add(() => {
-    state.scale(1.1);
-    if (playingState.holdState != null) {
-      state.move(pad.cursor.x, pad.cursor.y);
+    clientPlaying.playState.scale(1.1);
+    if (clientPlaying.playState.holdState != null) {
+      clientPlaying.playState.move(pad.cursor.x, pad.cursor.y);
     }
   });
 
@@ -131,14 +140,15 @@ function createMobileUi(state: InputSystemState) {
     if (pieMenu.entity.visible()) {
       pieMenu.target(padDir);
     } else {
+      const camerable = clientPlaying.uiGroups.piece.camerable;
       camerable.moveBy(cursorRest.x * camerable.scaleX, cursorRest.y * camerable.scaleX);
       camerable.modified();
 
-      if (playingState.holdState != null) {
-        state.move(pad.cursor.x, pad.cursor.y);
+      if (clientPlaying.playState.holdState != null) {
+        clientPlaying.playState.move(pad.cursor.x, pad.cursor.y);
       }
 
-      setCursorColor(pad, playingState);
+      setCursorColor(pad, clientPlaying);
       pad.cursor.modified();
     }
   });
@@ -148,13 +158,13 @@ function createMobileUi(state: InputSystemState) {
     100,
     () => pieMenuVisible(false),
   )
-    .addIcon("ico_info", state.toggle.info)
-    .addIcon("ico_preview", state.toggle.preview)
-    .addIcon("ico_setting", state.toggle.option)
-    .addIcon("ico_ranking", state.toggle.ranking)
-    .addIcon("ico_device", state.toggle.device)
+    .addIcon("ico_info", () => clientPlaying.uiGroups.info.toggle())
+    .addIcon("ico_preview", () => clientPlaying.uiGroups.preview.toggle())
+    .addIcon("ico_setting", () => clientPlaying.uiGroups.option.toggle())
+    .addIcon("ico_ranking", () => clientPlaying.uiGroups.ranking.toggle())
+    .addIcon("ico_device", () => clientPlaying.uiGroups.inputSystem.toggleInputSystem())
     .addIcon_Rect("color", "blue", e => {
-      pieMenu.icons.color.cssColor = state.toggle.color();
+      pieMenu.icons.color.cssColor = clientPlaying.uiGroups.bg.toggleColor();
       pieMenu.icons.color.modified();
     })
     .build({
@@ -205,11 +215,11 @@ function createMobileUi(state: InputSystemState) {
   };
 }
 
-function setCursorColor(pad: Pad, playingState: ClientPlayingState) {
+function setCursorColor(pad: Pad, clientPlaying: ClientPlaying) {
   pad.cursor.cssColor =
-    playingState.holdState != null
+    clientPlaying.playState.holdState != null
       ? "rgba(255,0,0,0.4)"
-      : playingState.getPieceFromScreenPx(pad.cursor.x, pad.cursor.y, true) != null
+      : clientPlaying.getPieceFromScreenPx(pad.cursor.x, pad.cursor.y, true) != null
         ? "red"
         : "yellow";
   pad.cursor.modified();

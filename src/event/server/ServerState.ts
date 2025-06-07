@@ -1,6 +1,6 @@
 import { SacServer } from "akashic-sac";
 import { Mutable } from "../../common/type";
-import { GameState, createGameState } from "../../util/GameState";
+import { GameState, createGameState } from "../../share/GameState";
 import { GameStart } from "../TitleEvent";
 import { createCheckAndDoFitAndConnect } from "./FitAndConnectCalc";
 

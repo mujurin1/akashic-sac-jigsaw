@@ -1,7 +1,7 @@
 import { imageDataUtil } from "akashic-sac";
 import { CustomSprite } from "../common/CustomSprite";
 import { Piece } from "../page/Playing/Piece";
-import { GameState } from "./GameState";
+import { GameState } from "../share/GameState";
 
 /**
  * ピース枠の仕様
@@ -26,7 +26,13 @@ type WakuType = "_" | "O" | "X";
 const WakuReverse = { O: "X", X: "O", _: "_" } as const;
 
 export interface CreatePiecesResult {
+  /**
+   * @deprecated できればこれはこれを使う場所で生成したい
+   */
   readonly preview: g.Sprite;
+  /**
+   * @deprecated できればこれはこれを使う場所で生成したい
+   */
   readonly frame: g.Sprite;
   readonly pieces: Piece[];
 }
@@ -44,8 +50,8 @@ export async function createPieces(
   const marginH = gameState.pieceSize.height * 0.25;
   const wakuW = gameState.pieceSize.width + marginW * 2;
   const wakuH = gameState.pieceSize.height + marginH * 2;
-  const boardW = gameState.board.width;
-  const boardH = gameState.board.height;
+  const boardW = gameState.boardArea.width;
+  const boardH = gameState.boardArea.height;
 
   const preview = new g.Sprite({
     scene,

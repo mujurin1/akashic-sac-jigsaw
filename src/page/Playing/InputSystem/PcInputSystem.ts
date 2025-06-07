@@ -1,13 +1,14 @@
-import { InputSystem, InputSystemState } from "./InputSystem";
+import { ClientPlaying } from "../State/ClientPlaying";
+import { InputSystem } from "./InputSystem";
 
-export function PcInputSystem(state: InputSystemState): InputSystem {
-  const { playingState } = state;
-  const { client, playArea } = playingState;
-  const { camerable } = playArea;
-  const { scene } = client.env;
+export function PcInputSystem(
+  clientPlaying: ClientPlaying,
+  inputUiParent: g.E,
+): InputSystem {
+  const scene = g.game.env.scene;
 
-  const pcUi = createIcons(state);
-  const eventManager = customWheelEvent(state);
+  const pcUi = createIcons(clientPlaying, inputUiParent);
+  const eventManager = customWheelEvent(clientPlaying);
 
   const result: InputSystem = {
     disable: () => {
@@ -36,30 +37,38 @@ export function PcInputSystem(state: InputSystemState): InputSystem {
 
   return result;
 
+
   function moveCamera(e: g.PointMoveEvent) {
-    if (playingState.holdState != null || e.target !== playArea.bg) return;
+    if (
+      clientPlaying.playState.holdState != null ||
+      e.target !== clientPlaying.uiGroups.bg.color
+    ) return;
+    const camerable = clientPlaying.uiGroups.piece.camerable;
     camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
     camerable.modified();
   }
+
   function pieceTouch(e: g.PointDownEvent) {
-    if (e.target !== playArea.bg) return;
-    state.hold(e.point.x, e.point.y);
+    if (e.target !== clientPlaying.uiGroups.bg.color) return;
+    clientPlaying.playState.hold(e.point.x, e.point.y);
   }
+
   function pieceMove(e: g.PointMoveEvent) {
-    if (playingState.holdState == null) return;
-    state.move(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
+    if (clientPlaying.playState.holdState == null) return;
+    clientPlaying.playState.move(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
   }
+
   function pieceRelease(e: g.PointUpEvent) {
-    if (playingState.holdState == null) return;
-    state.release(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
+    if (clientPlaying.playState.holdState == null) return;
+    clientPlaying.playState.release(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
   }
 }
 
-function createIcons(state: InputSystemState) {
-  const { client: { env: { scene } } } = state.playingState;
+function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
+  const scene = g.game.env.scene;
 
   const pcUiParent = new g.E({
-    scene, parent: state.playingState.display,
+    scene, parent: inputUiParent,
     hidden: true,
   });
   const iconParent = new g.E({
@@ -75,13 +84,13 @@ function createIcons(state: InputSystemState) {
     colorIcon: createIcon(undefined, [2, 1]),
   } as const;
 
-  icons.deviceIcon.onPointDown.add(() => state.toggle.device());
-  icons.optionIcon.onPointDown.add(() => state.toggle.option());
-  icons.rankingIcon.onPointDown.add(() => state.toggle.ranking());
-  icons.infoIcon.onPointDown.add(() => state.toggle.info());
-  icons.previewIcon.onPointDown.add(() => state.toggle.preview());
+  icons.deviceIcon.onPointDown.add(() => clientPlaying.uiGroups.inputSystem.toggleInputSystem());
+  icons.optionIcon.onPointDown.add(() => clientPlaying.uiGroups.option.toggle());
+  icons.rankingIcon.onPointDown.add(() => clientPlaying.uiGroups.ranking.toggle());
+  icons.infoIcon.onPointDown.add(() => clientPlaying.uiGroups.info.toggle());
+  icons.previewIcon.onPointDown.add(() => clientPlaying.uiGroups.preview.toggle());
   icons.colorIcon.onPointDown.add(() => {
-    icons.colorIcon.cssColor = state.toggle.color();
+    icons.colorIcon.cssColor = clientPlaying.uiGroups.bg.toggleColor();
     icons.colorIcon.modified();
   });
 
@@ -147,9 +156,7 @@ function createIcons(state: InputSystemState) {
   }
 }
 
-function customWheelEvent(
-  state: InputSystemState
-) {
+function customWheelEvent(clientPlaying: ClientPlaying) {
 
   return {
     enable: () => {
@@ -163,7 +170,7 @@ function customWheelEvent(
   };
 
   function wheelEvent(e: WheelEvent) {
-    if (state.playingState.option.visible) return;
+    if (clientPlaying.uiGroups.option.visible) return;
 
     e.preventDefault();
 
@@ -172,6 +179,6 @@ function customWheelEvent(
       : e.ctrlKey ? 1.2 : 1.1;
     const pos = { x: e.offsetX, y: e.offsetY };
 
-    state.scale(scale, { pos });
+    clientPlaying.playState.scale(scale, { pos });
   }
 }

@@ -7,7 +7,7 @@ import { ChangeLevel, ChangePuzzle, GameStart } from "../../event/TitleEvent";
 import { sendJoin } from "../../server_client";
 import { PlayerManager } from "../../util/PlayerManager";
 import { readAssets } from "../../util/readAssets";
-import { Playing } from "../Playing/PlayingState";
+import { createClientPlaying } from "../Playing/State/ClientPlaying";
 
 interface TitleState {
   client: SacClient;
@@ -234,7 +234,11 @@ function createUi(state: TitleState) {
         child.destroy();
       }
 
-      void Playing(client, data, previewsInfo);
+      // void Playing(client, data, previewsInfo[data.puzzleIndex]);
+      const unlockEvent = client.lockEvent();
+
+      void createClientPlaying(client, data, previewsInfo[data.puzzleIndex])
+        .then(unlockEvent);
     }),
     ChangePuzzle.receive(client, data => {
       state.puzzleIndex = data.index;

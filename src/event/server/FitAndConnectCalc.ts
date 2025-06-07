@@ -1,5 +1,5 @@
 import { sumPos } from "../../common/func";
-import { calcAnswerXY, calcIndexXY, Dir, Dirs } from "../../util/GameState";
+import { calcAnswerXY, calcIndexXY, Dir, Dirs } from "../../share/GameState";
 import { ConnectPiece, FitPiece } from "../PlayingEvent";
 import { ServerPieceState, ServerPlayingState } from "./ServerState";
 

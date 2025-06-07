@@ -12,11 +12,14 @@ const MOVE_PIECE_AREA_SIZE = 4;
  */
 const PIECE_MARGIN_PER = 0.3;
 
+/**
+ * サーバーとクライアントで共通なゲームの状態
+ */
 export interface GameState extends Omit<GameStart, keyof SacEvent> {
   /** ピースがハマるボード */
-  readonly board: g.CommonArea;
+  readonly boardArea: g.CommonArea;
   /** ピースが移動可能なエリアの制限 */
-  readonly movePieceArea: g.CommonSize;
+  readonly pieceAreaLimit: g.CommonSize;
   readonly piecePositions: g.CommonOffset[];
 }
 
@@ -38,13 +41,13 @@ export function createGameState(gameStart: GameStart): GameState {
   };
   return {
     ...gameStart,
-    board: {
+    boardArea: {
       ...boardSize,
       // ピースの移動可能な領域は 
       x: (movePieceArea.width - boardSize.width) / 2,
       y: (movePieceArea.height - boardSize.height) / 2,
     },
-    movePieceArea,
+    pieceAreaLimit: movePieceArea,
     piecePositions,
   };
 }
@@ -137,8 +140,8 @@ export const DirR = {
 export function calcAnswerXY(index: number, gameState: GameState): g.CommonOffset {
   const pos = calcIndexXY(index, gameState);
   return {
-    x: gameState.board.x + gameState.pieceSize.width * pos.x,
-    y: gameState.board.y + gameState.pieceSize.height * pos.y,
+    x: gameState.boardArea.x + gameState.pieceSize.width * pos.x,
+    y: gameState.boardArea.y + gameState.pieceSize.height * pos.y,
   };
 }
 
