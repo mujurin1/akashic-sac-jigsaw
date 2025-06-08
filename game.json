@@ -303,11 +303,6 @@
 			"path": "script/event/server/ServerState.js",
 			"global": true
 		},
-		"PlayingState": {
-			"type": "script",
-			"path": "script/page/Playing/PlayingState.js",
-			"global": true
-		},
 		"FitAndConnectCalc": {
 			"type": "script",
 			"path": "script/event/server/FitAndConnectCalc.js",
@@ -358,11 +353,6 @@
 			"path": "script/common/timeFlowController.js",
 			"global": true
 		},
-		"PlayingUi": {
-			"type": "script",
-			"path": "script/page/Playing/PlayingUi.js",
-			"global": true
-		},
 		"type": {
 			"type": "script",
 			"path": "script/common/type.js",
@@ -392,11 +382,6 @@
 		"BgGroup": {
 			"type": "script",
 			"path": "script/page/Playing/State/BgGroup.js",
-			"global": true
-		},
-		"ClientPlayingState": {
-			"type": "script",
-			"path": "script/page/Playing/State/ClientPlayingState.js",
 			"global": true
 		},
 		"InfoGroup": {

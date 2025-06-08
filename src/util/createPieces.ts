@@ -25,6 +25,286 @@ const pieceLine = `
 type WakuType = "_" | "O" | "X";
 const WakuReverse = { O: "X", X: "O", _: "_" } as const;
 
+interface WH { readonly w: number; readonly h: number; }
+interface XY { readonly x: number; readonly y: number; }
+
+interface Numbers {
+  readonly piece: WH;
+  readonly pieceSize: WH;
+  readonly boardArea: WH;
+  readonly origin: XY;
+
+  // 計算後の値
+  readonly margin: WH;
+  readonly waku: WH;
+}
+
+function createNumbers(gameState: GameState): Numbers {
+  const piece = {
+    w: gameState.pieceWH.width,
+    h: gameState.pieceWH.height
+  };
+  const pieceSize = {
+    w: gameState.pieceSize.width,
+    h: gameState.pieceSize.height
+  };
+  const boardArea = {
+    w: gameState.boardArea.width,
+    h: gameState.boardArea.height
+  };
+  const origin = {
+    x: gameState.origin.x,
+    y: gameState.origin.y
+  };
+
+  const margin = {
+    w: pieceSize.w * 0.25,
+    h: pieceSize.h * 0.25
+  };
+  const waku = {
+    w: pieceSize.w + margin.w * 2,
+    h: pieceSize.h + margin.h * 2
+  };
+
+  return {
+    piece,
+    pieceSize,
+    boardArea,
+    origin,
+
+    margin,
+    waku,
+  };
+}
+
+export interface PieceParameter {
+  readonly imageSrc: g.ImageAsset | g.Surface;
+  readonly random: g.Xorshift;
+  readonly numbers: Numbers;
+
+  // ピースの凸凹 (その向きの面が凸か凹か)
+  readonly rightOXs: WakuType[][];
+  readonly bottomOXs: WakuType[][];
+}
+
+
+/**
+ * この関数及び派生した関数はサーバー環境で呼び出してはダメ
+ */
+export function createPieceParameter(
+  gameState: GameState,
+  imageSrc: g.ImageAsset | g.Surface,
+): PieceParameter {
+  const random = new g.Xorshift(gameState.seed);
+  const numbers = createNumbers(gameState);
+
+  const rightOXs: WakuType[][] = [];
+  const bottomOXs: WakuType[][] = [];
+
+  for (let a = 0; a < numbers.piece.h; a++) {
+    const ary: WakuType[] = ["_"];
+    for (let b = 0; b < numbers.piece.w - 1; b++)
+      ary.push(randomBool(random) ? "O" : "X");
+    ary.push("_");
+    rightOXs.push(ary);
+  }
+  for (let a = 0; a < numbers.piece.w; a++) {
+    const ary: WakuType[] = ["_"];
+    for (let b = 0; b < numbers.piece.h - 1; b++)
+      ary.push(randomBool(random) ? "O" : "X");
+    ary.push("_");
+    bottomOXs.push(ary);
+  }
+
+  return {
+    imageSrc,
+    random,
+    numbers,
+    rightOXs,
+    bottomOXs,
+  };
+}
+
+export async function createPieces__(param: PieceParameter): Promise<Piece[]> {
+  const { numbers, imageSrc, rightOXs, bottomOXs } = param;
+  const scene = g.game.env.scene;
+
+  const marginW = numbers.pieceSize.w * 0.25;
+  const marginH = numbers.pieceSize.h * 0.25;
+  const wakuW = numbers.pieceSize.w + marginW * 2;
+  const wakuH = numbers.pieceSize.h + marginH * 2;
+  const boardW = numbers.boardArea.w;
+  const boardH = numbers.boardArea.h;
+
+  const [dekoImgData, bokoImgData] = await Promise.all([
+    imageDataUtil.fromSvgText(pieceDeko, wakuW, wakuH),
+    imageDataUtil.fromSvgText(pieceBoko, wakuW, wakuH),
+  ]);
+
+  const preview = new g.Sprite({
+    scene,
+    src: imageSrc,
+    srcX: numbers.origin.x,
+    srcY: numbers.origin.y,
+    width: boardW, height: boardH,
+  });
+  const tmpE = new g.E({ scene, width: numbers.pieceSize.w, height: numbers.pieceSize.h });
+  tmpE.append(preview);
+  const waku4Dirs = {
+    O: createWaku4Dir("O"),
+    X: createWaku4Dir("X"),
+  } as const;
+
+  const drawOffset: g.CommonRect = { left: marginW, top: marginH, right: marginW, bottom: marginH };
+
+  const pieces: Piece[] = [];
+
+  for (let h = 0; h < numbers.piece.h; h++) {
+    for (let w = 0; w < numbers.piece.w; w++) {
+      const p = stamp(
+        w, h,
+        WakuReverse[rightOXs[h][w]],
+        WakuReverse[bottomOXs[w][h]],
+        rightOXs[h][w + 1],
+        bottomOXs[w][h + 1],
+      );
+      Piece.setTag(p, h * numbers.piece.w + w);
+      pieces.push(p);
+    }
+  }
+
+  preview.destroy();
+  tmpE.destroy();
+  for (const waku of waku4Dirs.O) waku.destroy();
+  for (const waku of waku4Dirs.X) waku.destroy();
+
+  return pieces;
+
+
+  /**
+   * ピースを生成する
+   * @param w 左からw個目のピース
+   * @param h 上からh個目のピース
+   * @param wakuTypes [左,上,右,下]
+   */
+  function stamp(w: number, h: number, ...wakuTypes: [WakuType, WakuType, WakuType, WakuType]): Piece {
+    preview.x = marginW - numbers.pieceSize.w * w;
+    preview.y = marginH - numbers.pieceSize.h * h;
+    // preview.modified();  // 無くても良いみたい
+
+    const addedWakus: g.Sprite[] = [];
+    for (const i of [0, 1, 2, 3]) {
+      const waku = wakuTypes[i];
+      if (waku === "_") continue;
+      const wakuE = waku4Dirs[waku][i];
+      tmpE.append(wakuE);
+      addedWakus.push(wakuE);
+    }
+
+    const s = createCustomSpriteFromE(scene, tmpE, drawOffset);
+    for (const waku of addedWakus) waku.remove();
+    return s as Piece;
+  }
+
+  function createWaku4Dir(type: WakuType) {
+    const imgData = type === "O" ? dekoImgData : bokoImgData;
+    const params = {
+      compositeOperation: "destination-out",
+      scene, anchorX: null,
+    } as const;
+
+    return [270, 0, 90, 180].map(angle =>
+      imageDataUtil.toSprite(imgData, { ...params, angle })
+    );
+  }
+}
+
+export async function createFrames(param: PieceParameter): Promise<g.Sprite> {
+  const { numbers, imageSrc, rightOXs, bottomOXs } = param;
+  const scene = g.game.env.scene;
+
+  const marginW = numbers.pieceSize.w * 0.25;
+  const marginH = numbers.pieceSize.h * 0.25;
+  const boardW = numbers.boardArea.w;
+  const boardH = numbers.boardArea.h;
+
+  const frameE = new g.E({ scene, width: boardW, height: boardH });
+  const lineParam: Parameters<typeof imageDataUtil.toSprite>[1] = {
+    scene, parent: frameE, anchorX: null
+  };
+
+  const lineImgData = await imageDataUtil.fromSvgText(pieceLine, numbers.pieceSize.w, numbers.pieceSize.h);
+
+  let baseX = 0;
+  for (let w = 0; w < numbers.piece.w; w++) {
+    let baseY = 0;
+    for (let h = 0; h < numbers.piece.h; h++) {
+      stampRight(rightOXs[h][w + 1], baseX, baseY);
+      stampBottom(bottomOXs[w][h + 1], baseX, baseY);
+
+      baseY += numbers.pieceSize.h;
+    }
+    baseX += numbers.pieceSize.w;
+  }
+
+
+  const preview = new g.Sprite({
+    scene,
+    src: imageSrc,
+    srcX: numbers.origin.x,
+    srcY: numbers.origin.y,
+    width: boardW, height: boardH,
+  });
+
+  const frame = g.SpriteFactory.createSpriteFromE(scene, frameE);
+  frame.opacity = 0.5;
+  frame.compositeOperation = "destination-out";
+  frame.moveTo(preview.x, preview.y);
+  frame.modified();
+
+  frameE.destroy();
+  preview.destroy();
+
+  // TODO: createSpriteFactory する。でないと透過される
+  return frame;
+
+  // TODO: 下２つの関数 imageDataUtil.toSprite を無くす (canvas で生成する)
+
+  function stampRight(type: WakuType, baseX: number, baseY: number): void {
+    if (type === "_") return;
+
+    lineParam.y = baseY;
+    if (type === "X") {
+      lineParam.x = baseX + marginW;
+      lineParam.angle = 90;
+    } else {
+      lineParam.x = baseX + numbers.pieceSize.w - marginW;
+      lineParam.angle = 270;
+    }
+
+    imageDataUtil.toSprite(lineImgData, lineParam);
+  }
+
+  function stampBottom(type: WakuType, baseX: number, baseY: number): void {
+    if (type === "_") return;
+
+    lineParam.x = baseX;
+    if (type === "X") {
+      lineParam.y = baseY + marginH;
+      lineParam.angle = 180;
+    } else {
+      lineParam.y = baseY + numbers.pieceSize.h - marginH;
+      lineParam.angle = 0;
+    }
+
+    imageDataUtil.toSprite(lineImgData, lineParam);
+  }
+}
+
+
+
+
+
 export interface CreatePiecesResult {
   /**
    * @deprecated できればこれはこれを使う場所で生成したい
@@ -35,182 +315,6 @@ export interface CreatePiecesResult {
    */
   readonly frame: g.Sprite;
   readonly pieces: Piece[];
-}
-
-/**
- * ピースを生成する\
- * サーバー環境で呼び出してはダメ
- */
-export async function createPieces(
-  scene: g.Scene,
-  gameState: GameState,
-  imageSrc: g.ImageAsset | g.Surface,
-): Promise<CreatePiecesResult> {
-  const marginW = gameState.pieceSize.width * 0.25;
-  const marginH = gameState.pieceSize.height * 0.25;
-  const wakuW = gameState.pieceSize.width + marginW * 2;
-  const wakuH = gameState.pieceSize.height + marginH * 2;
-  const boardW = gameState.boardArea.width;
-  const boardH = gameState.boardArea.height;
-
-  const preview = new g.Sprite({
-    scene,
-    src: imageSrc,
-    srcX: gameState.origin.x,
-    srcY: gameState.origin.y,
-    width: boardW, height: boardH,
-  });
-
-  const [dekoImgData, bokoImgData, lineImgData] = await Promise.all([
-    imageDataUtil.fromSvgText(pieceDeko, wakuW, wakuH),
-    imageDataUtil.fromSvgText(pieceBoko, wakuW, wakuH),
-    imageDataUtil.fromSvgText(pieceLine, gameState.pieceSize.width, gameState.pieceSize.height),
-    // TODO: ピースの縦横比が1:1でない場合は更に倍の通り作る必要がある
-    // imageDataUtil.fromSvgText(pieceDeko, wakuH, wakuW),
-    // imageDataUtil.fromSvgText(pieceBoko, wakuH, wakuW),
-    // imageDataUtil.fromSvgText(pieceLine, param.pieceSize.height, param.pieceSize.width),
-  ]);
-
-  const allWakus = {
-    O: createWaku("O"),
-    X: createWaku("X"),
-  } as const;
-
-  const tmpE = new g.E({ scene, ...gameState.pieceSize });
-  tmpE.append(preview);
-  const drawOffset: g.CommonRect = { left: marginW, top: marginH, right: marginW, bottom: marginH };
-  const random = new g.Xorshift(gameState.seed);
-
-  // ピースの凸凹を作る (左/上から見たときに凸か凹か)
-  const wOXs: WakuType[][] = [];
-  const hOXs: WakuType[][] = [];
-
-  for (let a = 0; a < gameState.pieceWH.height; a++) {
-    const ary: WakuType[] = ["_"];
-    for (let b = 0; b < gameState.pieceWH.width - 1; b++)
-      ary.push(randomBool(random) ? "O" : "X");
-    ary.push("_");
-    wOXs.push(ary);
-  }
-  for (let a = 0; a < gameState.pieceWH.width; a++) {
-    const ary: WakuType[] = ["_"];
-    for (let b = 0; b < gameState.pieceWH.height - 1; b++)
-      ary.push(randomBool(random) ? "O" : "X");
-    ary.push("_");
-    hOXs.push(ary);
-  }
-
-  // ピースを作る
-  const pieces: Piece[] = [];
-
-  for (let h = 0; h < gameState.pieceWH.height; h++) {
-    for (let w = 0; w < gameState.pieceWH.width; w++) {
-      const p = stamp(
-        w, h,
-        WakuReverse[wOXs[h][w]],
-        WakuReverse[hOXs[w][h]],
-        wOXs[h][w + 1],
-        hOXs[w][h + 1],
-      );
-      Piece.setTag(p, h * gameState.pieceWH.width + w);
-      pieces.push(p);
-    }
-  }
-
-  // ピースの枠を作る
-  const frameE = new g.E({ scene, width: boardW, height: boardH });
-  const lineParam: Parameters<typeof imageDataUtil.toSprite>[1] = {
-    scene, parent: frameE, anchorX: null
-  };
-
-  // TODO: ここの imageDataUtil.toSprite を無くす (canvas で生成する)
-  let baseX = 0;
-  for (let w = 0; w < gameState.pieceWH.width; w++) {
-    let baseY = 0;
-    for (let h = 0; h < gameState.pieceWH.height; h++) {
-      // 右側
-      const lineW = wOXs[h][w + 1];
-      if (lineW !== "_") {
-        lineParam.x = baseX + gameState.pieceSize.width - marginW;
-        lineParam.y = baseY;
-        lineParam.angle = 270;
-        if (lineW === "X") {
-          lineParam.x = baseX + marginW;
-          lineParam.angle = 90;
-        }
-        imageDataUtil.toSprite(lineImgData, lineParam);
-      }
-      // 下側
-      const lineH = hOXs[w][h + 1];
-      if (lineH !== "_") {
-        lineParam.x = baseX;
-        lineParam.y = baseY + gameState.pieceSize.height - marginH;
-        lineParam.angle = 0;
-        if (lineH === "X") {
-          lineParam.y = baseY + marginH;
-          lineParam.angle = 180;
-        }
-        imageDataUtil.toSprite(lineImgData, lineParam);
-      }
-
-      baseY += gameState.pieceSize.height;
-    }
-    baseX += gameState.pieceSize.width;
-  }
-
-  preview.moveTo(0, 0);
-  preview.modified();
-
-  const frame = g.SpriteFactory.createSpriteFromE(scene, frameE);
-  frame.opacity = 0.5;
-  frame.compositeOperation = "destination-out";
-  frame.moveTo(preview.x, preview.y);
-  frame.modified();
-
-  for (const s of [...frameE.children!]) (<g.Sprite>s).destroy(true);
-
-  return { preview, pieces, frame };
-
-  /**
-   * ピースを生成する
-   * @param w 左からw個目のピース
-   * @param h 上からh個目のピース
-   * @param wakuTypes [左,上,右,下]
-   */
-  function stamp(w: number, h: number, ...wakuTypes: [WakuType, WakuType, WakuType, WakuType]): Piece {
-    preview.x = marginW - gameState.pieceSize.width * w;
-    preview.y = marginH - gameState.pieceSize.height * h;
-    // preview.modified();  // 無くても良いみたい
-
-    const wakus: g.Sprite[] = [];
-    for (const i of [0, 1, 2, 3]) {
-      const waku = wakuTypes[i];
-      if (waku === "_") continue;
-      const wakuE = allWakus[waku][i];
-      tmpE.append(wakuE);
-      wakus.push(wakuE);
-    }
-
-    const s = createCustomSpriteFromE(scene, tmpE, drawOffset);
-    for (const waku of wakus) waku.remove();
-    return s as Piece;
-  }
-
-  function createWaku(type: WakuType) {
-    const ary: g.Sprite[] = [];
-    for (const angle of [270, 0, 90, 180]) {
-      ary.push(
-        imageDataUtil.toSprite(
-          type === "O" ? dekoImgData : bokoImgData,
-          {
-            compositeOperation: "destination-out",
-            scene, anchorX: null, angle,
-          }
-        )
-      );
-    }
-    return ary;
-  }
 }
 
 /**

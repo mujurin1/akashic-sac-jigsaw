@@ -1,6 +1,6 @@
 import { HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
 import { GameState } from "../../../share/GameState";
-import { createPieces, CreatePiecesResult } from "../../../util/createPieces";
+import { createFrames, createPieceParameter, createPieces__, CreatePiecesResult } from "../../../util/createPieces";
 import { PreviewInfo } from "../../../util/readAssets";
 import { Piece } from "../Piece";
 import { ClientPlaying } from "./ClientPlaying";
@@ -69,11 +69,18 @@ export async function createPlayState(
   gameState: GameState,
   previewInfo: PreviewInfo,
 ): Promise<PlayState> {
-  const piecesResult = await createPieces(
-    clientPlaying.client.env.scene,
-    gameState,
-    previewInfo.imageAsset,
-  );
+  const param = createPieceParameter(gameState, previewInfo.imageAsset);
+  const piecesResult = {
+    pieces: await createPieces__(param),
+    frame: await createFrames(param),
+    preview: new g.Sprite({
+      scene: g.game.env.scene,
+      src: previewInfo.imageAsset,
+      srcX: gameState.origin.x,
+      srcY: gameState.origin.y,
+      width: gameState.boardArea.width, height: gameState.boardArea.height,
+    }),
+  };
 
   let holdState: HoldState | undefined = undefined;
   let totalScore = 0;

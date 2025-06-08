@@ -10,7 +10,8 @@
     "suppressImplicitAnyIndexErrors": false,
     // "noUnusedLocals": true,
     "declaration": true,
-    "allowUmdGlobalAccess": true
+    "allowUmdGlobalAccess": true,
+    // "noCheck": true,  // 型チェック無視
   },
   "files": [
     "node_modules/@akashic/akashic-engine/index.runtime.d.ts",
