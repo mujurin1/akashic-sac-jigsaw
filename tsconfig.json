@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2015",
-    "lib": [ "ES2019", "DOM" ],
+    "target": "esnext",
+    "lib": [ "esnext", "dom" ],
+    "types": [ ],
     "module": "commonjs",
     "outDir": "script",
     // "strict": true,

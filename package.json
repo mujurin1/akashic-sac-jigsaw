@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "dev": "npm run build:scan && npm run serve:watch",
+    "dev": "bun run build:scan && bun run serve:watch",
     "usac": "akashic install ../akashic-sac/akashic-sac-0.2.3.tgz",
     "serve:watch": "concurrently \"tsc -w\" \"akashic serve -p 3300 -s nicolive -w -B\"",
-    "export": "npm run build:scan && akashic export zip -f -o ./game.zip --nicolive --minify",
+    "export": "bun run build:scan && akashic export zip -f -o ./game.zip --nicolive --minify",
     "scan": "akashic scan asset",
     "build:scan": "rimraf ./script && tsc && akashic-cli-scan asset script",
     "update": "akashic-cli-scan asset && akashic-cli-scan globalScripts",
