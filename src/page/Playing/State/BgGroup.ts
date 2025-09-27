@@ -19,11 +19,11 @@ export function createBgGroup(clientPlaying: ClientPlaying): BgGroup {
   return bgGroup;
 
   function toggleColor(): string {
-    const color = BACKGROUND_COLOR.getNext(bgGroup.color.cssColor);
+    const color = BACKGROUND_COLOR.nextColorMap[bgGroup.color.cssColor];
     bgGroup.color.cssColor = color;
     bgGroup.color.modified();
 
-    return BACKGROUND_COLOR.nextIconBg[color];
+    return BACKGROUND_COLOR.nextColorMapIcon[color];
   }
 }
 

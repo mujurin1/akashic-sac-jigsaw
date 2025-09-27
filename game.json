@@ -408,6 +408,11 @@
 			"type": "script",
 			"path": "script/page/Playing/State/ClientPlaying.js",
 			"global": true
+		},
+		"PlayAreaGroup": {
+			"type": "script",
+			"path": "script/page/Playing/State/PlayAreaGroup.js",
+			"global": true
 		}
 	}
 }

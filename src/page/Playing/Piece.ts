@@ -94,7 +94,7 @@ export const Piece = {
    */
   pieceParentSetting(cientPlaying: ClientPlaying) {
     Piece._cientPlaying = cientPlaying;
-    Piece._pieceParent = Piece._cientPlaying.uiGroups.piece.pieceParent;
+    Piece._pieceParent = Piece._cientPlaying.uiGroups.playArea.pieceParent;
   },
   hold(piece: Piece, pId: string) {
     shiftTop(piece);

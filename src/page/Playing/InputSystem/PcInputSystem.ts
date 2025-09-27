@@ -38,14 +38,14 @@ export function PcInputSystem(
   return result;
 
 
-  function moveCamera(e: g.PointMoveEvent) {
+  function moveCamera({ target, prevDelta }: g.PointMoveEvent) {
     if (
       clientPlaying.playState.holdState != null ||
-      e.target !== clientPlaying.uiGroups.bg.color
+      target !== clientPlaying.uiGroups.bg.color
     ) return;
-    const camerable = clientPlaying.uiGroups.piece.camerable;
-    camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
-    camerable.modified();
+
+    const playArea = clientPlaying.uiGroups.playArea;
+    playArea.moveByCamera(-prevDelta.x, -prevDelta.y);
   }
 
   function pieceTouch(e: g.PointDownEvent) {
@@ -170,7 +170,8 @@ function customWheelEvent(clientPlaying: ClientPlaying) {
   };
 
   function wheelEvent(e: WheelEvent) {
-    if (clientPlaying.uiGroups.option.visible) return;
+    // TODO: オプションUIが開いているときは無効にする
+    // if (clientPlaying.uiGroups.option.visible) return;
 
     e.preventDefault();
 
@@ -179,6 +180,6 @@ function customWheelEvent(clientPlaying: ClientPlaying) {
       : e.ctrlKey ? 1.2 : 1.1;
     const pos = { x: e.offsetX, y: e.offsetY };
 
-    clientPlaying.playState.scale(scale, { pos });
+    clientPlaying.uiGroups.playArea.scaleCamera(scale, { pos });
   }
 }

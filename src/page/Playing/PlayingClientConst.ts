@@ -9,10 +9,11 @@ export const BACKGROUND_COLOR = (() => {
   );
 
   return {
+    /** 背景色のリスト */
     colors,
-    next,
-    /** 次の背景色を表示するアイコン用. 透明を半透明で可視化する */
-    nextIconBg: { ...next, "#4A8E3D": "rgba(255, 255, 255, 0.5)" } as Record<string, string>,
-    getNext: (color: string) => next[color] ?? colors[0],
+    /** 背景色から次の色へのマップ */
+    nextColorMap: next as Readonly<Record<string, string>>,
+    /** 背景色から次の色へのマップ (アイコン用) */
+    nextColorMapIcon: { ...next, "#4A8E3D": "rgba(255, 255, 255, 0.5)" } as Readonly<Record<string, string>>,
   } as const;
 })();

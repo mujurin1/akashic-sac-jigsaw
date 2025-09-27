@@ -49,13 +49,6 @@ export interface PlayState {
    * TODO: 判定が`true`ならくっつけるのか?
    */
   checkFit: () => void;
-
-  /**
-   * 拡大縮小 相対指定
-   * @param per 拡大縮小率
-   * @param options オプション
-   */
-  scale: (per: number, options?: ScaleOptions) => void;
 }
 
 interface HoldState {
@@ -76,8 +69,7 @@ export async function createPlayState(
     preview: new g.Sprite({
       scene: g.game.env.scene,
       src: previewInfo.imageAsset,
-      srcX: gameState.origin.x,
-      srcY: gameState.origin.y,
+      srcX: gameState.origin.x, srcY: gameState.origin.y,
       width: gameState.boardArea.width, height: gameState.boardArea.height,
     }),
   };
@@ -104,7 +96,6 @@ export async function createPlayState(
     move,
     release,
     checkFit,
-    scale,
   };
 
 
@@ -160,39 +151,4 @@ export async function createPlayState(
   function checkFit() {
     // ピースを離さずにハマるかチェックし、ハマるならハメる
   }
-
-  function scale(_per: number, options?: ScaleOptions) {
-    const { camerable } = clientPlaying.uiGroups.piece;
-    const scale = options?.isAbsolute ? _per : camerable.scaleX * _per;
-    const posX = options?.pos?.x ?? g.game.width * 0.5;
-    const posY = options?.pos?.y ?? g.game.height * 0.5;
-
-    const prevScale = camerable.scaleX;
-    camerable.scale(scale);
-
-    const cx = posX / g.game.width;
-    const cy = posY / g.game.height;
-    const scaleW = camerable.width * prevScale;
-    const scaleH = camerable.height * prevScale;
-    const offsetX = cx * scaleW * (1 - scale / prevScale);
-    const offsetY = cy * scaleH * (1 - scale / prevScale);
-    camerable.moveBy(offsetX, offsetY);
-
-    camerable.modified();
-  }
-}
-
-
-interface ScaleOptions {
-  /**
-   * 絶対値指定なら`true`
-   * @default `false`
-   */
-  isAbsolute?: boolean;
-
-  /**
-   * 拡大/縮小の中心座標 (画面上の座標)
-   * @default 画面中央
-   */
-  pos: { x: number; y: number; };
 }

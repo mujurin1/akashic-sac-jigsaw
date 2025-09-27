@@ -40,9 +40,8 @@ export function MobileInputSystem(
   function moveCamera(e: g.PointMoveEvent) {
     if (e.target !== clientPlaying.uiGroups.bg.color) return;
 
-    const camerable = clientPlaying.uiGroups.piece.camerable;
-    camerable.moveBy(-e.prevDelta.x * camerable.scaleX, -e.prevDelta.y * camerable.scaleX);
-    camerable.modified();
+    const playArea = clientPlaying.uiGroups.playArea;
+    playArea.moveByCamera(-e.prevDelta.x, -e.prevDelta.y);
 
     if (clientPlaying.playState.holdState == null) {
       setCursorColor(mobileUi.pad, clientPlaying);
@@ -113,13 +112,13 @@ function createMobileUi(
     clientPlaying.playState.checkFit();
   });
   mobileUiParts.zoomInBtn.onPointDown.add(() => {
-    clientPlaying.playState.scale(0.9);
+    clientPlaying.uiGroups.playArea.scaleCamera(0.9);
     if (clientPlaying.playState.holdState != null) {
       clientPlaying.playState.move(pad.cursor.x, pad.cursor.y);
     }
   });
   mobileUiParts.zoomOutBtn.onPointDown.add(() => {
-    clientPlaying.playState.scale(1.1);
+    clientPlaying.uiGroups.playArea.scaleCamera(1.1);
     if (clientPlaying.playState.holdState != null) {
       clientPlaying.playState.move(pad.cursor.x, pad.cursor.y);
     }
@@ -137,12 +136,12 @@ function createMobileUi(
     cursorSpeed: 17,
   });
   pad.onMoving.add(({ padDir, moved, cursorRest }) => {
+    console.log(cursorRest.x, cursorRest.y);
     if (pieMenu.entity.visible()) {
       pieMenu.target(padDir);
     } else {
-      const camerable = clientPlaying.uiGroups.piece.camerable;
-      camerable.moveBy(cursorRest.x * camerable.scaleX, cursorRest.y * camerable.scaleX);
-      camerable.modified();
+      const playArea = clientPlaying.uiGroups.playArea;
+      playArea.moveByCamera(cursorRest.x, cursorRest.y);
 
       if (clientPlaying.playState.holdState != null) {
         clientPlaying.playState.move(pad.cursor.x, pad.cursor.y);

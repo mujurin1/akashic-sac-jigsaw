@@ -21,21 +21,22 @@ export interface InputSystemControl {
  */
 export function inputSystemControl(clientPlaying: ClientPlaying): InputSystemControl {
   let currentType: InputSystemType = "pc";
-
-  const inputUiParent = new g.E({ scene: g.game.env.scene });
-  const inputSystems = {
-    "pc": PcInputSystem(clientPlaying, inputUiParent),
-    "mobile": MobileInputSystem(clientPlaying, inputUiParent),
-  } as const satisfies Record<InputSystemType, InputSystem>;
+  const scene = g.game.env.scene;
 
   const control: InputSystemControl = {
-    inputUiParent,
+    inputUiParent: new g.E({ scene, parent: scene }),
     get currentType() { return currentType; },
     get current() { return inputSystems[currentType]; },
 
     toggleInputSystem,
     destroy,
   };
+
+  const inputSystems = {
+    "pc": PcInputSystem(clientPlaying, control.inputUiParent),
+    "mobile": MobileInputSystem(clientPlaying, control.inputUiParent),
+  } as const satisfies Record<InputSystemType, InputSystem>;
+
   inputSystems.pc.enable(createNewUiState());
 
   return control;
@@ -58,7 +59,7 @@ export function inputSystemControl(clientPlaying: ClientPlaying): InputSystemCon
   // TODO: これの関数名ビミョすぎ
   function createNewUiState(): NewUiState {
     return {
-      nextBgColor: BACKGROUND_COLOR.nextIconBg[clientPlaying.uiGroups.bg.color.cssColor],
+      nextBgColor: BACKGROUND_COLOR.nextColorMapIcon[clientPlaying.uiGroups.bg.color.cssColor],
     };
   }
 }

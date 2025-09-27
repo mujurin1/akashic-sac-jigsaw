@@ -5,7 +5,7 @@ import { GameState } from "../share/GameState";
 
 /**
  * ピース枠の仕様
- * * 300x300 px 上下左右50px が他のピースの範囲（出っ張る部分）
+ * * 300x300px    上下左右50px が他のピースの範囲（出っ張る部分）
  */
 const pieceDeko = `
 <svg width="300" height="300" version="1.1" xmlns="http://www.w3.org/2000/svg">
