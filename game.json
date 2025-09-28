@@ -413,6 +413,11 @@
 			"type": "script",
 			"path": "script/page/Playing/State/PlayAreaGroup.js",
 			"global": true
+		},
+		"OptionGroup": {
+			"type": "script",
+			"path": "script/page/Playing/State/OptionGroup.js",
+			"global": true
 		}
 	}
 }

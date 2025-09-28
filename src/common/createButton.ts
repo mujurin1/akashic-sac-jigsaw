@@ -24,6 +24,8 @@ export interface ButtonParam {
 
   /** デフォルトは`"left"`だが`width`を指定した場合のデフォルトは`"center"` */
   textAlign?: g.TextAlignString;
+
+  action?: (e: g.PointDownEvent) => void;
 }
 
 export function createButton(param: ButtonParam): g.Sprite {
@@ -38,7 +40,7 @@ export function createButton(param: ButtonParam): g.Sprite {
     textAlign: param.textAlign != null ? param.textAlign : width == null ? "left" : "center",
     widthAutoAdjust: width == null,
     lineBreak: false,
-    fontSize: param.fontSize ?? 65,
+    fontSize: param.fontSize ?? param.font?.size ?? 65,
     x: width == null ? margin : 0, y: margin - 5,
   });
   if (height != null) {
@@ -65,6 +67,9 @@ export function createButton(param: ButtonParam): g.Sprite {
   });
 
   sprite.append(label);
+  if (param.action != null) {
+    sprite.onPointDown.add(param.action);
+  }
 
   return sprite;
 }

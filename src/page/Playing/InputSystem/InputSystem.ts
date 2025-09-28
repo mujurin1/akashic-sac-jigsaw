@@ -12,7 +12,20 @@ export interface InputSystemControl {
   readonly currentType: InputSystemType;
   readonly current: InputSystem;
 
+  /**
+   * 操作方法を切り替える
+   * @param type 切り替えるタイプ (指定しない場合は次のタイプに切り替える)
+   * - `"pc"`: PC向け操作方法
+   * - `"mobile"`: モバイル向け操作方法
+   */
   toggleInputSystem(type?: InputSystemType): void;
+
+  /**
+   * 入力の有効/無効を切り替える
+   * @param enabled `true`: 有効, `false`: 無効
+   */
+  setInputEnabled(enabled: boolean): void;
+
   destroy(): void;
 }
 
@@ -29,6 +42,7 @@ export function inputSystemControl(clientPlaying: ClientPlaying): InputSystemCon
     get current() { return inputSystems[currentType]; },
 
     toggleInputSystem,
+    setInputEnabled,
     destroy,
   };
 
@@ -49,6 +63,13 @@ export function inputSystemControl(clientPlaying: ClientPlaying): InputSystemCon
 
     currentType = type;
     inputSystems[type].enable(createNewUiState());
+  }
+  function setInputEnabled(enabled: boolean) {
+    if (enabled) {
+      inputSystems[currentType].enable(createNewUiState());
+    } else {
+      inputSystems[currentType].disable();
+    }
   }
   function destroy() {
     for (const type of InputSystemType) {

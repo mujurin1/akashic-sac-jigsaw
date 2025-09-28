@@ -8,6 +8,7 @@ import { inputSystemControl, InputSystemControl } from "../InputSystem/InputSyst
 import { Piece } from "../Piece";
 import { BgGroup, createBgGroup } from "./BgGroup";
 import { createInfoGroup, InfoGroup } from "./InfoGroup";
+import { createOptionGroup, OptionGroup } from "./OptionGroup";
 import { createPieceGroup as createPlayAreaGroup, PieceGroup as PlayAreaGroup } from "./PlayAreaGroup";
 import { createPlayState, PlayState } from "./PlayState";
 
@@ -26,14 +27,15 @@ export interface ClientPlaying {
     /** 右上の Info パネル */
     readonly info: InfoGroup;
 
-    /** 操作方法の管理 */
-    readonly inputSystem: InputSystemControl;
-
     // 普段は非表示の要素
     readonly ranking: any;
     readonly preview: any;
-    readonly option: any;
+    readonly option: OptionGroup;
   };
+
+  /** 操作方法の管理 */
+  readonly inputSystem: InputSystemControl;
+
 
   /** プレイヤーが参加しているか */
   isJoined(): boolean;
@@ -73,13 +75,13 @@ export async function createClientPlaying(
 
       // プレイヤーに情報を表示する/操作する要素
       get info() { return infoGroup; },
-      get inputSystem() { return inputSystem; },
 
       // 普段は非表示の要素
       get ranking() { return rankingGroup; },
       get preview() { return preview; },
       get option() { return optionGroup; },
     },
+    get inputSystem() { return inputSystem; },
 
     isJoined,
     toPieceArea,
@@ -100,7 +102,7 @@ export async function createClientPlaying(
 
   const rankingGroup = null;
   const preview = null;
-  const optionGroup = null;
+  const optionGroup = createOptionGroup(clientPlaying);
 
   // ピースの初期化
   Piece.pieceParentSetting(clientPlaying);
@@ -115,7 +117,7 @@ export async function createClientPlaying(
   // TODO: client.removeEventSets(eventKeys);
   setEvents(clientPlaying);
 
-  playAreaGroup.resetCamera();
+  playAreaGroup.reset();
 
   return clientPlaying;
 

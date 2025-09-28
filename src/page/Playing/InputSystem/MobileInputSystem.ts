@@ -41,7 +41,7 @@ export function MobileInputSystem(
     if (e.target !== clientPlaying.uiGroups.bg.color) return;
 
     const playArea = clientPlaying.uiGroups.playArea;
-    playArea.moveByCamera(-e.prevDelta.x, -e.prevDelta.y);
+    playArea.moveBy(-e.prevDelta.x, -e.prevDelta.y);
 
     if (clientPlaying.playState.holdState == null) {
       setCursorColor(mobileUi.pad, clientPlaying);
@@ -112,13 +112,13 @@ function createMobileUi(
     clientPlaying.playState.checkFit();
   });
   mobileUiParts.zoomInBtn.onPointDown.add(() => {
-    clientPlaying.uiGroups.playArea.scaleCamera(0.9);
+    clientPlaying.uiGroups.playArea.scaleBy(0.9);
     if (clientPlaying.playState.holdState != null) {
       clientPlaying.playState.move(pad.cursor.x, pad.cursor.y);
     }
   });
   mobileUiParts.zoomOutBtn.onPointDown.add(() => {
-    clientPlaying.uiGroups.playArea.scaleCamera(1.1);
+    clientPlaying.uiGroups.playArea.scaleBy(1.1);
     if (clientPlaying.playState.holdState != null) {
       clientPlaying.playState.move(pad.cursor.x, pad.cursor.y);
     }
@@ -141,7 +141,7 @@ function createMobileUi(
       pieMenu.target(padDir);
     } else {
       const playArea = clientPlaying.uiGroups.playArea;
-      playArea.moveByCamera(cursorRest.x, cursorRest.y);
+      playArea.moveBy(cursorRest.x, cursorRest.y);
 
       if (clientPlaying.playState.holdState != null) {
         clientPlaying.playState.move(pad.cursor.x, pad.cursor.y);
@@ -161,7 +161,7 @@ function createMobileUi(
     .addIcon("ico_preview", () => clientPlaying.uiGroups.preview.toggle())
     .addIcon("ico_setting", () => clientPlaying.uiGroups.option.toggle())
     .addIcon("ico_ranking", () => clientPlaying.uiGroups.ranking.toggle())
-    .addIcon("ico_device", () => clientPlaying.uiGroups.inputSystem.toggleInputSystem())
+    .addIcon("ico_device", () => clientPlaying.inputSystem.toggleInputSystem())
     .addIcon_Rect("color", "blue", e => {
       pieMenu.icons.color.cssColor = clientPlaying.uiGroups.bg.toggleColor();
       pieMenu.icons.color.modified();

@@ -43,23 +43,37 @@ export interface PieceGroup {
   toggleBoardPieceFrame(visibleTo?: boolean): void;
 
   /**
-   * カメラのスケールを変更する
+   * カメラのスケールを相対的に変更する
    * @param per 拡大縮小率
-   * @param options.isAbsolute 絶対値指定なら`true` (default: `false`)
-   * @param options.pos 拡大/縮小の中心座標 (画面上の座標) (default: 画面中央)
+   * @param option.pos 拡大/縮小の中心座標 (画面上の座標) (default: 画面中央)
    */
-  scaleCamera(per: number, options?: ScaleOptions): void;
+  scaleBy(per: number, option?: ScaleOption): void;
+  /**
+   * カメラのスケールを絶対的に変更する
+   * @param per 拡大縮小率
+   * @param option.pos 拡大/縮小の中心座標 (画面上の座標) (default: 画面中央)
+   */
+  scaleTo(per: number, option?: ScaleOption): void;
+
   /**
    * カメラを相対的に動かす
-   * @param dx X方向の移動量
-   * @param dy Y方向の移動量
-   * @param ignoreScale 移動量をカメラのスケールに影響されない絶対値として扱うなら`true` (default: `false`)
+   * @param x X方向の移動量 (カメラスケールの影響を受けます)
+   * @param y Y方向の移動量 (カメラスケールの影響を受けます)
    */
-  moveByCamera(dx: number, dy: number, ignoreScale?: boolean): void;
+  moveBy(x: number, y: number): void;
+  /**
+   * カメラを絶対的に動かす
+   * @param x 画面上のX座標
+   * @param y 画面上のY座標
+   * @param option.centerPer 移動後のカメラの補正位置割合 (default: 中央)
+   * @param option.ignoreScale カメラのスケールを無視して移動するかどうか (default: false)
+   */
+  moveTo(x: number, y: number, option?: MoveToOption): void;
+
   /**
    * カメラを初期位置にリセットする
    */
-  resetCamera(): void;
+  reset(): void;
 }
 
 export function createPieceGroup(clientPlaying: ClientPlaying): PieceGroup {
@@ -110,65 +124,84 @@ export function createPieceGroup(clientPlaying: ClientPlaying): PieceGroup {
     toggleBoardPreview: (value) => toggleVisibleTo(boardPreview, value),
     toggleBoardPieceFrame: (value) => toggleVisibleTo(boardPieceFrame, value),
 
-    scaleCamera,
-    moveByCamera,
-    resetCamera,
+    scaleBy, scaleTo,
+    moveBy, moveTo,
+
+    reset,
   };
 
-
-  function scaleCamera(_per: number, options?: ScaleOptions) {
-    const scale = options?.isAbsolute ? _per : camerable.scaleX * _per;
-    const posX = options?.pos?.x ?? g.game.width * 0.5;
-    const posY = options?.pos?.y ?? g.game.height * 0.5;
+  function scaleBy(_per: number, option?: ScaleOption) {
+    scaleTo(camerable.scaleX * _per, option);
+  }
+  function scaleTo(per: number, option?: ScaleOption) {
+    const posX = option?.pos?.x ?? g.game.width * 0.5;
+    const posY = option?.pos?.y ?? g.game.height * 0.5;
 
     const prevScale = camerable.scaleX;
-    camerable.scale(scale);
+    camerable.scale(per);
 
     const cx = posX / g.game.width;
     const cy = posY / g.game.height;
     const scaleW = camerable.width * prevScale;
     const scaleH = camerable.height * prevScale;
-    const offsetX = cx * scaleW * (1 - scale / prevScale);
-    const offsetY = cy * scaleH * (1 - scale / prevScale);
+    const offsetX = cx * scaleW * (1 - per / prevScale);
+    const offsetY = cy * scaleH * (1 - per / prevScale);
     camerable.moveBy(offsetX, offsetY);
 
     camerable.modified();
   }
 
-  function moveByCamera(dx: number, dy: number, ignoreScale = false) {
-    const x = ignoreScale ? dx : dx * camerable.scaleX;
-    const y = ignoreScale ? dy : dy * camerable.scaleY;
+  function moveBy(dx: number, dy: number) {
+    const x = dx * camerable.scaleX;
+    const y = dy * camerable.scaleY;
     camerable.moveBy(x, y);
     camerable.modified();
   }
-
-  function resetCamera() {
-    // ボードの中央が画面中央に来るように移動
+  function moveTo(x: number, y: number, option?: MoveToOption) {
+    const centerPer = option?.centerPer ?? { x: 0.5, y: 0.5 };
+    const offsetX = g.game.width * camerable.scaleX * centerPer.x;
+    const offsetY = g.game.height * camerable.scaleY * centerPer.y;
     camerable.moveTo(
-      board.x + ((board.width - g.game.width) / 2),
-      board.y + ((board.height - g.game.height) / 2),
+      x * (option?.ignoreScale ? camerable.scaleX : 1) - offsetX,
+      y * (option?.ignoreScale ? camerable.scaleY : 1) - offsetY,
     );
+    camerable.modified();
+  }
+
+  function reset() {
+    // ボードの中央が画面中央に来るように移動
+    const pieceAreaLimit = clientPlaying.playState.gameState.pieceAreaLimit;
+    moveTo(pieceAreaLimit.width / 2, pieceAreaLimit.height / 2);
 
     // ボード全体が画面に収まるように拡大縮小
-    scaleCamera(((board.width + board.height) * 2.5) / (g.game.width + g.game.height), { isAbsolute: true });
+    scaleTo(((board.width + board.height) * 2.5) / (g.game.width + g.game.height));
 
     // 画面右上の Info パネルを避けて、大体中央になるように移動
     // > 0.257 = 「右上の Info パネル」が画面の横幅に占める割合 (横幅)
-    moveByCamera((g.game.width * 0.257 / 2), 0);
+    moveBy((g.game.width * 0.257 / 2), 0);
   }
 }
 
 
-interface ScaleOptions {
-  /**
-   * 絶対値指定なら`true`
-   * @default `false`
-   */
-  isAbsolute?: boolean;
-
+interface ScaleOption {
   /**
    * 拡大/縮小の中心座標 (画面上の座標)
    * @default 画面中央
    */
   pos?: { x: number; y: number; };
+}
+
+interface MoveToOption {
+  /**
+   * 移動後のカメラの補正位置割合\
+   * `0`: 左上  `1`: 右下
+   * @default {x:0.5,y:0.5}  (中央) 
+   */
+  centerPer?: { x: number; y: number; };
+
+  /**
+   * カメラのスケールを無視して移動するかどうか
+   * @default false
+   */
+  ignoreScale?: boolean;
 }

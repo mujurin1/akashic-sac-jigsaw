@@ -6,9 +6,7 @@ export function sumPos(a: g.CommonOffset, b: g.CommonOffset): g.CommonOffset {
 /**
  * エンティティの表示状態を切り替える
  * @param e 表示を切り替えるエンティティ
- * @param visibleTo `true`なら表示、`false`なら非表示にする\
- *                 `undefined`なら現在の表示状態を反転させる
- * @default `undefined`
+ * @param visibleTo `true`: 表示, `false`: 非表示, `undefined`: トグル
  */
 export function toggleVisibleTo(e: g.E, visibleTo?: boolean): void {
   visibleTo ??= !e.visible();

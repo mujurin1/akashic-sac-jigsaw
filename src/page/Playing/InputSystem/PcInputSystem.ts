@@ -45,7 +45,7 @@ export function PcInputSystem(
     ) return;
 
     const playArea = clientPlaying.uiGroups.playArea;
-    playArea.moveByCamera(-prevDelta.x, -prevDelta.y);
+    playArea.moveBy(-prevDelta.x, -prevDelta.y);
   }
 
   function pieceTouch(e: g.PointDownEvent) {
@@ -77,14 +77,14 @@ function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
 
   const icons = {
     deviceIcon: createIcon("ico_device", [0, 2]),
-    optionIcon: createIcon("ico_setting", [1, 2]),
+    infoIcon: createIcon("ico_info", [1, 2]),
     rankingIcon: createIcon("ico_ranking", [2, 2]),
-    infoIcon: createIcon("ico_info", [0, 1]),
+    optionIcon: createIcon("ico_setting", [0, 1]),
     previewIcon: createIcon("ico_preview", [1, 1]),
     colorIcon: createIcon(undefined, [2, 1]),
   } as const;
 
-  icons.deviceIcon.onPointDown.add(() => clientPlaying.uiGroups.inputSystem.toggleInputSystem());
+  icons.deviceIcon.onPointDown.add(() => clientPlaying.inputSystem.toggleInputSystem());
   icons.optionIcon.onPointDown.add(() => clientPlaying.uiGroups.option.toggle());
   icons.rankingIcon.onPointDown.add(() => clientPlaying.uiGroups.ranking.toggle());
   icons.infoIcon.onPointDown.add(() => clientPlaying.uiGroups.info.toggle());
@@ -180,6 +180,6 @@ function customWheelEvent(clientPlaying: ClientPlaying) {
       : e.ctrlKey ? 1.2 : 1.1;
     const pos = { x: e.offsetX, y: e.offsetY };
 
-    clientPlaying.uiGroups.playArea.scaleCamera(scale, { pos });
+    clientPlaying.uiGroups.playArea.scaleBy(scale, { pos });
   }
 }

@@ -26,8 +26,7 @@ export interface InfoGroup {
 
   /**
    * 表示を切り替える
-   * 
-   * 非表示の場合、内容の自動更新は行わない
+   * @param visibleTo `true`: 表示, `false`: 非表示, `undefined`: トグル
    */
   toggle(visibleTo?: boolean): void;
 }
@@ -37,13 +36,13 @@ export interface InfoGroup {
  */
 export function createInfoGroup(clientPlaying: ClientPlaying): InfoGroup {
   const scene = g.game.env.scene;
-  const font = createFont({ size: 50 });
 
-  const ___display = scene;
   /** 左上の仮UI */
   {
+    const font = createFont({ size: 50 });
+    const parent = scene;
     const join = new g.Label({
-      scene, parent: ___display, font, text: "参加",
+      scene, parent, font, text: "参加",
       x: 10, y: 10, touchable: true,
     });
     join.onPointDown.add(sendJoin);
@@ -58,15 +57,10 @@ export function createInfoGroup(clientPlaying: ClientPlaying): InfoGroup {
 
   const info: InfoGroup = {
     panel: infoUi.panel,
-    toggle,
+    toggle: value => toggleVisibleTo(info.panel, value),
   };
 
   return info;
-
-  function toggle(visibleTo?: boolean): void {
-    toggleVisibleTo(info.panel, visibleTo);
-
-  }
 }
 
 /**
