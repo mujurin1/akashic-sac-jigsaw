@@ -76,7 +76,7 @@ export function setPartsEvent(
   const playerManager = clientDI.get(PlayerManager);
 
   let counter = g.game.fps;
-  let lastUpdatedPiece = -1;
+  let lastUpdatedPieceLength = -1;
   scene.onUpdate.add(update);
 
   // 通常は毎秒/スキップ中は5分毎
@@ -96,8 +96,8 @@ export function setPartsEvent(
     counter = 0;
 
     // 累計スコアが更新された時のみ更新
-    if (lastUpdatedPiece !== state.pieces.length) {
-      lastUpdatedPiece = state.totalScore;
+    if (lastUpdatedPieceLength !== state.pieces.length) {
+      lastUpdatedPieceLength = state.totalScore;
       updateScore();
       updatePlayer();
     }
@@ -126,8 +126,8 @@ export function setPartsEvent(
     } else {
       players = playerManager.players.slice(0, 5);
       if (
-        players.every(p => p.id !== g.game.selfId) &&
-        playerManager.has(g.game.selfId)
+        playerManager.has(g.game.selfId) &&
+        players.every(p => p.id !== g.game.selfId)
       ) {
         players[4] = playerManager.get(g.game.selfId)!;
       }

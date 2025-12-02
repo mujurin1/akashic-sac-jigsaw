@@ -108,8 +108,7 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
 
       piece.pos = point;
       if (!state.checkAndDoFitAndConnect(data.pieceIndex)) {
-        player.score += 1;
-        playerManager.updateScore();
+        playerManager.addScore(player.id, 1, true);
         server.broadcast(data);
       }
       state.deleteHolder(player.id);

@@ -2,13 +2,13 @@ import { EventTrigger } from "akashic-sac";
 
 export interface Player {
   readonly id: string;
-  name: string;
+  readonly name: string;
   /** 生ユーザー名かどうか */
-  realName: boolean;
+  readonly realName: boolean;
   /** ハメた/繋げたピース数 */
-  score: number;
+  readonly score: number;
   /** 順位 */
-  rank: number;
+  readonly rank: number;
 }
 
 export class PlayerManager {
@@ -20,6 +20,9 @@ export class PlayerManager {
 
   public get length() { return this.players.length; }
 
+  private _totalScore = 0;
+  public get totalScore() { return this._totalScore; }
+
   public upsert(id: string, name: string, realName: boolean): void {
     let player = this.get(id);
 
@@ -29,8 +32,8 @@ export class PlayerManager {
       this.players.push(player);
       this._playerMap.set(id, player);
     } else if (!player.realName && realName) {
-      player.name = name;
-      player.realName = realName;
+      (<Mutable<Player>>player).name = name;
+      (<Mutable<Player>>player).realName = realName;
     }
 
     this._onJoined.fire(player);
@@ -44,18 +47,29 @@ export class PlayerManager {
     return this._playerMap.has(id!);
   }
 
-  public updateScore(): void {
+  public addScore(id: string, delta: number, isUpdateRank = false): void {
+    const player = this.get(id);
+    if (player == null) throw new Error(`[PlayerManager.ts addScore(${id}, ${delta}, ${isUpdateRank})] Player not found`);
+    (<Mutable<Player>>player).score += delta;
+    this._totalScore += delta;
+    if (isUpdateRank) this.updateRank();
+  }
+
+  /**
+   * スコアを元に順位を更新する
+   */
+  public updateRank(): void {
     this.players.sort((a, b) => b.score - a.score);
     let score = -1;
     let rank = 0;
     let skip = 1;
     for (let p of this.players) {
       if (p.score == score) {
-        p.rank = rank;
+        (<Mutable<Player>>p).rank = rank;
         skip++;
       } else {
         rank += skip;
-        p.rank = rank;
+        (<Mutable<Player>>p).rank = rank;
         skip = 1;
         score = p.score;
       }

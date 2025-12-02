@@ -1,6 +1,7 @@
 import { HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
 import { GameState } from "../../../share/GameState";
 import { createFrames, createPieceParameter, createPieces__, CreatePiecesResult } from "../../../util/createPieces";
+import { PlayerManager } from "../../../util/PlayerManager";
 import { PreviewInfo } from "../../../util/readAssets";
 import { Piece } from "../Piece";
 import { ClientPlaying } from "./ClientPlaying";
@@ -75,18 +76,18 @@ export async function createPlayState(
   };
 
   let holdState: HoldState | undefined = undefined;
-  let totalScore = 0;
   let finishTime: number | undefined = undefined;
 
   // 内部状態用
   const sendMoveCount = 5;
   let sendMoveCounter = 0;
+  const playerManager = clientPlaying.client.env.clientDI.get(PlayerManager);
 
 
   return {
     pieces: piecesResult.pieces,
     get holdState() { return holdState; },
-    get totalScore() { return totalScore; },
+    get totalScore() { return playerManager.totalScore; },
     get finishTime() { return finishTime; },
 
     // TODO: これらは後で場所を動かすかも

@@ -194,13 +194,14 @@ export async function createClientPlaying(
       FitPiece.receive(client, ({ pId, pieceIndex }) => {
         const piece = pieces[pieceIndex];
         Piece.fit(piece);
-        // updateScore(pId!);
+        playerManager.addScore(pId!, 1, true);
       }),
       ConnectPiece.receive(client, ({ pId, parentIndex, childIndex }) => {
         const parent = pieces[parentIndex];
         const child = pieces[childIndex];
         Piece.connect(parent, child, clientPlaying.playState.gameState);
         if (g.game.selfId === pId) parent.parent.append(parent);
+        playerManager.addScore(pId!, 1, true);
         // updateScore(pId!);
       }),
     ];
