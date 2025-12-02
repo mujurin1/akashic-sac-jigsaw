@@ -52,7 +52,7 @@ export function createCheckAndDoFitAndConnect(
     }
 
     return false;
-  };
+  }
 
   /**
    * ピースがハマるかチェックする

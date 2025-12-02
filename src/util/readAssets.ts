@@ -9,22 +9,6 @@ export interface PreviewInfo {
   readonly imageAsset: g.ImageAsset;
 }
 
-export function readAssets(scene: g.Scene): PreviewInfo[] {
-  return JigsawAssets
-    .map(x => ({
-      title: x.title,
-      imageAsset: scene.asset.getImage(`${AssetInfo.ASSET_DIR}/${x.name}.jpg`),
-    }));
-  // const pictureInfo =
-  //   scene.asset.getText(AssetInfo.SETTING_TXT).data.split("\r\n")
-  //     .map(x => x.split(" "))
-  //     .map(x => ({
-  //       title: x[1],
-  //       imageAsset: scene.asset.getImage(`${AssetInfo.ASSET_DIR}/${x[0]}.jpg`),
-  //     }));
-  // return pictureInfo;
-}
-
 export const JigsawAssets = [
   { name: "fox", title: "狐" },
   { name: "duck", title: "アヒルの家族" },
@@ -47,3 +31,19 @@ export const JigsawAssets = [
   { name: "living-room", title: "リビング" },
   { name: "architecture", title: "高速道路" },
 ] as const;
+
+export function readAssets(scene: g.Scene): PreviewInfo[] {
+  return JigsawAssets
+    .map(x => ({
+      title: x.title,
+      imageAsset: scene.asset.getImage(`${AssetInfo.ASSET_DIR}/${x.name}.jpg`),
+    }));
+  // const pictureInfo =
+  //   scene.asset.getText(AssetInfo.SETTING_TXT).data.split("\r\n")
+  //     .map(x => x.split(" "))
+  //     .map(x => ({
+  //       title: x[1],
+  //       imageAsset: scene.asset.getImage(`${AssetInfo.ASSET_DIR}/${x[0]}.jpg`),
+  //     }));
+  // return pictureInfo;
+}

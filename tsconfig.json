@@ -19,6 +19,6 @@
   ],
   "include": [
     "src/**/*.ts",
-    "typings/console.d.ts"
+    "types/console.d.ts"
   ]
 }
