@@ -231,7 +231,7 @@ function createInfoUi({ display, title }: { display: g.E; title: string; }): Inf
     return [
       new Label({
         scene, parent: panel,
-        font, text: `EMPTY-${index}`,
+        font, text: `EMPTY-${index}`,   // TODO: "" にすれば ok
         textAlign: "left",
         lineBreak: false,
         width: 200,

@@ -13,6 +13,7 @@ export interface Player {
 
 export class PlayerManager {
   private readonly _onJoined = new EventTrigger<[Player]>();
+  /** 参加または名前が更新された場合に発火 */
   public readonly onJoined = this._onJoined.asSetOnly;
 
   private readonly _playerMap = new Map<string, Player>();
@@ -31,7 +32,8 @@ export class PlayerManager {
       player = { id, name, realName, score: 0, rank };
       this.players.push(player);
       this._playerMap.set(id, player);
-    } else if (!player.realName && realName) {
+    } else {
+      // } else if (!player.realName && realName) {   // TODO: 名前を変更不可能にする場合
       (<Mutable<Player>>player).name = name;
       (<Mutable<Player>>player).realName = realName;
     }

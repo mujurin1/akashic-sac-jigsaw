@@ -113,7 +113,7 @@ function createUi(state: TitleState) {
     scene, parent: scene,
     cssColor: "white",
     x: 25, y: 510,
-    width: 770, height: 70,
+    width: 1200, height: 70,
   });
   const levelNumText = new Label({
     scene, parent: levelTextBack,
@@ -129,6 +129,14 @@ function createUi(state: TitleState) {
     font: fontN,
     text: "??x??  0000枚",
     textAlign: "right",
+    width: 630,
+  });
+  const aboutTimeText = new Label({
+    scene, parent: levelTextBack,
+    x: 700,
+    y: 10,
+    font: createFont({ size: 40, fontWeight: "bold" }),
+    text: "予想タイム：10～30分",
     width: levelTextBack.width - 5,
   });
   //#endregion レベル・ピース数
@@ -138,7 +146,7 @@ function createUi(state: TitleState) {
     //#region パズル変更
     const left = createButton({
       scene, parent: scene,
-      x: titleBack.x, y: 580, text: "←",
+      x: titleBack.x, y: 590, text: "←",
       width: 180, height: 100,
     });
     const right = createButton({
@@ -169,7 +177,7 @@ function createUi(state: TitleState) {
     //#region レベル変更
     const levelSlider = new Slider({
       scene, parent: scene,
-      width: levelTextBack.width, height: 80,
+      width: 770, height: 80,
       x: levelTextBack.x, y: levelTextBack.y + 90,
       per: 0.5,
       min: 0, max: 100,
@@ -204,6 +212,8 @@ function createUi(state: TitleState) {
       // TODO
       pieceNumText.text = `??x??  ???枚`;
       pieceNumText.invalidate();
+      aboutTimeText.text = `予想タイム：？分`;
+      aboutTimeText.invalidate();
     } else {
       const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
       const pixel = (100 - state.level) + 40;
@@ -218,8 +228,21 @@ function createUi(state: TitleState) {
         y: Math.floor((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
       };
 
-      pieceNumText.text = `${state.pieceWH.height}x${state.pieceWH.width}  ${state.pieceWH.height * state.pieceWH.width}枚`;
+      const pieceCount = state.pieceWH.height * state.pieceWH.width;
+      pieceNumText.text = `${state.pieceWH.height}x${state.pieceWH.width}  ${pieceCount}枚`;
       pieceNumText.invalidate();
+
+      // const [floorTime, upperTime] = estimateTime(playerManager.length, pieceCount);
+      const [floorTime, upperTime] = estimateTime(1, pieceCount);
+      if (floorTime >= 60 * 5) {
+        aboutTimeText.text = `予想タイム：ヤバイ`;
+      } else if (upperTime >= 60 * 5) {
+        aboutTimeText.text = `予想タイム：${floorTime}～ﾔﾊﾞｲ`;
+      } else {
+        aboutTimeText.text = `予想タイム：${floorTime}～${Math.floor(upperTime)}分`;
+      }
+
+      aboutTimeText.invalidate();
     }
   };
   setChangeLevel(50);
@@ -286,4 +309,81 @@ function setSprite(sprite: g.Sprite, src: g.ImageAsset) {
   }
 
   sprite.invalidate();
+}
+
+/**
+ * 予想クリア時間を計算する
+ * @param players プレイヤー人数
+ * @param pieces ピース数
+ * @returns [下限時間(分), 上限時間(分)]
+ */
+export function estimateTime(players: number, pieces: number): [floorTime: number, upperTime: number] {
+  /* --- 1. ピース数の難易度（D） ---
+   * 「ピース数あたりの難易度」を決める
+   *
+   * alpha: ピース数による難易度の強さ
+   * 値を増やすと
+   *   - ピース数が大きいほど難易度（=時間）が急激に増える
+   *   - 100 → 200 → 300 → 500ピースの差が極端に大きくなる
+   *   - 高ピースの時間が 爆発的 に伸びる
+   * 値を減らすと
+   *   - ピース数の影響が緩やかになり、全体的に短時間寄りになる
+   *   - 特に200ピース以上の時間が抑えられる
+   * 
+   * D = ピース数による難易度係数（60ピースで1.0）
+   */
+  const alpha = 1.5;
+  const D = Math.pow(pieces / 60, alpha);
+
+  /* --- 2. 人数効率（E） ---
+   * 「人数が増えた時に、どれだけ効率が上がるか」を決める
+   *
+   * k: 人数効果の立ち上がり速度
+   * 値を増やすと
+   *   - 効率がゆっくり上昇し、多人数でもあまり速くならない
+   *   - 10人いても効率が頭打ちしにくく、 混雑感 が強い
+   * 値を減らすと
+   *   - 少人数で効率が急上昇する（例：3人でほぼ最大）
+   *   - それ以上人数を増やしても改善が小さい
+   *
+   * beta: 人数による効率上昇の最大幅
+   * 値を増やすと
+   *   - 多人数が非常に効率的になり、時間が大幅に短くなる
+   *   - 10人での時間が極端に短くなる可能性がある
+   * 値を減らすと
+   *   - 多人数のメリットが小さくなる
+   *   - 5～10人いても劇的には速くならない
+   * 
+   * E = 人数による効率係数（大きいほど時間が短くなる）
+   */
+  const k = 6;
+  const beta = 0.8;
+  const E = 1 + beta * (1 - Math.exp(-players / k));
+
+  /* --- 3. 基本時間と合成 ---
+   * base: 基準時間（60ピースを平均的な人数で解いた時の目安）
+   * 値を増やすと
+   *   - 全てのケースで時間が長くなる
+   * 値を減らすと
+   *   - 全体的に短くなる（標準的なパズルが簡単な扱いになる）
+   *
+   * T = base * D / E:
+   *     - D（難易度）が高いと時間が増える
+   *     - E（人数効率）が高いと時間が減る
+   */
+  const base = 3.0;
+  const T = base * D / E;
+
+  /* --- 4. 上限・下限の幅 ---
+   * low : 想定される最短クリア時間（理論的にうまく行った場合）
+   * high: 想定される最長クリア時間
+   *       時間幅は「ピース数が多いほどばらつく」ように調整している
+   */
+  const low = T;
+  const high = T * (1.4 + Math.sqrt(pieces / 300));
+
+  return [
+    Math.max(1, Math.floor(low)),
+    Math.max(2, Math.floor(high))
+  ];
 }
