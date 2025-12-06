@@ -11,6 +11,8 @@ import { createInfoGroup, InfoGroup } from "./InfoGroup";
 import { createOptionGroup, OptionGroup } from "./OptionGroup";
 import { createPieceGroup as createPlayAreaGroup, PieceGroup as PlayAreaGroup } from "./PlayAreaGroup";
 import { createPlayState, PlayState } from "./PlayState";
+import { createPreviewGroup, PreviewGroup } from "./PreviewGroup";
+import { createRankingGroup, RankingGroup } from "./RankingGroup";
 
 export interface ClientPlaying {
   readonly client: SacClient;
@@ -28,8 +30,8 @@ export interface ClientPlaying {
     readonly info: InfoGroup;
 
     // 普段は非表示の要素
-    readonly ranking: any;
-    readonly preview: any;
+    readonly ranking: RankingGroup;
+    readonly preview: PreviewGroup;
     readonly option: OptionGroup;
   };
 
@@ -100,8 +102,8 @@ export async function createClientPlaying(
 
   const inputSystem = inputSystemControl(clientPlaying);
 
-  const rankingGroup = null;
-  const preview = null;
+  const rankingGroup = createRankingGroup(clientPlaying);
+  const preview = createPreviewGroup(clientPlaying);
   const optionGroup = createOptionGroup(clientPlaying);
 
   // ピースの初期化

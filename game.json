@@ -403,6 +403,22 @@
 			"type": "script",
 			"path": "script/util/readAssets.js",
 			"global": true
+		},
+		"RankingGroup": {
+			"type": "script",
+			"path": "script/page/Playing/State/RankingGroup.js",
+			"global": true
+		},
+		"PreviewGroup": {
+			"type": "script",
+			"path": "script/page/Playing/State/PreviewGroup.js",
+			"global": true
+		},
+		"ranking_view": {
+			"type": "image",
+			"path": "image/ranking_view.png",
+			"width": 870,
+			"height": 690
 		}
 	}
 }

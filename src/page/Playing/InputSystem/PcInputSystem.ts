@@ -157,7 +157,6 @@ function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
 }
 
 function customWheelEvent(clientPlaying: ClientPlaying) {
-
   return {
     enable: () => {
       if (!g.game.env.hasClient) return;

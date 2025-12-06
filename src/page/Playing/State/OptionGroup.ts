@@ -1,3 +1,4 @@
+import { createFont } from "akashic-sac";
 import { createButton } from "../../../common/createButton";
 import { ClientPlaying } from "./ClientPlaying";
 
@@ -67,6 +68,18 @@ export function createOptionGroup(clientPlaying: ClientPlaying): OptionGroup {
       width: 180, height: 100,
       action: () => toggle()
     });
+
+    {
+      const font = createFont({ size: 80, fontColor: "white" });
+
+      // TODO: オプションのUI
+      new g.Label({
+        scene, parent: display,
+        text: "オプションUI（未実装）",
+        font,
+        x: 30, y: 300,
+      });
+    }
 
     return display;
   }
