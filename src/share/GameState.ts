@@ -114,12 +114,12 @@ function lineupPiece(
     }
   }
 
-  // TODO: ピースのランダム整列
-  const random = new g.Xorshift(seed);
-  for (let i = positions.length - 1; i > 0; i--) {
-    const j = Math.floor(random.random() * (i + 1));
-    [positions[i], positions[j]] = [positions[j], positions[i]];
-  }
+  // MEMO: ピースのランダム整列
+  // const random = new g.Xorshift(seed);
+  // for (let i = positions.length - 1; i > 0; i--) {
+  //   const j = Math.floor(random.random() * (i + 1));
+  //   [positions[i], positions[j]] = [positions[j], positions[i]];
+  // }
 
   return [positions, { width: lineup.w, height: lineup.h }];
 }

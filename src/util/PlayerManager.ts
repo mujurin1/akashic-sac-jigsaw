@@ -16,7 +16,13 @@ export class PlayerManager {
   /** 参加または名前が更新された場合に発火 */
   public readonly onJoined = this._onJoined.asSetOnly;
 
+  private readonly _onUpdated = new EventTrigger<[Player]>();
+  /** スコアや順位が更新された場合に発火 */
+  public readonly onUpdated = this._onUpdated.asSetOnly;
+
   private readonly _playerMap = new Map<string, Player>();
+
+  /** ランキング順に並んでいる */
   public readonly players: Player[] = [];
 
   public get length() { return this.players.length; }
@@ -28,7 +34,7 @@ export class PlayerManager {
     let player = this.get(id);
 
     if (player == null) {
-      const rank = this.players[this.players.length - 1]?.rank || 1;
+      const rank = this.players[this.players.length - 1]?.rank ?? 1;
       player = { id, name, realName, score: 0, rank };
       this.players.push(player);
       this._playerMap.set(id, player);
@@ -39,6 +45,7 @@ export class PlayerManager {
     }
 
     this._onJoined.fire(player);
+    this._onUpdated.fire(player);
   }
 
   public get(id?: string): Player | undefined {
@@ -55,6 +62,8 @@ export class PlayerManager {
     (<Mutable<Player>>player).score += delta;
     this._totalScore += delta;
     if (isUpdateRank) this.updateRank();
+
+    this._onUpdated.fire(player);
   }
 
   /**
@@ -62,18 +71,19 @@ export class PlayerManager {
    */
   public updateRank(): void {
     this.players.sort((a, b) => b.score - a.score);
-    let score = -1;
-    let rank = 0;
-    let skip = 1;
+    let prevRank = -1;
+    let rank = 1;
+    let skip = 0;
+
     for (let p of this.players) {
-      if (p.score == score) {
+      if (p.score === prevRank) {
         (<Mutable<Player>>p).rank = rank;
         skip++;
       } else {
         rank += skip;
-        (<Mutable<Player>>p).rank = rank;
         skip = 1;
-        score = p.score;
+        (<Mutable<Player>>p).rank = rank;
+        prevRank = p.score;
       }
     }
   }

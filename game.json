@@ -419,6 +419,24 @@
 			"path": "image/ranking_view.png",
 			"width": 870,
 			"height": 690
+		},
+		"crown_3": {
+			"type": "image",
+			"path": "image/crown_3.png",
+			"width": 60,
+			"height": 40
+		},
+		"crown_2": {
+			"type": "image",
+			"path": "image/crown_2.png",
+			"width": 60,
+			"height": 40
+		},
+		"crown_1": {
+			"type": "image",
+			"path": "image/crown_1.png",
+			"width": 60,
+			"height": 40
 		}
 	}
 }
