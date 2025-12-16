@@ -13,7 +13,7 @@ interface InfoUi {
   readonly percent: Label;
   readonly fitCount: Label;
   readonly time: Label;
-  readonly players: readonly [Label, Label][];
+  readonly players: readonly [Label, g.Label][];
 }
 
 export interface InfoGroup {
@@ -133,23 +133,26 @@ export function setPartsEvent(
       }
     }
 
-    // プレイヤー毎に予め名前テキストを作りすげ替えると効率が上がる
-    // 便利に作るにはキャッシュ強化版Labelを作ると良いが面倒なので‥
     for (let i = 0; i < players.length; i++) {
-      const p = players[i];
-      const isSelf = p.id === g.game.selfId;
-      // const color = isSelf ? "#7345ff" : "black";
+      const player = players[i];
+      const isSelf = player.id === g.game.selfId;
       const color = isSelf ? "blue" : "black";
-      const [name, score] = infoUi.players[i];
-      if (name.text != p.name) {
-        name.text = p.name;
-        name.textColor = color;
-        name.invalidate();
+      const [nameLabel, scoreLabel] = infoUi.players[i];
+      if (nameLabel.text != player.name) {
+        if (nameLabel.font.measureText(player.name).width > nameLabel.width) {
+          nameLabel.fontSize = 19;
+        } else {
+          nameLabel.fontSize = nameLabel.font.size;
+        }
+
+        nameLabel.text = player.name;
+        nameLabel.textColor = color;
+        nameLabel.invalidate();
       }
       // if (score.text != p.score as unknown as string) {
-      score.text = p.score + "";
-      score.textColor = color;
-      score.invalidate();
+      scoreLabel.text = player.score + "";
+      scoreLabel.textColor = color;
+      scoreLabel.invalidate();
       // }
     }
   }
@@ -226,18 +229,17 @@ function createInfoUi({ display, title }: { display: g.E; title: string; }): Inf
     players: [0, 1, 2, 3, 4].map(i => createPlayerSet(i)),
   };
 
-  function createPlayerSet(index: number): [Label, Label] {
+  function createPlayerSet(index: number): [Label, g.Label] {
     const y = 150 + index * 40;
     return [
       new Label({
         scene, parent: panel,
-        font, text: `EMPTY-${index}`,   // TODO: "" にすれば ok
+        font, text: "",
         textAlign: "left",
-        lineBreak: false,
         width: 200,
         x: 10, y,
       }),
-      new Label({
+      new g.Label({
         scene, parent: panel,
         font, text: "",
         textAlign: "right",
