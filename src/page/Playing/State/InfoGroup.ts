@@ -50,7 +50,7 @@ export function createInfoGroup(clientPlaying: ClientPlaying): InfoGroup {
 
   const infoUi = createInfoUi({
     display: clientPlaying.display,
-    title: JigsawAssets[clientPlaying.playState.gameState.puzzleIndex].title,
+    title: JigsawAssets[clientPlaying.playState.gameState.puzzleIndex]?.title ?? "カスタム画像",
   });
 
   setPartsEvent(clientPlaying.client, clientPlaying.playState, infoUi);

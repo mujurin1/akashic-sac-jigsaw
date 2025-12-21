@@ -3,7 +3,6 @@ import { ConnectPiece, FitPiece, ForceReleasePiece, HoldPiece, MovePiece, Releas
 import { GameStart } from "../../../event/TitleEvent";
 import { createGameState } from "../../../share/GameState";
 import { PlayerManager } from "../../../util/PlayerManager";
-import { PreviewInfo } from "../../../util/readAssets";
 import { inputSystemControl, InputSystemControl } from "../InputSystem/InputSystem";
 import { Piece } from "../Piece";
 import { BgGroup, createBgGroup } from "./BgGroup";
@@ -61,7 +60,7 @@ export interface ClientPlaying {
 export async function createClientPlaying(
   client: SacClient,
   gameStart: GameStart,
-  previewInfo: PreviewInfo,
+  surface: g.Surface | g.ImageAsset,
 ): Promise<ClientPlaying> {
   const scene = client.env.scene;
   const playerManager = client.env.clientDI.get(PlayerManager);
@@ -93,7 +92,7 @@ export async function createClientPlaying(
   const playState = await createPlayState(
     clientPlaying,
     createGameState(gameStart),
-    previewInfo
+    surface
   );
 
   const bgGroup = createBgGroup(clientPlaying);

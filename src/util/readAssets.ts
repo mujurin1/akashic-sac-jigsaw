@@ -6,7 +6,7 @@ const AssetInfo = {
 
 export interface PreviewInfo {
   readonly title: string;
-  readonly imageAsset: g.ImageAsset;
+  readonly imageAsset: g.Surface | g.ImageAsset;
 }
 
 export const JigsawAssets = [

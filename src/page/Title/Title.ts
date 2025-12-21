@@ -230,7 +230,10 @@ function createUi(state: TitleState) {
 
       const unlockEvent = client.lockEvent();
 
-      void createClientPlaying(client, data, previewsInfo[data.puzzleIndex])
+      const surface = data.puzzleIndex === -1
+        ? customResult.customSurface!
+        : previewsInfo[data.puzzleIndex].imageAsset;
+      void createClientPlaying(client, data, surface)
         .then(unlockEvent);
     }),
     ChangePuzzle.receive(client, data => {
