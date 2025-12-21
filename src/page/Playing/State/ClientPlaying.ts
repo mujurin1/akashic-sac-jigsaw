@@ -1,5 +1,5 @@
 import { SacClient } from "akashic-sac";
-import { ConnectPiece, FitPiece, ForceReleasePiece, HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
+import { ConnectPiece, FitPiece, ForceReleasePiece, GameClear, HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
 import { GameStart } from "../../../event/TitleEvent";
 import { createGameState } from "../../../share/GameState";
 import { PlayerManager } from "../../../util/PlayerManager";
@@ -203,8 +203,8 @@ export async function createClientPlaying(
         Piece.connect(parent, child, clientPlaying.playState.gameState);
         if (g.game.selfId === pId) parent.parent.append(parent);
         playerManager.addScore(pId!, 1, true);
-        // updateScore(pId!);
       }),
+      GameClear.receive(client, clientPlaying.playState.gameClear),
     ];
   }
 }

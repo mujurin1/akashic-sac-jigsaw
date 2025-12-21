@@ -76,15 +76,18 @@ export function setPartsEvent(
   const playerManager = clientDI.get(PlayerManager);
 
   let counter = g.game.fps;
-  let lastUpdatedPieceLength = -1;
+  let updateScores = true;
   scene.onUpdate.add(update);
 
   // 通常は毎秒/スキップ中は5分毎
   const updateCountNormal = g.game.fps;
   const updateCountSkipping = g.game.fps * 300;
 
+  const onUpdatedHandlerKey = playerManager.onUpdated.on(() => updateScores = true);
+
   return () => {
     scene.onUpdate.remove(update);
+    playerManager.onUpdated.off(onUpdatedHandlerKey);
   };
 
   function update() {
@@ -95,9 +98,8 @@ export function setPartsEvent(
     if (counter < updateCount) return;
     counter = 0;
 
-    // 累計スコアが更新された時のみ更新
-    if (lastUpdatedPieceLength !== state.pieces.length) {
-      lastUpdatedPieceLength = state.totalScore;
+    if (updateScores) {
+      updateScores = false;
       updateScore();
       updatePlayer();
     }
@@ -106,7 +108,7 @@ export function setPartsEvent(
 
   /** 完成率/ピース数表記 */
   function updateScore() {
-    const per = Math.round(state.totalScore / state.pieces.length);
+    const per = Math.ceil(state.totalScore / state.pieces.length * 100);
     infoUi.percent.text = `${per}%`;
     infoUi.percent.invalidate();
 
@@ -115,7 +117,10 @@ export function setPartsEvent(
   }
   /** 時刻 */
   function updateTime() {
-    infoUi.time.text = createElapsedTimeText(state.gameState.startTime);
+    infoUi.time.text = createElapsedTimeText(
+      state.gameState.startTime,
+      state.finishTime,
+    );
     infoUi.time.invalidate();
   }
   /** プレイヤー */
@@ -164,12 +169,14 @@ const inv60 = 1 / 60;
 /**
  * `startTime`から現在時刻までの経過時間をテキストで返す
  * @param startTime 開始時刻
+ * @param finishTime 終了時刻 (未指定時は現在時刻)
  */
-function createElapsedTimeText(startTime: number): string {
+function createElapsedTimeText(startTime: number, finishTime: number | undefined): string {
+  finishTime ??= g.game.getCurrentTime();
   // scene.local が `interpolate-local` のため正確でないことがある
   // 最後に受信したイベント以降はローカルの経過tick数で計算されるため
   // (新しくイベントを受信すれば正しい時刻になる)
-  let time = Math.floor((g.game.getCurrentTime() - startTime) / 1000);
+  let time = Math.floor((finishTime - startTime) / 1000);
   // const hour = Math.floor(time / 3600);
   // const minute = Math.floor(time / 60) % 60;
   // const second = time % 60;

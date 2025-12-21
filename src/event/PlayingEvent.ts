@@ -49,6 +49,14 @@ export class FitPiece extends SacEvent() {
   ) { super(); }
 }
 
+/** ゲームクリア */
+export class GameClear extends SacEvent() {
+  constructor(
+    readonly finishTime: number,
+    readonly finishPlayerId: string,
+  ) { super(); }
+}
+
 // MS * COUNT = ピースを保持出来る時間
 const PIECE_RELEASE_MS = 10_000;
 const PIECE_RELEASE_COUNT = 3;
@@ -57,6 +65,8 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
   const state = createPlayingState(server, gameStart);
   const playerManager = server.env.serverDI.get(PlayerManager);
   const holders = state.holders;
+
+  let totalScore = 0;
 
   // TODO: server.removeEventSets(eventKeys);
   const eventKeys = [
@@ -107,8 +117,14 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
       if (holders.get(player.id)?.pieceIndex !== pieceIndex) return;
 
       piece.pos = point;
-      if (!state.checkAndDoFitAndConnect(data.pieceIndex)) {
+      if (state.checkAndDoFitAndConnect(data.pieceIndex)) {
         playerManager.addScore(player.id, 1, true);
+        totalScore += 1;
+
+        if (totalScore >= state.pieces.length) {
+          server.broadcast(new GameClear(g.game.getCurrentTime(), player.id));
+        }
+      } else {
         server.broadcast(data);
       }
       state.deleteHolder(player.id);

@@ -1,4 +1,4 @@
-import { HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
+import { GameClear, HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
 import { GameState } from "../../../share/GameState";
 import { createFrames, createPieceParameter, createPieces__, CreatePiecesResult } from "../../../util/createPieces";
 import { PlayerManager } from "../../../util/PlayerManager";
@@ -16,6 +16,7 @@ export interface PlayState {
   readonly holdState: Readonly<HoldState> | undefined;
   readonly totalScore: number;
   readonly finishTime: number | undefined;
+  readonly finishPlayerId: string | undefined;
 
 
   // TODO: これらは後で場所を動かすかも
@@ -49,6 +50,9 @@ export interface PlayState {
    * TODO: 判定が`true`ならくっつけるのか?
    */
   checkFit: () => void;
+
+  /** ゲームクリア */
+  gameClear(gameClear: GameClear): void;
 }
 
 interface HoldState {
@@ -76,6 +80,7 @@ export async function createPlayState(
 
   let holdState: HoldState | undefined = undefined;
   let finishTime: number | undefined = undefined;
+  let finishPlayerId: string | undefined = undefined;
 
   // 内部状態用
   const sendMoveCount = 5;
@@ -88,6 +93,7 @@ export async function createPlayState(
     get holdState() { return holdState; },
     get totalScore() { return playerManager.totalScore; },
     get finishTime() { return finishTime; },
+    get finishPlayerId() { return finishPlayerId; },
 
     // TODO: これらは後で場所を動かすかも
     gameState, piecesResult,
@@ -96,8 +102,17 @@ export async function createPlayState(
     move,
     release,
     checkFit,
+    gameClear,
   };
 
+
+  function gameClear(gameClear: GameClear): void {
+    finishTime = gameClear.finishTime;
+    finishPlayerId = gameClear.finishPlayerId;
+
+    // スコアの再計算イベントを発火させるため
+    playerManager.addScore(finishPlayerId, 0);
+  }
 
   function hold(x: number, y: number): boolean {
     holdState = clientPlaying.getPieceFromScreenPx(x, y, true);

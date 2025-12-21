@@ -5,8 +5,6 @@ import { PlayerManager } from "../../../util/PlayerManager";
 import { ClientPlaying } from "./ClientPlaying";
 
 export interface RankingGroup {
-  readonly panel: g.E;
-
   /**
    * 表示を切り替える
    * @param visibleTo `true`: 表示, `false`: 非表示, `undefined`: トグル
@@ -28,7 +26,7 @@ export function createRankingGroup(clientPlaying: ClientPlaying): RankingGroup {
   const playerManager = client.env.clientDI.get(PlayerManager);
   const playerEntities = new Map<string, PlayerEntity>();
 
-  const { panel, nameArea } = createRankingPanel(
+  const { rankingE, nameArea, lastPiecePlayerName } = createRankingPanel(
     display,
     () => playerManager.players.length
   );
@@ -38,10 +36,9 @@ export function createRankingGroup(clientPlaying: ClientPlaying): RankingGroup {
   let updateSkipped = true;
 
   return {
-    panel,
     toggle: value => {
-      toggleVisibleTo(panel, value);
-      if (panel.visible() && updateSkipped) {
+      toggleVisibleTo(nameArea, value);
+      if (nameArea.visible() && updateSkipped) {
         update();
         updateSkipped = false;
       }
@@ -50,9 +47,14 @@ export function createRankingGroup(clientPlaying: ClientPlaying): RankingGroup {
   };
 
   function update(): void {
-    if (!panel.visible()) {
+    if (!nameArea.visible()) {
       updateSkipped = true;
       return;
+    }
+
+    if (clientPlaying.playState.finishPlayerId != null) {
+      lastPiecePlayerName.text = playerManager.get(clientPlaying.playState.finishPlayerId)!.name;
+      lastPiecePlayerName.invalidate();
     }
 
     for (let i = 0; i < playerManager.players.length; i++) {
@@ -111,7 +113,7 @@ export function createRankingGroup(clientPlaying: ClientPlaying): RankingGroup {
     let entity = playerEntities.get(id);
     if (entity) return entity;
 
-    entity = createPlayerEntity(nameArea);
+    entity = createPlayerEntity(rankingE);
     playerEntities.set(id, entity);
     return entity;
   }
@@ -136,38 +138,48 @@ function createRankingPanel(
   parent: g.E,
   playerCount: () => number
 ): {
-  panel: g.E;
-  nameArea: g.E;
+  rankingE: g.E;
+  lastPiecePlayerName: Label;
+  nameArea: g.Sprite;
 } {
   const scene = parent.scene;
   const src = scene.asset.getImageById("ranking_view");
 
-  const panel = new g.Sprite({
+  const nameArea = new g.Sprite({
     scene, parent,
     hidden: true,
     src,
     x: (950 - src.width) / 2, y: (g.game.height - src.height) / 2,
+    touchable: true,
+  });
+
+  const lastPiecePlayerName = new Label({
+    scene, parent: nameArea,
+    x: 160, y: 95,
+    width: 660, height: 40,
+    font,
+    text: "",
   });
 
   const marginW = 100;
 
   const namePane = new g.Pane({
-    scene, parent: panel,
+    scene, parent: nameArea,
     x: marginW / 2, y: 175,
     // スコアがはみ出しても良いように右側を広くする
-    width: panel.width - marginW / 2, height: 480,
+    width: nameArea.width - marginW / 2, height: 480,
     touchable: true,
   });
-  const nameArea = new g.E({ scene, parent: namePane });
+  const rankingE = new g.E({ scene, parent: namePane });
 
   namePane.onPointMove.add(e => {
     const maxY = playerCount() * C.PlayerEntityHeight;
-    const newY = nameArea.y + e.prevDelta.y;
-    nameArea.y = Math.min(0, Math.max(namePane.height - maxY, newY));
-    nameArea.modified();
+    const newY = rankingE.y + e.prevDelta.y;
+    rankingE.y = Math.min(0, Math.max(namePane.height - maxY, newY));
+    rankingE.modified();
   });
 
-  return { panel, nameArea };
+  return { nameArea, lastPiecePlayerName, rankingE };
 }
 
 const font = createFont({ size: 40 });
