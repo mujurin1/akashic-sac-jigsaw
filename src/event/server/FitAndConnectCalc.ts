@@ -15,8 +15,9 @@ export function createCheckAndDoFitAndConnect(
 ): CheckAndDoFitAndConnect {
   const { gameState, server } = state;
 
-  const connectMargin = (gameState.pieceSize.width + gameState.pieceSize.height) / 8 * 10000;
-  const fitMargin = (gameState.pieceSize.width + gameState.pieceSize.height) / 6 * 10000;
+  // MEMO: ピースのフィット位置
+  const connectMargin = (gameState.pieceSize.width + gameState.pieceSize.height) / 8;
+  const fitMargin = (gameState.pieceSize.width + gameState.pieceSize.height) / 6;
   const dirOffset = {
     top: { x: 0, y: -gameState.pieceSize.height },
     bottom: { x: 0, y: gameState.pieceSize.height },

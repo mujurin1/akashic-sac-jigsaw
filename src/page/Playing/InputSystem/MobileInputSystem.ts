@@ -136,7 +136,6 @@ function createMobileUi(
     cursorSpeed: 17,
   });
   pad.onMoving.add(({ padDir, moved, cursorRest }) => {
-    console.log(cursorRest.x, cursorRest.y);
     if (pieMenu.entity.visible()) {
       pieMenu.target(padDir);
     } else {
