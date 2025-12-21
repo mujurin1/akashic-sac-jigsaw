@@ -1,4 +1,4 @@
-import { SacEvent, SacServer } from "akashic-sac";
+import { SacEvent, SacServer, ShareBigText } from "akashic-sac";
 import { JigsawAssets } from "../util/readAssets";
 import { serverPlaying } from "./PlayingEvent";
 
@@ -31,6 +31,8 @@ export class GameStart extends SacEvent() {
 
 export function serverTitle(server: SacServer): void {
   const puzzleMaxIndex = JigsawAssets.length - 1;
+
+  ShareBigText.waitingFromSingleUser("IMAGE", g.game.env.hostId, () => true);
 
   const eventKeys = [
     ChangePuzzle.receive(server, data => {

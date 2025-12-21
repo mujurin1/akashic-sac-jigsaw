@@ -25,6 +25,9 @@ export interface ButtonParam {
   /** デフォルトは`"left"`だが`width`を指定した場合のデフォルトは`"center"` */
   textAlign?: g.TextAlignString;
 
+  /** このエンティティの表示状態 **/
+  hidden?: boolean;
+
   action?: (e: g.PointDownEvent) => void;
 }
 
@@ -64,6 +67,7 @@ export function createButton(param: ButtonParam): g.Sprite {
     x: param.x,
     y: param.y,
     touchable: param.touchable !== false,
+    hidden: param.hidden ?? false,
   });
 
   sprite.append(label);

@@ -1,5 +1,5 @@
 import { Label } from "@akashic-extension/akashic-label";
-import { SacClient, createFont } from "akashic-sac";
+import { createFont, SacClient } from "akashic-sac";
 import { Slider } from "../../common/Slider";
 import { createButton } from "../../common/createButton";
 import { timeFlowController } from "../../common/timeFlowController";
@@ -8,6 +8,7 @@ import { sendJoin } from "../../server_client";
 import { PlayerManager } from "../../util/PlayerManager";
 import { readAssets } from "../../util/readAssets";
 import { createClientPlaying } from "../Playing/State/ClientPlaying";
+import { customImageTitle, TitleUi } from "./Custom";
 
 interface TitleState {
   client: SacClient;
@@ -51,7 +52,7 @@ function createUi(state: TitleState) {
     // width: previewPanel.width, height: previewPanel.height,
     src: previewsInfo[state.puzzleIndex].imageAsset,
   });
-  setSprite(preview, previewsInfo[state.puzzleIndex].imageAsset);
+  setPreviewSprite(preview, previewsInfo[state.puzzleIndex].imageAsset);
   //#endregion 画像プレビュー
 
   //#region タイトル・参加数・参加ボタン
@@ -94,6 +95,8 @@ function createUi(state: TitleState) {
 
   joinBtn.onPointDown.add(sendJoin);
   const removePmKey = playerManager.onJoined.on(({ id, realName }) => {
+    setChangeLevel(state.level);
+
     if (id === g.game.selfId) {
       if (realName) {
         joinBtn.destroy();
@@ -142,6 +145,11 @@ function createUi(state: TitleState) {
   //#endregion レベル・ピース数
 
   //#region ホスト専用
+  const titleUi: TitleUi = {
+    previewPanel,
+    levelTextBack,
+  };
+
   if (client.env.isHost) {
     //#region パズル変更
     const left = createButton({
@@ -154,14 +162,14 @@ function createUi(state: TitleState) {
       x: left.x + 200, y: left.y, text: "→",
       width: left.width, height: 100,
     });
-    const start = createButton({
+    titleUi.startButton = createButton({
       scene, parent: scene,
       x: 950, y: 400, text: " 開始 ",
     });
 
     left.onPointDown.add(() => client.sendEvent(new ChangePuzzle(state.puzzleIndex - 1)));
     right.onPointDown.add(() => client.sendEvent(new ChangePuzzle(state.puzzleIndex + 1)));
-    start.onPointDown.add(() => client.sendEvent(new GameStart(
+    titleUi.startButton.onPointDown.add(() => client.sendEvent(new GameStart(
       Math.floor(Math.random() * 10000),
       g.game.getCurrentTime(),
       state.puzzleIndex,
@@ -175,7 +183,7 @@ function createUi(state: TitleState) {
     //#endregion パズル変更
 
     //#region レベル変更
-    const levelSlider = new Slider({
+    titleUi.levelSlider = new Slider({
       scene, parent: scene,
       width: 770, height: 80,
       x: levelTextBack.x, y: levelTextBack.y + 90,
@@ -186,7 +194,7 @@ function createUi(state: TitleState) {
       client.sendEvent(new ChangeLevel(newLevel));
     });
 
-    levelSlider.onValueChange.add(value => {
+    titleUi.levelSlider.onValueChange.add(value => {
       const newLevel = Math.round(value);
       if (newLevel === state.level) return;
 
@@ -203,52 +211,15 @@ function createUi(state: TitleState) {
   }
   //#endregion ホスト専用
 
-  const setChangeLevel = (level: number) => {
-    state.level = level;
-    levelNumText.text = `レベル ${Math.round(state.level)}`;
-    levelNumText.invalidate();
+  // カスタム画像
+  const customResult = customImageTitle(client, titleUi, setChangeLevel);
 
-    if (state.puzzleIndex === -1) {
-      // TODO
-      pieceNumText.text = `??x??  ???枚`;
-      pieceNumText.invalidate();
-      aboutTimeText.text = `予想タイム：？分`;
-      aboutTimeText.invalidate();
-    } else {
-      const imageAsset = previewsInfo[state.puzzleIndex].imageAsset;
-      const pixel = (100 - state.level) + 40;
 
-      state.pieceSize = { width: pixel, height: pixel };
-      state.pieceWH = {
-        width: Math.floor(imageAsset.width / pixel),
-        height: Math.floor(imageAsset.height / pixel),
-      };
-      state.origin = {
-        x: Math.floor((imageAsset.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
-        y: Math.floor((imageAsset.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
-      };
-
-      const pieceCount = state.pieceWH.height * state.pieceWH.width;
-      pieceNumText.text = `${state.pieceWH.height}x${state.pieceWH.width}  ${pieceCount}枚`;
-      pieceNumText.invalidate();
-
-      // const [floorTime, upperTime] = estimateTime(playerManager.length, pieceCount);
-      const [floorTime, upperTime] = estimateTime(1, pieceCount);
-      if (floorTime >= 60 * 5) {
-        aboutTimeText.text = `予想タイム：ヤバイ`;
-      } else if (upperTime >= 60 * 5) {
-        aboutTimeText.text = `予想タイム：${floorTime}～ﾔﾊﾞｲ`;
-      } else {
-        aboutTimeText.text = `予想タイム：${floorTime}～${Math.floor(upperTime)}分`;
-      }
-
-      aboutTimeText.invalidate();
-    }
-  };
   setChangeLevel(50);
 
   const eventKeys: number[] = [
     GameStart.receive(client, data => {
+      customResult.destroy();
       client.removeEventSets(eventKeys);
       playerManager.onJoined.off(removePmKey);
 
@@ -257,7 +228,6 @@ function createUi(state: TitleState) {
         child.destroy();
       }
 
-      // void Playing(client, data, previewsInfo[data.puzzleIndex]);
       const unlockEvent = client.lockEvent();
 
       void createClientPlaying(client, data, previewsInfo[data.puzzleIndex])
@@ -268,15 +238,13 @@ function createUi(state: TitleState) {
       setChangeLevel(state.level);
 
       if (state.puzzleIndex === -1) {
-        preview.hide();
         titleText.text = "カスタム画像";
         titleText.invalidate();
       } else {
         const info = previewsInfo[state.puzzleIndex];
-        preview.show();
         titleText.text = info.title;
         titleText.invalidate();
-        setSprite(preview, info.imageAsset);
+        setPreviewSprite(preview, info.imageAsset);
       }
     }),
   ];
@@ -286,29 +254,70 @@ function createUi(state: TitleState) {
       ChangeLevel.receive(client, data => setChangeLevel(data.level))
     );
   }
+
+
+  function setChangeLevel(level: number = state.level): void {
+    state.level = level;
+    levelNumText.text = `レベル ${Math.round(state.level)}`;
+    levelNumText.invalidate();
+
+    const surface =
+      state.puzzleIndex === -1
+        ? customResult.customSurface
+        : previewsInfo[state.puzzleIndex].imageAsset;
+
+    if (!surface) return;
+
+    const pixel = (100 - state.level) + 40;
+
+    state.pieceSize = { width: pixel, height: pixel };
+    state.pieceWH = {
+      width: Math.floor(surface.width / pixel),
+      height: Math.floor(surface.height / pixel),
+    };
+    state.origin = {
+      x: Math.floor((surface.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
+      y: Math.floor((surface.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
+    };
+
+    const pieceCount = state.pieceWH.height * state.pieceWH.width;
+    pieceNumText.text = `${state.pieceWH.height}x${state.pieceWH.width}  ${pieceCount}枚`;
+    pieceNumText.invalidate();
+
+    const [floorTime, upperTime] = estimateTime(playerManager.length, pieceCount);
+    if (floorTime >= 60 * 5) {
+      aboutTimeText.text = `予想タイム：ヤバイ`;
+    } else if (upperTime >= 60 * 5) {
+      aboutTimeText.text = `予想タイム：${floorTime}～ﾔﾊﾞｲ`;
+    } else {
+      aboutTimeText.text = `予想タイム：${floorTime}～${Math.floor(upperTime)}分`;
+    }
+
+    aboutTimeText.invalidate();
+  }
 }
 
 
-function setSprite(sprite: g.Sprite, src: g.ImageAsset) {
-  sprite.src = src;
-  sprite.width = sprite.srcWidth = src.width;
-  sprite.height = sprite.srcHeight = src.height;
-  const width = (<g.E>sprite.parent).width;
-  const height = (<g.E>sprite.parent).height;
-  const widthPer = width / sprite.width;
-  const heightPer = height / sprite.height;
+export function setPreviewSprite(preview: g.Sprite, src: g.Surface | g.ImageAsset) {
+  preview.src = src;
+  preview.width = preview.srcWidth = src.width;
+  preview.height = preview.srcHeight = src.height;
+  const width = (<g.E>preview.parent).width;
+  const height = (<g.E>preview.parent).height;
+  const widthPer = width / preview.width;
+  const heightPer = height / preview.height;
 
   if (heightPer < widthPer) {
-    sprite.scale(heightPer);
-    sprite.x = (width - sprite.width * sprite.scaleX) / 2;
-    sprite.y = 0;
+    preview.scale(heightPer);
+    preview.x = (width - preview.width * preview.scaleX) / 2;
+    preview.y = 0;
   } else {
-    sprite.scale(widthPer);
-    sprite.x = 0;
-    sprite.y = (height - sprite.height * sprite.scaleY) / 2;
+    preview.scale(widthPer);
+    preview.x = 0;
+    preview.y = (height - preview.height * preview.scaleY) / 2;
   }
 
-  sprite.invalidate();
+  preview.invalidate();
 }
 
 /**

@@ -437,6 +437,11 @@
 			"path": "image/crown_1.png",
 			"width": 60,
 			"height": 40
+		},
+		"Custom": {
+			"type": "script",
+			"path": "script/page/Title/Custom.js",
+			"global": true
 		}
 	}
 }
