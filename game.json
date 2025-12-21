@@ -442,6 +442,16 @@
 			"type": "script",
 			"path": "script/page/Title/Custom.js",
 			"global": true
+		},
+		"kamihubuki-js": {
+			"type": "script",
+			"path": "script/util/kamihubuki-js.js",
+			"global": true
+		},
+		"kamihubukiEffect": {
+			"type": "script",
+			"path": "script/util/kamihubukiEffect.js",
+			"global": true
 		}
 	}
 }

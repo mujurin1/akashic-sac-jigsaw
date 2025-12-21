@@ -1,6 +1,7 @@
 import { GameClear, HoldPiece, MovePiece, ReleasePiece } from "../../../event/PlayingEvent";
 import { GameState } from "../../../share/GameState";
 import { createFrames, createPieceParameter, createPieces__, CreatePiecesResult } from "../../../util/createPieces";
+import { createKamihubukiEffect } from "../../../util/kamihubukiEffect";
 import { PlayerManager } from "../../../util/PlayerManager";
 import { Piece } from "../Piece";
 import { ClientPlaying } from "./ClientPlaying";
@@ -109,6 +110,13 @@ export async function createPlayState(
   function gameClear(gameClear: GameClear): void {
     finishTime = gameClear.finishTime;
     finishPlayerId = gameClear.finishPlayerId;
+
+    createKamihubukiEffect({
+      parent: clientPlaying.display,
+      generatedPerSeccond: 10,
+      width: g.game.width,
+      height: g.game.height,
+    });
 
     // スコアの再計算イベントを発火させるため
     playerManager.addScore(finishPlayerId, 0);
