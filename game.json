@@ -53,6 +53,30 @@
 		"node_modules/akashic-sac/lib/utils/Util.js"
 	],
 	"assets": {
+		"fit_other": {
+			"type": "audio",
+			"path": "audio/fit_other",
+			"systemId": "sound",
+			"duration": 154,
+			"hint": {
+				"extensions": [
+					".aac",
+					".ogg"
+				]
+			}
+		},
+		"fit_self": {
+			"type": "audio",
+			"path": "audio/fit_self",
+			"systemId": "sound",
+			"duration": 183,
+			"hint": {
+				"extensions": [
+					".aac",
+					".ogg"
+				]
+			}
+		},
 		"crown_1": {
 			"type": "image",
 			"path": "image/crown_1.png",

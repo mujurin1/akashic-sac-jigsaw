@@ -20,6 +20,7 @@ export = (gameMainParam: g.GameMainParameterObject) => {
         assetIds: [
           "default_frame", "title_back", "sanka_nin", "ranking_view", "crown_1", "crown_2", "crown_3",
           "ico_ban", "ico_device", "ico_info", "ico_preview", "ico_ranking", "ico_more", "ico_setting",
+          "fit_self", "fit_other"
         ],
         assetPaths: ["/assets/**/*"],
       }

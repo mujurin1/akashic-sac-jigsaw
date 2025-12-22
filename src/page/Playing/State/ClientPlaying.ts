@@ -120,6 +120,13 @@ export async function createClientPlaying(
 
   playAreaGroup.reset();
 
+  // 超雑なSE実装
+  let isAudioEnabled = false;
+  g.game.audio.sound.volume = 0.5;
+  scene.onPointDownCapture.addOnce(() => isAudioEnabled = true);
+  const fitSelfSeSrc = scene.asset.getAudioById("fit_self");
+  const fitOtherSe = scene.asset.getAudioById("fit_other");
+
   return clientPlaying;
 
 
@@ -196,6 +203,8 @@ export async function createClientPlaying(
         const piece = pieces[pieceIndex];
         Piece.fit(piece);
         playerManager.addScore(pId!, 1, true);
+
+        fitSound(g.game.selfId === pId);
       }),
       ConnectPiece.receive(client, ({ pId, parentIndex, childIndex }) => {
         const parent = pieces[parentIndex];
@@ -203,8 +212,18 @@ export async function createClientPlaying(
         Piece.connect(parent, child, clientPlaying.playState.gameState);
         if (g.game.selfId === pId) parent.parent.append(parent);
         playerManager.addScore(pId!, 1, true);
+
+        fitSound(g.game.selfId === pId);
       }),
       GameClear.receive(client, clientPlaying.playState.gameClear),
     ];
+  }
+
+  function fitSound(isSelf: boolean) {
+    if (!isAudioEnabled) return;
+
+    if (isSelf) g.game.audio.play(fitSelfSeSrc);
+    else g.game.audio.play(fitOtherSe);
+
   }
 }
