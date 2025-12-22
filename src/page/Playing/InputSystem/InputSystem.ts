@@ -55,6 +55,7 @@ export function inputSystemControl(clientPlaying: ClientPlaying): InputSystemCon
 
   return control;
 
+
   function toggleInputSystem(type?: InputSystemType) {
     if (type == null) type = currentType === "mobile" ? "pc" : "mobile";
     if (type === currentType) return;

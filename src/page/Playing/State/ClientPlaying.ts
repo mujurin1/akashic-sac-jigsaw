@@ -8,7 +8,7 @@ import { Piece } from "../Piece";
 import { BgGroup, createBgGroup } from "./BgGroup";
 import { createInfoGroup, InfoGroup } from "./InfoGroup";
 import { createOptionGroup, OptionGroup } from "./OptionGroup";
-import { createPieceGroup as createPlayAreaGroup, PieceGroup as PlayAreaGroup } from "./PlayAreaGroup";
+import { createPlayAreaGroup, PlayAreaGroup } from "./PlayAreaGroup";
 import { createPlayState, PlayState } from "./PlayState";
 import { createPreviewGroup, PreviewGroup } from "./PreviewGroup";
 import { createRankingGroup, RankingGroup } from "./RankingGroup";

@@ -1,4 +1,4 @@
-import { CamerableE } from "akashic-sac";
+import { CamerableE, createFont } from "akashic-sac";
 import { toggleVisibleTo } from "../../../common/func";
 import { ClientPlaying } from "./ClientPlaying";
 
@@ -14,7 +14,7 @@ import { ClientPlaying } from "./ClientPlaying";
  *    |-Pieces[]
  * ```
  */
-export interface PieceGroup {
+export interface PlayAreaGroup {
   /** ピースやボードの存在する本当のプレイエリア */
   readonly camerable: CamerableE;
 
@@ -76,7 +76,7 @@ export interface PieceGroup {
   reset(): void;
 }
 
-export function createPieceGroup(clientPlaying: ClientPlaying): PieceGroup {
+export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup {
   const scene = g.game.env.scene;
   const parent = clientPlaying.display;
   const {
@@ -110,6 +110,10 @@ export function createPieceGroup(clientPlaying: ClientPlaying): PieceGroup {
   board.append(boardPieceFrame);
 
   const pieceParent = new g.E({ scene, parent: camerable });
+
+
+  const displayResult = createDisplay(clientPlaying);
+
 
   return {
     camerable,
@@ -149,6 +153,8 @@ export function createPieceGroup(clientPlaying: ClientPlaying): PieceGroup {
     camerable.moveBy(offsetX, offsetY);
 
     camerable.modified();
+
+    cameraMoved();
   }
 
   function moveBy(dx: number, dy: number) {
@@ -156,6 +162,8 @@ export function createPieceGroup(clientPlaying: ClientPlaying): PieceGroup {
     const y = dy * camerable.scaleY;
     camerable.moveBy(x, y);
     camerable.modified();
+
+    cameraMoved();
   }
   function moveTo(x: number, y: number, option?: MoveToOption) {
     const centerPer = option?.centerPer ?? { x: 0.5, y: 0.5 };
@@ -166,6 +174,8 @@ export function createPieceGroup(clientPlaying: ClientPlaying): PieceGroup {
       y * (option?.ignoreScale ? camerable.scaleY : 1) - offsetY,
     );
     camerable.modified();
+
+    cameraMoved();
   }
 
   function reset() {
@@ -179,6 +189,27 @@ export function createPieceGroup(clientPlaying: ClientPlaying): PieceGroup {
     // 画面右上の Info パネルを避けて、大体中央になるように移動
     // > 0.257 = 「右上の Info パネル」が画面の横幅に占める割合 (横幅)
     moveBy((g.game.width * 0.257 / 2), 0);
+  }
+
+
+  function cameraMoved() {
+    if (cameraOverd()) {
+      displayResult.switchHelpText(true);
+    } else {
+      displayResult.switchHelpText(false);
+    }
+  }
+
+  /** カメラがジグソーの外にあるか判定する */
+  function cameraOverd(): boolean {
+    const x = camerable.x;
+    const y = camerable.y;
+
+    const leftTopX = g.game.width * camerable.scaleX;
+    const leftTopY = g.game.height * camerable.scaleY;
+    const rightBottom = clientPlaying.playState.gameState.pieceAreaLimit;
+    return x < -leftTopX || rightBottom.width < x ||
+      y < -leftTopY || rightBottom.height < y;
   }
 }
 
@@ -204,4 +235,32 @@ interface MoveToOption {
    * @default false
    */
   ignoreScale?: boolean;
+}
+
+
+
+function createDisplay(clientPlaying: ClientPlaying): {
+  switchHelpText(visible: boolean): void;
+} {
+  const parent = new g.E({ scene: g.game.env.scene, parent: clientPlaying.display });
+
+  const text = new g.Label({
+    scene: g.game.env.scene,
+    parent,
+    x: 0, y: 650,
+    width: 1130,
+    widthAutoAdjust: false,
+    textAlign: "right",
+    text: "歯車で画面位置をリセットできます↗",
+    font: createFont({ size: 50 }),
+    hidden: true,
+  });
+
+  return {
+    switchHelpText(visible: boolean) {
+      if (visible === text.visible()) return;
+      if (visible) text.show();
+      else text.hide();
+    },
+  };
 }
