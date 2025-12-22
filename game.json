@@ -53,6 +53,24 @@
 		"node_modules/akashic-sac/lib/utils/Util.js"
 	],
 	"assets": {
+		"crown_1": {
+			"type": "image",
+			"path": "image/crown_1.png",
+			"width": 60,
+			"height": 40
+		},
+		"crown_2": {
+			"type": "image",
+			"path": "image/crown_2.png",
+			"width": 60,
+			"height": 40
+		},
+		"crown_3": {
+			"type": "image",
+			"path": "image/crown_3.png",
+			"width": 60,
+			"height": 40
+		},
 		"default_frame": {
 			"type": "image",
 			"path": "image/default_frame.png",
@@ -106,6 +124,12 @@
 			"path": "image/ico_visible.png",
 			"width": 96,
 			"height": 96
+		},
+		"ranking_view": {
+			"type": "image",
+			"path": "image/ranking_view.png",
+			"width": 870,
+			"height": 690
 		},
 		"sanka_nin": {
 			"type": "image",
@@ -374,6 +398,21 @@
 			"path": "script/page/Playing/State/PlayState.js",
 			"global": true
 		},
+		"PreviewGroup": {
+			"type": "script",
+			"path": "script/page/Playing/State/PreviewGroup.js",
+			"global": true
+		},
+		"RankingGroup": {
+			"type": "script",
+			"path": "script/page/Playing/State/RankingGroup.js",
+			"global": true
+		},
+		"Custom": {
+			"type": "script",
+			"path": "script/page/Title/Custom.js",
+			"global": true
+		},
 		"Title": {
 			"type": "script",
 			"path": "script/page/Title/Title.js",
@@ -394,55 +433,6 @@
 			"path": "script/util/createPieces.js",
 			"global": true
 		},
-		"PlayerManager": {
-			"type": "script",
-			"path": "script/util/PlayerManager.js",
-			"global": true
-		},
-		"readAssets": {
-			"type": "script",
-			"path": "script/util/readAssets.js",
-			"global": true
-		},
-		"RankingGroup": {
-			"type": "script",
-			"path": "script/page/Playing/State/RankingGroup.js",
-			"global": true
-		},
-		"PreviewGroup": {
-			"type": "script",
-			"path": "script/page/Playing/State/PreviewGroup.js",
-			"global": true
-		},
-		"ranking_view": {
-			"type": "image",
-			"path": "image/ranking_view.png",
-			"width": 870,
-			"height": 690
-		},
-		"crown_3": {
-			"type": "image",
-			"path": "image/crown_3.png",
-			"width": 60,
-			"height": 40
-		},
-		"crown_2": {
-			"type": "image",
-			"path": "image/crown_2.png",
-			"width": 60,
-			"height": 40
-		},
-		"crown_1": {
-			"type": "image",
-			"path": "image/crown_1.png",
-			"width": 60,
-			"height": 40
-		},
-		"Custom": {
-			"type": "script",
-			"path": "script/page/Title/Custom.js",
-			"global": true
-		},
 		"kamihubuki-js": {
 			"type": "script",
 			"path": "script/util/kamihubuki-js.js",
@@ -451,6 +441,16 @@
 		"kamihubukiEffect": {
 			"type": "script",
 			"path": "script/util/kamihubukiEffect.js",
+			"global": true
+		},
+		"PlayerManager": {
+			"type": "script",
+			"path": "script/util/PlayerManager.js",
+			"global": true
+		},
+		"readAssets": {
+			"type": "script",
+			"path": "script/util/readAssets.js",
 			"global": true
 		}
 	}

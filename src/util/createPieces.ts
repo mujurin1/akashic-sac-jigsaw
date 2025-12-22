@@ -18,7 +18,7 @@ const pieceBoko = `
 const pieceLine = `
 <svg width="200" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg">
 <path d="M 0 50 L 75 50 A 31 31 0 1 0 125 50 L 200 50"
-  stroke="red" stroke-width="12px" fill="transparent" stroke-linejoin="bevel" />
+  stroke="rgba(255, 255, 255, 0.3)" stroke-width="12px" fill="transparent" stroke-linejoin="bevel" />
 </svg>`;
 
 // O:凸 X:凹 _:壁
@@ -257,8 +257,7 @@ export async function createFrames(param: PieceParameter): Promise<g.Sprite> {
   });
 
   const frame = g.SpriteFactory.createSpriteFromE(scene, frameE);
-  frame.opacity = 0.5;
-  frame.compositeOperation = "destination-out";
+  // frame.compositeOperation = "destination-out";
   frame.moveTo(preview.x, preview.y);
   frame.modified();
 
