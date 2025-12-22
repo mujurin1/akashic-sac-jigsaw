@@ -58,8 +58,10 @@ export class GameClear extends SacEvent() {
 }
 
 // MS * COUNT = ピースを保持出来る時間
-const PIECE_RELEASE_MS = 10_000;
-const PIECE_RELEASE_COUNT = 3;
+const enum PIECE_RELEASE {
+  MS = 10_000,
+  COUNT = 3,
+}
 
 export function serverPlaying(server: SacServer, gameStart: GameStart): void {
   const state = createPlayingState(server, gameStart);
@@ -92,7 +94,7 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
       server.broadcast(data);
     }),
     MovePiece.receive(server, data => {
-      const { pId, pieceIndex, point: position } = data;
+      const { pId, pieceIndex, point } = data;
       // ゲームに参加していないプレイヤー
       if (!playerManager.has(pId)) return;
       const piece = state.pieces[pieceIndex];
@@ -101,7 +103,7 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
       // そのプレイヤーが持っていないピース
       if (holders.get(pId)?.pieceIndex !== pieceIndex) return;
 
-      piece.pos = position;
+      piece.pos = point;
 
       server.broadcast(data);
     }),
@@ -116,7 +118,7 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
       // そのプレイヤーが持っていないピース
       if (holders.get(player.id)?.pieceIndex !== pieceIndex) return;
 
-      piece.pos = point;
+      piece.pos = clampPiecePosition(point);
       if (state.checkAndDoFitAndConnect(data.pieceIndex)) {
         playerManager.addScore(player.id, 1, true);
         totalScore += 1;
@@ -125,7 +127,8 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
           server.broadcast(new GameClear(g.game.getCurrentTime(), player.id));
         }
       } else {
-        server.broadcast(data);
+        const newData: ReleasePiece = { ...data, point: piece.pos };
+        server.broadcast(newData);
       }
       state.deleteHolder(player.id);
     }),
@@ -135,6 +138,7 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
     }),
     CheckFitPiece.receive(server, data => {
       const { pId } = data;
+      // TODO: ピースがハマっているかチェックする機能は未実装
       if (
         !playerManager.has(pId) ||
         holders.has(pId)
@@ -148,10 +152,27 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
     for (const [pId, value] of holders) {
       value.releaseCounter++;
 
-      if (value.releaseCounter >= PIECE_RELEASE_COUNT) {
+      if (value.releaseCounter >= PIECE_RELEASE.COUNT) {
         state.deleteHolder(pId);
         server.broadcast(new ForceReleasePiece(value.pieceIndex), pId);
       }
     }
-  }, PIECE_RELEASE_MS);
+  }, PIECE_RELEASE.MS);
+
+
+  function clampPiecePosition(point: g.CommonOffset): g.CommonOffset {
+    const limitX = state.gameState.pieceAreaLimit.width -
+      state.gameState.pieceSize.width;
+    const limitY = state.gameState.pieceAreaLimit.height -
+      state.gameState.pieceSize.height;
+    const x =
+      point.x < 0 ? 0
+        : point.x > limitX ? limitX
+          : point.x;
+    const y =
+      point.y < 0 ? 0
+        : point.y > limitY ? limitY
+          : point.y;
+    return { x, y };
+  }
 }

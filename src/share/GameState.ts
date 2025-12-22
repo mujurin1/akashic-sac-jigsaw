@@ -35,7 +35,7 @@ export function createGameState(gameStart: GameStart): GameState {
     boardSize,
   );
   // TODO: lineup 変数を使って適切なボードサイズを計算する
-  const movePieceArea: g.CommonSize = {
+  const pieceAreaLimit: g.CommonSize = {
     width: boardSize.width * MOVE_PIECE_AREA_SIZE,
     height: boardSize.height * MOVE_PIECE_AREA_SIZE,
   };
@@ -44,10 +44,10 @@ export function createGameState(gameStart: GameStart): GameState {
     boardArea: {
       ...boardSize,
       // ピースの移動可能な領域は 
-      x: (movePieceArea.width - boardSize.width) / 2,
-      y: (movePieceArea.height - boardSize.height) / 2,
+      x: (pieceAreaLimit.width - boardSize.width) / 2,
+      y: (pieceAreaLimit.height - boardSize.height) / 2,
     },
-    pieceAreaLimit: movePieceArea,
+    pieceAreaLimit,
     piecePositions,
   };
 }

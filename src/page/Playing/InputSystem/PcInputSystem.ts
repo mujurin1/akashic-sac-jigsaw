@@ -1,6 +1,13 @@
 import { ClientPlaying } from "../State/ClientPlaying";
 import { InputSystem } from "./InputSystem";
 
+const enum PICK_MOVE {
+  SPEED = 20,
+  MARGIN_X = 100,
+  MARGIN_Y = 100,
+  MARGIN_PER = 0.4,
+}
+
 export function PcInputSystem(
   clientPlaying: ClientPlaying,
   inputUiParent: g.E,
@@ -9,6 +16,10 @@ export function PcInputSystem(
 
   const pcUi = createIcons(clientPlaying, inputUiParent);
   const eventManager = customWheelEvent(clientPlaying);
+
+  let pickedMoveCameraPer = { x: 0, y: 0 };
+
+  scene.onUpdate.add(movePickedCamera);
 
   const result: InputSystem = {
     disable: () => {
@@ -32,6 +43,7 @@ export function PcInputSystem(
     forceRelease() { },
     destroy() {
       result.disable();
+      scene.onUpdate.remove(movePickedCamera);
     },
   };
 
@@ -56,11 +68,52 @@ export function PcInputSystem(
   function pieceMove(e: g.PointMoveEvent) {
     if (clientPlaying.playState.holdState == null) return;
     clientPlaying.playState.move(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
+
+    const x = e.point.x + e.startDelta.x;
+    const y = e.point.y + e.startDelta.y;
+    updatePickedMoveCameraPer(x, y);
   }
 
   function pieceRelease(e: g.PointUpEvent) {
+    pickedMoveCameraPer = { x: 0, y: 0 };
+
     if (clientPlaying.playState.holdState == null) return;
     clientPlaying.playState.release(e.point.x + e.startDelta.x, e.point.y + e.startDelta.y);
+  }
+
+  function updatePickedMoveCameraPer(x: number, y: number) {
+    const left = PICK_MOVE.MARGIN_X - x;
+    const right = x - (g.game.width - PICK_MOVE.MARGIN_X);
+    if (left > 0) {
+      const per = left / PICK_MOVE.MARGIN_X;
+      pickedMoveCameraPer.x = -per;
+    } else if (right > 0) {
+      const per = right / PICK_MOVE.MARGIN_X;
+      pickedMoveCameraPer.x = per;
+    } else {
+      pickedMoveCameraPer.x = 0;
+    }
+
+    const top = PICK_MOVE.MARGIN_Y - y;
+    const bottom = y - (g.game.height - PICK_MOVE.MARGIN_Y);
+    if (top > 0) {
+      const per = top / PICK_MOVE.MARGIN_Y;
+      pickedMoveCameraPer.y = -per;
+    } else if (bottom > 0) {
+      const per = bottom / PICK_MOVE.MARGIN_Y;
+      pickedMoveCameraPer.y = per;
+    } else {
+      pickedMoveCameraPer.y = 0;
+    }
+  }
+
+  function movePickedCamera() {
+    if (pickedMoveCameraPer.x === 0 && pickedMoveCameraPer.y === 0) return;
+    const playArea = clientPlaying.uiGroups.playArea;
+    playArea.moveBy(
+      pickedMoveCameraPer.x * PICK_MOVE.SPEED,
+      pickedMoveCameraPer.y * PICK_MOVE.SPEED,
+    );
   }
 }
 
