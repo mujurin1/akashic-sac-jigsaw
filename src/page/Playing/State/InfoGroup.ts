@@ -35,17 +35,20 @@ export interface InfoGroup {
  * プレビューやランキングなどのパーツを作る
  */
 export function createInfoGroup(clientPlaying: ClientPlaying): InfoGroup {
-  const scene = g.game.env.scene;
-
   /** 左下の仮UI */
-  {
-    const font = createFont({ size: 50 });
-    const parent = scene;
+  if (!clientPlaying.isJoined()) {
+    const scene = g.game.env.scene;
     const join = new g.Label({
-      scene, parent, font, text: "参加",
-      x: 10, y: g.game.height - 70, touchable: true,
+      scene, parent: scene,
+      font: createFont({ size: 50 }),
+      text: "参加",
+      x: 10, y: g.game.height - 70,
+      touchable: true,
     });
-    join.onPointDown.add(sendJoin);
+    join.onPointDown.add(() => {
+      sendJoin();
+      join.destroy();
+    });
   }
 
   const infoUi = createInfoUi({

@@ -194,9 +194,9 @@ export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup
 
   function cameraMoved() {
     if (cameraOverd()) {
-      displayResult.switchHelpText(true);
+      displayResult.switchJigsawViewOut(true);
     } else {
-      displayResult.switchHelpText(false);
+      displayResult.switchJigsawViewOut(false);
     }
   }
 
@@ -240,11 +240,11 @@ interface MoveToOption {
 
 
 function createDisplay(clientPlaying: ClientPlaying): {
-  switchHelpText(visible: boolean): void;
+  switchJigsawViewOut(visible: boolean): void;
 } {
   const parent = new g.E({ scene: g.game.env.scene, parent: clientPlaying.display });
 
-  const text = new g.Label({
+  const helpText = new g.Label({
     scene: g.game.env.scene,
     parent,
     x: 0, y: 650,
@@ -257,10 +257,10 @@ function createDisplay(clientPlaying: ClientPlaying): {
   });
 
   return {
-    switchHelpText(visible: boolean) {
-      if (visible === text.visible()) return;
-      if (visible) text.show();
-      else text.hide();
+    switchJigsawViewOut(outside: boolean) {
+      if (outside === helpText.visible()) return;
+      if (outside) helpText.show();
+      else helpText.hide();
     },
   };
 }
