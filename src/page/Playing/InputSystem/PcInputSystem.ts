@@ -128,6 +128,7 @@ function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
     scene, parent: pcUiParent,
   });
 
+  let iconsVisible = false;
   const icons = {
     icoVisible: createIcon("ico_visible", [0, 2]),
     // MEMO: 操作デバイス切り替えボタン
@@ -137,6 +138,8 @@ function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
     optionIcon: createIcon("ico_setting", [0, 1]),
     previewIcon: createIcon("ico_preview", [1, 1]),
     colorIcon: createIcon(undefined, [2, 1]),
+    zoomIn: createIcon("ico_zoomIn", [1, 0]),
+    zoomOut: createIcon("ico_zoomOut", [2, 0]),
   } as const;
 
   const reViewIcon = createReViewIcon();
@@ -162,6 +165,12 @@ function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
     icons.colorIcon.cssColor = clientPlaying.uiGroups.bg.toggleColor();
     icons.colorIcon.modified();
   });
+  icons.zoomIn.onPointDown.add(() => {
+    clientPlaying.uiGroups.playArea.scaleBy(0.9);
+  });
+  icons.zoomOut.onPointDown.add(() => {
+    clientPlaying.uiGroups.playArea.scaleBy(1.1);
+  });
 
   const moreIcon = createIcon("ico_more", [0, 0]);
   pcUiParent.append(moreIcon);
@@ -169,15 +178,23 @@ function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
   moreIcon.modified();
 
   moreIcon.onPointDown.add(() => {
-    if (iconParent.visible()) {
-      iconParent.hide();
+    iconsVisible = !iconsVisible;
+    if (iconsVisible) {
       moreIcon.opacity = 0.7;
+      for (const [name, icon] of Object.entries(icons)) {
+        if (name === "zoomIn" || name === "zoomOut") continue;
+        icon.hide();
+      }
     } else {
-      iconParent.show();
       moreIcon.opacity = 1;
+      for (const [name, icon] of Object.entries(icons)) {
+        if (name === "zoomIn" || name === "zoomOut") continue;
+        icon.show();
+      }
     }
     moreIcon.modified();
   });
+
 
 
   return {

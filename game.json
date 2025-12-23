@@ -149,6 +149,18 @@
 			"width": 96,
 			"height": 96
 		},
+		"ico_zoomIn": {
+			"type": "image",
+			"path": "image/ico_zoomIn.png",
+			"width": 100,
+			"height": 100
+		},
+		"ico_zoomOut": {
+			"type": "image",
+			"path": "image/ico_zoomOut.png",
+			"width": 100,
+			"height": 100
+		},
 		"ranking_view": {
 			"type": "image",
 			"path": "image/ranking_view.png",

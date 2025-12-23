@@ -19,7 +19,7 @@ export = (gameMainParam: g.GameMainParameterObject) => {
       sceneParam: {
         assetIds: [
           "default_frame", "title_back", "sanka_nin", "ranking_view", "crown_1", "crown_2", "crown_3",
-          "ico_ban", "ico_device", "ico_info", "ico_preview", "ico_ranking", "ico_more", "ico_setting", "ico_visible",
+          "ico_ban", "ico_device", "ico_info", "ico_preview", "ico_ranking", "ico_more", "ico_setting", "ico_visible", "ico_zoomIn", "ico_zoomOut",
           "fit_self", "fit_other"
         ],
         assetPaths: ["/assets/**/*"],
