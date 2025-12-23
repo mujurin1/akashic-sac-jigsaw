@@ -1,6 +1,7 @@
 {
   "scripts": {
     "dev": "bun run build:scan && bun run serve:watch",
+    "serve": "akashic serve -p 3300 -s nicolive -w -B",
     "usac": "akashic install ../akashic-sac/akashic-sac-0.2.3.tgz",
     "serve:watch": "concurrently \"tsc -w\" \"akashic serve -p 3300 -s nicolive -w -B\"",
     "export": "bun run build:scan && akashic export zip -f -o ./game.zip --nicolive --minify",

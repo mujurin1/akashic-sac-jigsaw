@@ -167,126 +167,6 @@
 			"width": 380,
 			"height": 80
 		},
-		"assets/antelope.jpg": {
-			"type": "image",
-			"path": "assets/antelope.jpg",
-			"width": 1280,
-			"height": 780
-		},
-		"assets/architecture.jpg": {
-			"type": "image",
-			"path": "assets/architecture.jpg",
-			"width": 1920,
-			"height": 1439
-		},
-		"assets/audience.jpg": {
-			"type": "image",
-			"path": "assets/audience.jpg",
-			"width": 1920,
-			"height": 884
-		},
-		"assets/beach.jpg": {
-			"type": "image",
-			"path": "assets/beach.jpg",
-			"width": 1280,
-			"height": 960
-		},
-		"assets/cake.jpg": {
-			"type": "image",
-			"path": "assets/cake.jpg",
-			"width": 1280,
-			"height": 720
-		},
-		"assets/cockpit.jpg": {
-			"type": "image",
-			"path": "assets/cockpit.jpg",
-			"width": 1920,
-			"height": 1209
-		},
-		"assets/color-fan.jpg": {
-			"type": "image",
-			"path": "assets/color-fan.jpg",
-			"width": 1920,
-			"height": 1280
-		},
-		"assets/duck.jpg": {
-			"type": "image",
-			"path": "assets/duck.jpg",
-			"width": 1280,
-			"height": 853
-		},
-		"assets/excavators.jpg": {
-			"type": "image",
-			"path": "assets/excavators.jpg",
-			"width": 1280,
-			"height": 416
-		},
-		"assets/firewood.jpg": {
-			"type": "image",
-			"path": "assets/firewood.jpg",
-			"width": 1280,
-			"height": 853
-		},
-		"assets/fox.jpg": {
-			"type": "image",
-			"path": "assets/fox.jpg",
-			"width": 1280,
-			"height": 851
-		},
-		"assets/frangipani.jpg": {
-			"type": "image",
-			"path": "assets/frangipani.jpg",
-			"width": 1280,
-			"height": 853
-		},
-		"assets/japan.jpg": {
-			"type": "image",
-			"path": "assets/japan.jpg",
-			"width": 1920,
-			"height": 1076
-		},
-		"assets/latte-art.jpg": {
-			"type": "image",
-			"path": "assets/latte-art.jpg",
-			"width": 1280,
-			"height": 853
-		},
-		"assets/living-room.jpg": {
-			"type": "image",
-			"path": "assets/living-room.jpg",
-			"width": 1920,
-			"height": 1280
-		},
-		"assets/noodle-soup.jpg": {
-			"type": "image",
-			"path": "assets/noodle-soup.jpg",
-			"width": 1280,
-			"height": 960
-		},
-		"assets/paraglider.jpg": {
-			"type": "image",
-			"path": "assets/paraglider.jpg",
-			"width": 1280,
-			"height": 855
-		},
-		"assets/skyscrapers.jpg": {
-			"type": "image",
-			"path": "assets/skyscrapers.jpg",
-			"width": 1280,
-			"height": 853
-		},
-		"assets/supreme.jpg": {
-			"type": "image",
-			"path": "assets/supreme.jpg",
-			"width": 1280,
-			"height": 852
-		},
-		"assets/watch.jpg": {
-			"type": "image",
-			"path": "assets/watch.jpg",
-			"width": 1920,
-			"height": 1280
-		},
 		"createButton": {
 			"type": "script",
 			"path": "script/common/createButton.js",
@@ -476,6 +356,89 @@
 			"type": "script",
 			"path": "script/util/readAssets.js",
 			"global": true
+		},
+		"assets/zunda.jpg": {
+			"type": "image",
+			"path": "assets/zunda.jpg",
+			"width": 1288,
+			"height": 812
+		},
+		"assets/roulette.jpg": {
+			"type": "image",
+			"path": "assets/roulette.jpg",
+			"width": 1248,
+			"height": 936
+		},
+		"assets/okonomi.jpg": {
+			"type": "image",
+			"path": "assets/okonomi.jpg",
+			"width": 1224,
+			"height": 922
+		},
+		"assets/tibi.jpg": {
+			"type": "image",
+			"path": "assets/tibi.jpg",
+			"width": 1248,
+			"height": 936
+		},
+		"Waku": {
+			"type": "script",
+			"path": "script/common/Waku.js",
+			"global": true
+		},
+		"assets/galaxy.jpg": {
+			"type": "image",
+			"path": "assets/galaxy.jpg",
+			"width": 1920,
+			"height": 1080
+		},
+		"assets/moon.jpg": {
+			"type": "image",
+			"path": "assets/moon.jpg",
+			"width": 1119,
+			"height": 1077
+		},
+		"assets/tree.jpg": {
+			"type": "image",
+			"path": "assets/tree.jpg",
+			"width": 1094,
+			"height": 1641
+		},
+		"assets/plum.jpg": {
+			"type": "image",
+			"path": "assets/plum.jpg",
+			"width": 1734,
+			"height": 1153
+		},
+		"assets/horse.jpg": {
+			"type": "image",
+			"path": "assets/horse.jpg",
+			"width": 1129,
+			"height": 836
+		},
+		"assets/city.jpg": {
+			"type": "image",
+			"path": "assets/city.jpg",
+			"width": 1256,
+			"height": 1640
+		},
+		"assets/christmas-dog.jpg": {
+			"type": "image",
+			"path": "assets/christmas-dog.jpg",
+			"width": 1342,
+			"height": 2021
+		},
+		"assets/cookie-doll.jpg": {
+			"type": "image",
+			"path": "assets/cookie-doll.jpg",
+			"width": 1200,
+			"height": 800
+		},
+		"assets/duck.jpg": {
+			"type": "image",
+			"path": "assets/duck.jpg",
+			"width": 1557,
+			"height": 999
 		}
 	}
 }
