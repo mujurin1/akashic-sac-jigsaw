@@ -12,15 +12,18 @@ export interface TitleUi {
   startButton?: g.Sprite;
 }
 
+export type CustomShareState = "none" | "dropped" | "sharing" | "shared";
+
 export interface CustomImageTitleReturn {
-  customSurface: g.Surface | undefined;
+  readonly customSurface: g.Surface | undefined;
+  getCustomState(): CustomShareState;
   destroy(): void;
 }
 
 export function customImageTitle(
   client: SacClient,
   titleUi: TitleUi,
-  setChangeLevel: (level?: number) => void,
+  refreshLevel: () => void,
 ): CustomImageTitleReturn {
   const scene = client.env.scene;
   const { previewPanel } = titleUi;
@@ -29,14 +32,15 @@ export function customImageTitle(
   let dropped: { imageDataUrl: string; surface: g.Surface; } | undefined;
   let sharedSurface: g.Surface | undefined;
 
-  function getCustomState() {
+  function getCustomState(): CustomShareState {
     if (sharedSurface != null) return "shared";
+    if (!shareButton.touchable) return "sharing";
     if (dropped != null) return "dropped";
     return "none";
   }
 
 
-  //#region TEXT
+  //#region プレビュー部分のヘルプテキスト
   const customFont = createFont({ size: 50, fontColor: "white" });
   const customTextParent = new g.E({ scene, parent: previewPanel, hidden: true });
   new Label({
@@ -74,7 +78,17 @@ export function customImageTitle(
     textAlign: "center",
     text: "400x400px ~ 2000x2000px 程度の画像がおすすめです"
   });
-  //#endregion TEXT
+  //#endregion プレビュー部分のヘルプテキスト
+
+  //#region 共有中テキスト
+  const sharingText = new g.Label({
+    scene, parent: previewPanel,
+    x: 50, y: 550,
+    font: createFont({ size: 40 }),
+    text: "画像を共有中… 少々お待ちください",
+    hidden: true,
+  });
+  //#endregion 共有中テキスト
 
   //#region ドラッグドロップ直後に出るUI
   const shareButton = createButton({
@@ -87,8 +101,10 @@ export function customImageTitle(
   shareButton.onPointDown.add(() => {
     if (dropped == null) return;
 
+    shareButton.touchable = false;
     DragDrop.unhook();
     shareButton.hide();
+    sharingText.show();
     ShareBigText.send("IMAGE", dropped.imageDataUrl);
   });
   //#endregion ドラッグドロップ直後に出るUI
@@ -109,7 +125,6 @@ export function customImageTitle(
       const customState = getCustomState();
 
       if (data.index === -1) {
-
         switch (customState) {
           case "none":
             preview.hide();
@@ -125,6 +140,13 @@ export function customImageTitle(
             titleUi.startButton?.hide();
             setPreviewSprite(preview, dropped!.surface);
             break;
+          case "sharing":
+            titleUi.levelTextBack.hide();
+            titleUi.levelSlider?.hide();
+            titleUi.startButton?.hide();
+            sharingText.show();
+            setPreviewSprite(preview, dropped!.surface);
+            break;
           case "shared":
             setPreviewSprite(preview, sharedSurface!);
             break;
@@ -133,6 +155,7 @@ export function customImageTitle(
         preview.show();
         customTextParent.hide();
         shareButton.hide();
+        sharingText.hide();
 
         titleUi.levelTextBack.show();
         titleUi.levelSlider?.show();
@@ -147,6 +170,7 @@ export function customImageTitle(
       DragDrop.unhook();
       shareImageUnhook?.();
     },
+    getCustomState,
     get customSurface() {
       return sharedSurface;
     }
@@ -171,6 +195,8 @@ export function customImageTitle(
         dropped = { imageDataUrl, surface };
         preview.show();
         setPreviewSprite(preview, dropped.surface);
+
+        refreshLevel();
       });
 
     // ShareBigText.send("IMAGE", imageDataUrl);
@@ -186,13 +212,14 @@ export function customImageTitle(
         titleUi.levelTextBack.show();
         titleUi.levelSlider?.show();
         titleUi.startButton?.show();
+        sharingText.hide();
 
         const surface = imageDataUtil.toSurface(imageData);
         sharedSurface = surface;
         preview.show();
         setPreviewSprite(preview, sharedSurface!);
 
-        setChangeLevel();
+        refreshLevel();
 
         if (dropped != null) {
           dropped.surface.destroy();

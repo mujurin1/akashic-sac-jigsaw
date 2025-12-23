@@ -1,9 +1,10 @@
 import { Label } from "@akashic-extension/akashic-label";
 import { createFont, SacClient } from "akashic-sac";
 import { Slider } from "../../common/Slider";
+import { Waku } from "../../common/Waku";
 import { createButton } from "../../common/createButton";
 import { timeFlowController } from "../../common/timeFlowController";
-import { ChangeLevel, ChangePuzzle, GameStart } from "../../event/TitleEvent";
+import { ChangeLevel, ChangeOrigin, ChangePuzzle, GameStart } from "../../event/TitleEvent";
 import { sendJoin } from "../../server_client";
 import { PlayerManager } from "../../util/PlayerManager";
 import { readAssets } from "../../util/readAssets";
@@ -49,10 +50,59 @@ function createUi(state: TitleState) {
   });
   const preview = new g.Sprite({
     scene, parent: previewPanel,
-    // width: previewPanel.width, height: previewPanel.height,
     src: previewsInfo[state.puzzleIndex].imageAsset,
   });
   setPreviewSprite(preview, previewsInfo[state.puzzleIndex].imageAsset);
+
+  new g.Label({
+    scene, parent: scene,
+    font: createFont({ size: 20, fontColor: "black" }),
+    text: "赤い枠線をドラッグで範囲を指定します",
+    x: 50, y: 5,
+  });
+
+  const waku = new Waku({
+    scene, parent: preview,
+    cssColor: "red",
+    width: 100, height: 100,
+    borderSize: 8,
+    touchable: g.game.env.isHost,
+  });
+
+  waku.onPointMove.add(e => {
+    waku.x += e.prevDelta.x;
+    waku.y += e.prevDelta.y;
+    if (waku.x < 0) waku.x = 0;
+    else if (waku.x + waku.width > preview.width) waku.x = preview.width - waku.width;
+    if (waku.y < 0) waku.y = 0;
+    else if (waku.y + waku.height > preview.height) waku.y = preview.height - waku.height;
+
+    state.origin.x = waku.x;
+    state.origin.y = waku.y;
+
+    waku.modified();
+  });
+  waku.onPointUp.add(() => {
+    client.sendEvent(new ChangeOrigin({ x: state.origin.x, y: state.origin.y }));
+  });
+
+  function updateWaku() {
+    if (
+      state.puzzleIndex === -1 &&
+      customResult.getCustomState() !== "shared"
+    ) {
+      waku.hide();
+      return;
+    } else if (!waku.visible()) {
+      waku.show();
+    }
+
+    waku.width = state.pieceSize.width * state.pieceWH.width;
+    waku.height = state.pieceSize.height * state.pieceWH.height;
+    waku.x = state.origin.x;
+    waku.y = state.origin.y;
+    waku.modified();
+  }
   //#endregion 画像プレビュー
 
   //#region タイトル・参加数・参加ボタン
@@ -95,7 +145,7 @@ function createUi(state: TitleState) {
 
   joinBtn.onPointDown.add(sendJoin);
   const removePmKey = playerManager.onJoined.on(({ id, realName }) => {
-    setChangeLevel(state.level);
+    updateLevelText();
 
     if (id === g.game.selfId) {
       if (realName) {
@@ -238,7 +288,7 @@ function createUi(state: TitleState) {
     }),
     ChangePuzzle.receive(client, data => {
       state.puzzleIndex = data.index;
-      setChangeLevel(state.level);
+      setChangeLevel();
 
       if (state.puzzleIndex === -1) {
         titleText.text = "カスタム画像";
@@ -250,6 +300,11 @@ function createUi(state: TitleState) {
         setPreviewSprite(preview, info.imageAsset);
       }
     }),
+    ChangeOrigin.receive(client, data => {
+      if (g.game.env.isHost) return;
+      state.origin = data.origin;
+      updateWaku();
+    })
   ];
 
   if (!g.game.env.isHost) {
@@ -259,31 +314,39 @@ function createUi(state: TitleState) {
   }
 
 
-  function setChangeLevel(level: number = state.level): void {
-    state.level = level;
-    levelNumText.text = `レベル ${Math.round(state.level)}`;
-    levelNumText.invalidate();
+
+  function setChangeLevel(level?: number): void {
+    if (level != null) state.level = level;
 
     const surface =
       state.puzzleIndex === -1
         ? customResult.customSurface
         : previewsInfo[state.puzzleIndex].imageAsset;
 
-    if (!surface) return;
+    if (surface) {
+      const pixel = (100 - state.level) + 40;
 
-    const pixel = (100 - state.level) + 40;
+      state.pieceSize = { width: pixel, height: pixel };
+      state.pieceWH = {
+        width: Math.floor(surface.width / pixel),
+        height: Math.floor(surface.height / pixel),
+      };
+      state.origin = {
+        x: Math.floor((surface.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
+        y: Math.floor((surface.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
+      };
+    }
 
-    state.pieceSize = { width: pixel, height: pixel };
-    state.pieceWH = {
-      width: Math.floor(surface.width / pixel),
-      height: Math.floor(surface.height / pixel),
-    };
-    state.origin = {
-      x: Math.floor((surface.width - (state.pieceSize.width * state.pieceWH.width)) / 2),
-      y: Math.floor((surface.height - (state.pieceSize.height * state.pieceWH.height)) / 2),
-    };
+    updateLevelText();
+    updateWaku();
+  }
 
+  function updateLevelText(): void {
     const pieceCount = state.pieceWH.height * state.pieceWH.width;
+
+    levelNumText.text = `レベル ${Math.round(state.level)}`;
+    levelNumText.invalidate();
+
     pieceNumText.text = `${state.pieceWH.height}x${state.pieceWH.width}  ${pieceCount}枚`;
     pieceNumText.invalidate();
 
@@ -291,7 +354,7 @@ function createUi(state: TitleState) {
     if (floorTime >= 60 * 5) {
       aboutTimeText.text = `予想タイム：ヤバイ`;
     } else if (upperTime >= 60 * 5) {
-      aboutTimeText.text = `予想タイム：${floorTime}～ﾔﾊﾞｲ`;
+      aboutTimeText.text = `予想タイム：${floorTime}分～ﾔﾊﾞｲ`;
     } else {
       aboutTimeText.text = `予想タイム：${floorTime}～${Math.floor(upperTime)}分`;
     }

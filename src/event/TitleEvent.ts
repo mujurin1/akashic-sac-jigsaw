@@ -14,6 +14,12 @@ export class ChangeLevel extends SacEvent() {
     readonly level: number,
   ) { super(); }
 }
+export class ChangeOrigin extends SacEvent() {
+  constructor(
+    /** 切り抜く原点（左上） */
+    readonly origin: g.CommonOffset,
+  ) { super(); }
+}
 export class GameStart extends SacEvent() {
   constructor(
     readonly seed: number,
@@ -46,6 +52,10 @@ export function serverTitle(server: SacServer): void {
       server.broadcast(new ChangePuzzle(puzzleIndex));
     }),
     ChangeLevel.receive(server, data => {
+      if (data.pId !== g.game.env.hostId) return;
+      server.broadcast(data);
+    }),
+    ChangeOrigin.receive(server, data => {
       if (data.pId !== g.game.env.hostId) return;
       server.broadcast(data);
     }),
