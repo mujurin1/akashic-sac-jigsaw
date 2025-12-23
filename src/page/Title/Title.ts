@@ -43,7 +43,7 @@ function createUi(state: TitleState) {
   const previewsInfo = readAssets(scene);
   const fontN = createFont({ size: 50, fontWeight: "bold" });
 
-  //#region 画像プレビュー
+  //#region 画像プレビュー枠
   const previewPanel = new g.FilledRect({
     scene, parent: scene, cssColor: "black",
     x: 25, y: 35, width: 770, height: 460,
@@ -57,7 +57,7 @@ function createUi(state: TitleState) {
   new g.Label({
     scene, parent: scene,
     font: createFont({ size: 20, fontColor: "black" }),
-    text: "赤い枠線をドラッグで範囲を指定します",
+    text: "赤い枠はジグソーパズルになる範囲です。生主はドラッグで調整できます",
     x: 50, y: 5,
   });
 
@@ -70,8 +70,8 @@ function createUi(state: TitleState) {
   });
 
   waku.onPointMove.add(e => {
-    waku.x += e.prevDelta.x;
-    waku.y += e.prevDelta.y;
+    waku.x += e.prevDelta.x / preview.scaleX;
+    waku.y += e.prevDelta.y / preview.scaleX;
     if (waku.x < 0) waku.x = 0;
     else if (waku.x + waku.width > preview.width) waku.x = preview.width - waku.width;
     if (waku.y < 0) waku.y = 0;
@@ -103,7 +103,7 @@ function createUi(state: TitleState) {
     waku.y = state.origin.y;
     waku.modified();
   }
-  //#endregion 画像プレビュー
+  //#endregion 画像プレビュー枠
 
   //#region タイトル・参加数・参加ボタン
   const titleBack = new g.Sprite({

@@ -62,21 +62,30 @@ export function customImageTitle(
   });
   new Label({
     scene, parent: customTextParent,
-    x: 0, y: 380,
+    x: 0, y: 330,
     width: previewPanel.width,
     font: customFont,
     fontSize: 30,
+    textAlign: "center",
+    text: "400x400px ~ 2000x2000px 程度の画像がおすすめです"
+  });
+  new Label({
+    scene, parent: customTextParent,
+    x: 0, y: 400,
+    width: previewPanel.width,
+    font: customFont,
+    fontSize: 25,
     textAlign: "center",
     text: "※PC 専用です※"
   });
   new Label({
     scene, parent: customTextParent,
-    x: 0, y: 420,
+    x: 0, y: 435,
     width: previewPanel.width,
     font: customFont,
-    fontSize: 25,
+    fontSize: 20,
     textAlign: "center",
-    text: "400x400px ~ 2000x2000px 程度の画像がおすすめです"
+    text: "※小さい画像を使う場合、ピース数 2x2 以上にしてください※"
   });
   //#endregion プレビュー部分のヘルプテキスト
 
