@@ -129,7 +129,9 @@ function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
   });
 
   const icons = {
-    deviceIcon: createIcon("ico_device", [0, 2]),
+    icoVisible: createIcon("ico_visible", [0, 2]),
+    // MEMO: 操作デバイス切り替えボタン
+    // deviceIcon: createIcon("ico_device", [0, 2]),
     infoIcon: createIcon("ico_info", [1, 2]),
     rankingIcon: createIcon("ico_ranking", [2, 2]),
     optionIcon: createIcon("ico_setting", [0, 1]),
@@ -137,7 +139,21 @@ function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
     colorIcon: createIcon(undefined, [2, 1]),
   } as const;
 
-  icons.deviceIcon.onPointDown.add(() => clientPlaying.inputSystem.toggleInputSystem());
+  const reViewIcon = createReViewIcon();
+  reViewIcon.onPointDown.add(() => {
+    for (const p of scene.children) {
+      p.show();
+    }
+    reViewIcon.hide();
+  });
+
+  icons.icoVisible.onPointDown.add(() => {
+    for (const p of scene.children) {
+      p.hide();
+    }
+    reViewIcon.show();
+  });
+  // icons.deviceIcon.onPointDown.add(() => clientPlaying.inputSystem.toggleInputSystem());
   icons.optionIcon.onPointDown.add(() => clientPlaying.uiGroups.option.toggle());
   icons.rankingIcon.onPointDown.add(() => clientPlaying.uiGroups.ranking.toggle());
   icons.infoIcon.onPointDown.add(() => clientPlaying.uiGroups.info.toggle());
@@ -234,4 +250,22 @@ function customWheelEvent(clientPlaying: ClientPlaying) {
 
     clientPlaying.uiGroups.playArea.scaleBy(scale, { pos });
   }
+}
+
+function createReViewIcon(): g.Sprite {
+  const scene = g.game.env.scene;
+
+  const src = scene.asset.getImageById("ico_visible");
+
+  const visibleIcon = new g.Sprite({
+    scene, parent: scene,
+    src,
+    x: g.game.width - src.width,
+    y: g.game.height - src.height,
+    opacity: 0.3,
+    touchable: true,
+    hidden: true,
+  });
+
+  return visibleIcon;
 }

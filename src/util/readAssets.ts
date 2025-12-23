@@ -13,7 +13,6 @@ export const JigsawAssets = [
   { name: "zunda", title: "ずんだ" },
   { name: "roulette", title: "ルーレット" },
   { name: "okonomi", title: "お好み焼き" },
-  { name: "roulette", title: "ルーレット" },
   { name: "tibi", title: "ちび" },
 
   { name: "galaxy", title: "銀河" },

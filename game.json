@@ -167,6 +167,129 @@
 			"width": 380,
 			"height": 80
 		},
+		"assets/zunda.jpg": {
+			"type": "image",
+			"path": "assets/zunda.jpg",
+			"width": 1288,
+			"height": 812
+		},
+		"assets/roulette.jpg": {
+			"type": "image",
+			"path": "assets/roulette.jpg",
+			"width": 1248,
+			"height": 936
+		},
+		"assets/okonomi.jpg": {
+			"type": "image",
+			"path": "assets/okonomi.jpg",
+			"width": 1224,
+			"height": 922
+		},
+		"assets/tibi.jpg": {
+			"type": "image",
+			"path": "assets/tibi.jpg",
+			"width": 1248,
+			"height": 936
+		},
+		"assets/galaxy.jpg": {
+			"type": "image",
+			"path": "assets/galaxy.jpg",
+			"width": 1920,
+			"height": 1080
+		},
+		"assets/moon.jpg": {
+			"type": "image",
+			"path": "assets/moon.jpg",
+			"width": 1119,
+			"height": 1077
+		},
+		"assets/tree.jpg": {
+			"type": "image",
+			"path": "assets/tree.jpg",
+			"width": 1094,
+			"height": 1641
+		},
+		"assets/plum.jpg": {
+			"type": "image",
+			"path": "assets/plum.jpg",
+			"width": 1734,
+			"height": 1153
+		},
+		"assets/horse.jpg": {
+			"type": "image",
+			"path": "assets/horse.jpg",
+			"width": 1129,
+			"height": 836
+		},
+		"assets/city.jpg": {
+			"type": "image",
+			"path": "assets/city.jpg",
+			"width": 1256,
+			"height": 1640
+		},
+		"assets/christmas-dog.jpg": {
+			"type": "image",
+			"path": "assets/christmas-dog.jpg",
+			"width": 1342,
+			"height": 2021
+		},
+		"assets/cookie-doll.jpg": {
+			"type": "image",
+			"path": "assets/cookie-doll.jpg",
+			"width": 1200,
+			"height": 800
+		},
+		"assets/duck.jpg": {
+			"type": "image",
+			"path": "assets/duck.jpg",
+			"width": 1557,
+			"height": 999
+		},
+		"Events": {
+			"type": "script",
+			"path": "script/event/Events.js",
+			"global": true
+		},
+		"func": {
+			"type": "script",
+			"path": "script/common/func.js",
+			"global": true
+		},
+		"PlayingEvent": {
+			"type": "script",
+			"path": "script/event/PlayingEvent.js",
+			"global": true
+		},
+		"FitAndConnectCalc": {
+			"type": "script",
+			"path": "script/event/server/FitAndConnectCalc.js",
+			"global": true
+		},
+		"ServerState": {
+			"type": "script",
+			"path": "script/event/server/ServerState.js",
+			"global": true
+		},
+		"GameState": {
+			"type": "script",
+			"path": "script/share/GameState.js",
+			"global": true
+		},
+		"PlayerManager": {
+			"type": "script",
+			"path": "script/util/PlayerManager.js",
+			"global": true
+		},
+		"readAssets": {
+			"type": "script",
+			"path": "script/util/readAssets.js",
+			"global": true
+		},
+		"TitleEvent": {
+			"type": "script",
+			"path": "script/event/TitleEvent.js",
+			"global": true
+		},
 		"createButton": {
 			"type": "script",
 			"path": "script/common/createButton.js",
@@ -175,11 +298,6 @@
 		"CustomSprite": {
 			"type": "script",
 			"path": "script/common/CustomSprite.js",
-			"global": true
-		},
-		"func": {
-			"type": "script",
-			"path": "script/common/func.js",
 			"global": true
 		},
 		"Pad": {
@@ -212,29 +330,9 @@
 			"path": "script/common/timeFlowController.js",
 			"global": true
 		},
-		"Events": {
+		"Waku": {
 			"type": "script",
-			"path": "script/event/Events.js",
-			"global": true
-		},
-		"PlayingEvent": {
-			"type": "script",
-			"path": "script/event/PlayingEvent.js",
-			"global": true
-		},
-		"FitAndConnectCalc": {
-			"type": "script",
-			"path": "script/event/server/FitAndConnectCalc.js",
-			"global": true
-		},
-		"ServerState": {
-			"type": "script",
-			"path": "script/event/server/ServerState.js",
-			"global": true
-		},
-		"TitleEvent": {
-			"type": "script",
-			"path": "script/event/TitleEvent.js",
+			"path": "script/common/Waku.js",
 			"global": true
 		},
 		"main": {
@@ -327,11 +425,6 @@
 			"path": "script/server_client.js",
 			"global": true
 		},
-		"GameState": {
-			"type": "script",
-			"path": "script/share/GameState.js",
-			"global": true
-		},
 		"createPieces": {
 			"type": "script",
 			"path": "script/util/createPieces.js",
@@ -346,99 +439,6 @@
 			"type": "script",
 			"path": "script/util/kamihubukiEffect.js",
 			"global": true
-		},
-		"PlayerManager": {
-			"type": "script",
-			"path": "script/util/PlayerManager.js",
-			"global": true
-		},
-		"readAssets": {
-			"type": "script",
-			"path": "script/util/readAssets.js",
-			"global": true
-		},
-		"assets/zunda.jpg": {
-			"type": "image",
-			"path": "assets/zunda.jpg",
-			"width": 1288,
-			"height": 812
-		},
-		"assets/roulette.jpg": {
-			"type": "image",
-			"path": "assets/roulette.jpg",
-			"width": 1248,
-			"height": 936
-		},
-		"assets/okonomi.jpg": {
-			"type": "image",
-			"path": "assets/okonomi.jpg",
-			"width": 1224,
-			"height": 922
-		},
-		"assets/tibi.jpg": {
-			"type": "image",
-			"path": "assets/tibi.jpg",
-			"width": 1248,
-			"height": 936
-		},
-		"Waku": {
-			"type": "script",
-			"path": "script/common/Waku.js",
-			"global": true
-		},
-		"assets/galaxy.jpg": {
-			"type": "image",
-			"path": "assets/galaxy.jpg",
-			"width": 1920,
-			"height": 1080
-		},
-		"assets/moon.jpg": {
-			"type": "image",
-			"path": "assets/moon.jpg",
-			"width": 1119,
-			"height": 1077
-		},
-		"assets/tree.jpg": {
-			"type": "image",
-			"path": "assets/tree.jpg",
-			"width": 1094,
-			"height": 1641
-		},
-		"assets/plum.jpg": {
-			"type": "image",
-			"path": "assets/plum.jpg",
-			"width": 1734,
-			"height": 1153
-		},
-		"assets/horse.jpg": {
-			"type": "image",
-			"path": "assets/horse.jpg",
-			"width": 1129,
-			"height": 836
-		},
-		"assets/city.jpg": {
-			"type": "image",
-			"path": "assets/city.jpg",
-			"width": 1256,
-			"height": 1640
-		},
-		"assets/christmas-dog.jpg": {
-			"type": "image",
-			"path": "assets/christmas-dog.jpg",
-			"width": 1342,
-			"height": 2021
-		},
-		"assets/cookie-doll.jpg": {
-			"type": "image",
-			"path": "assets/cookie-doll.jpg",
-			"width": 1200,
-			"height": 800
-		},
-		"assets/duck.jpg": {
-			"type": "image",
-			"path": "assets/duck.jpg",
-			"width": 1557,
-			"height": 999
 		}
 	}
 }

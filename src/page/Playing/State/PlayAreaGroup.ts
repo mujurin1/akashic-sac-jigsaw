@@ -19,7 +19,7 @@ export interface PlayAreaGroup {
   readonly camerable: CamerableE;
 
   /** ピースの移動可能な領域 */
-  readonly pieceLimitArea: g.CommonArea;
+  readonly pieceLimitArea: g.E;
 
   /** ピースをハメるボード */
   readonly board: g.E;
@@ -85,9 +85,8 @@ export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup
   } = clientPlaying.playState;
 
   const camerable = new CamerableE({ scene, parent, anchorX: 0, anchorY: 0 });
-  const pieceLimitArea = new g.FilledRect({
+  const pieceLimitArea = new g.E({
     scene, parent: camerable,
-    cssColor: "#883f5f",
     width: gameState.pieceAreaLimit.width,
     height: gameState.pieceAreaLimit.height,
   });
