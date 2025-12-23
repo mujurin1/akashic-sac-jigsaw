@@ -5,7 +5,6 @@ import { createGameState } from "../../../share/GameState";
 import { PlayerManager } from "../../../util/PlayerManager";
 import { inputSystemControl, InputSystemControl } from "../InputSystem/InputSystem";
 import { Piece } from "../Piece";
-import { BgGroup, createBgGroup } from "./BgGroup";
 import { createInfoGroup, InfoGroup } from "./InfoGroup";
 import { createOptionGroup, OptionGroup } from "./OptionGroup";
 import { createPlayAreaGroup, PlayAreaGroup } from "./PlayAreaGroup";
@@ -21,8 +20,6 @@ export interface ClientPlaying {
   readonly display: g.E;
 
   readonly uiGroups: {
-    /** 背景 */
-    readonly bg: BgGroup;
     /** カメラ・ピース・ボードなど */
     readonly playArea: PlayAreaGroup;
     /** 右上の Info パネル */
@@ -71,7 +68,6 @@ export async function createClientPlaying(
     get playState() { return playState; },
     display,
     uiGroups: {
-      get bg() { return bgGroup; },
       get playArea() { return playAreaGroup; },
 
       // プレイヤーに情報を表示する/操作する要素
@@ -95,7 +91,6 @@ export async function createClientPlaying(
     surface
   );
 
-  const bgGroup = createBgGroup(clientPlaying);
   const playAreaGroup = createPlayAreaGroup(clientPlaying);
   const infoGroup = createInfoGroup(clientPlaying);
 

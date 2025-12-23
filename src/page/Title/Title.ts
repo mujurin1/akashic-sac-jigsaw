@@ -54,12 +54,20 @@ function createUi(state: TitleState) {
   });
   setPreviewSprite(preview, previewsInfo[state.puzzleIndex].imageAsset);
 
-  new g.Label({
+  const helpText = new g.Label({
     scene, parent: scene,
     font: createFont({ size: 20, fontColor: "black" }),
     text: "赤い枠はジグソーパズルになる範囲です。生主はドラッグで調整できます",
     x: 50, y: 5,
   });
+  const helpBack = new g.FilledRect({
+    scene,
+    cssColor: "white",
+    x: helpText.x - 10, y: helpText.y - 5,
+    width: helpText.width + 20,
+    height: helpText.height + 10,
+  });
+  scene.insertBefore(helpBack, helpText);
 
   const waku = new Waku({
     scene, parent: preview,

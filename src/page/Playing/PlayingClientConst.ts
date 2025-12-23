@@ -12,7 +12,7 @@ export const BACKGROUND_COLOR = (() => {
     /** 背景色のリスト */
     colors,
     /** 背景色から次の色へのマップ */
-    nextColorMap: next as Readonly<Record<string, string>>,
+    nextColorMap: next as Readonly<Record<string, typeof colors[number]>>,
     /** 背景色から次の色へのマップ (アイコン用) */
     nextColorMapIcon: { ...next, "#4A8E3D": "rgba(255, 255, 255, 0.5)" } as Readonly<Record<string, string>>,
   } as const;

@@ -1,5 +1,7 @@
+import { Label } from "@akashic-extension/akashic-label";
 import { CamerableE, createFont } from "akashic-sac";
 import { toggleVisibleTo } from "../../../common/func";
+import { BACKGROUND_COLOR } from "../PlayingClientConst";
 import { ClientPlaying } from "./ClientPlaying";
 
 /**
@@ -19,7 +21,10 @@ export interface PlayAreaGroup {
   readonly camerable: CamerableE;
 
   /** ピースの移動可能な領域 */
-  readonly pieceLimitArea: g.E;
+  readonly playarea: g.FilledRect;
+
+  /** ホントの背景 */
+  readonly background: g.FilledRect;
 
   /** ピースをハメるボード */
   readonly board: g.E;
@@ -71,6 +76,11 @@ export interface PlayAreaGroup {
   moveTo(x: number, y: number, option?: MoveToOption): void;
 
   /**
+   * @returns 次の背景色
+   */
+  toggleBackColor(): string;
+
+  /**
    * カメラを初期位置にリセットする
    */
   reset(): void;
@@ -84,9 +94,29 @@ export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup
     piecesResult: { preview, frame: boardPieceFrame },
   } = clientPlaying.playState;
 
+  //#region MEMO: 背景 (昔の BgGroup 相当)
+  const background = new g.FilledRect({
+    scene, parent,
+    cssColor: "rgba(255, 255, 255, 0.8)",
+    width: g.game.width, height: g.game.height,
+  });
+  new g.Label({
+    scene, parent: background,
+    font: createFont({ size: 30 }),
+    text: "パズルの領域から遠く離れると説明を読めます",
+  });
+  //#endregion
+
   const camerable = new CamerableE({ scene, parent, anchorX: 0, anchorY: 0 });
-  const pieceLimitArea = new g.E({
+  // const pieceLimitArea = new g.E({
+  //   scene, parent: camerable,
+  //   width: gameState.pieceAreaLimit.width,
+  //   height: gameState.pieceAreaLimit.height,
+  // });
+
+  const playarea = new g.FilledRect({
     scene, parent: camerable,
+    cssColor: BACKGROUND_COLOR.colors[0],
     width: gameState.pieceAreaLimit.width,
     height: gameState.pieceAreaLimit.height,
   });
@@ -111,12 +141,13 @@ export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup
   const pieceParent = new g.E({ scene, parent: camerable });
 
 
-  const displayResult = createDisplay(clientPlaying);
+  const displayResult = createDisplay(clientPlaying, background);
 
 
   return {
     camerable,
-    pieceLimitArea,
+    playarea,
+    background,
 
     board,
     boardPreview,
@@ -129,6 +160,8 @@ export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup
 
     scaleBy, scaleTo,
     moveBy, moveTo,
+
+    toggleBackColor,
 
     reset,
   };
@@ -190,6 +223,20 @@ export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup
     moveBy((g.game.width * 0.257 / 2), 0);
   }
 
+  function toggleBackColor(): string {
+    const color = BACKGROUND_COLOR.nextColorMap[playarea.cssColor];
+    playarea.cssColor = color;
+    playarea.modified();
+
+    if (color === "transparent") {
+      background.hide();
+    } else if (!background.visible()) {
+      background.show();
+    }
+
+    return BACKGROUND_COLOR.nextColorMapIcon[color];
+  }
+
 
   function cameraMoved() {
     if (cameraOverd()) {
@@ -238,28 +285,39 @@ interface MoveToOption {
 
 
 
-function createDisplay(clientPlaying: ClientPlaying): {
+function createDisplay(clientPlaying: ClientPlaying, background: g.FilledRect): {
   switchJigsawViewOut(visible: boolean): void;
 } {
-  const parent = new g.E({ scene: g.game.env.scene, parent: clientPlaying.display });
+  const scene = g.game.env.scene;
+  const parent = new g.E({ scene, parent: background, hidden: true });
+
+  const updates = new Label({
+    scene, parent,
+    font: createFont({ size: 30 }),
+    x: 10,
+    text: `
+
+＝＝＝＝　機能など　＝＝＝＝
+・マウスホイールで拡大縮小 (Ctrl を押しながらで高速)
+`,
+    width: 940,
+  });
 
   const helpText = new g.Label({
-    scene: g.game.env.scene,
-    parent,
+    scene, parent,
     x: 0, y: 650,
-    width: 1130,
+    width: 900,
     widthAutoAdjust: false,
     textAlign: "right",
     text: "歯車で画面位置をリセットできます↗",
-    font: createFont({ size: 50 }),
-    hidden: true,
+    font: createFont({ size: 40 }),
   });
 
   return {
     switchJigsawViewOut(outside: boolean) {
-      if (outside === helpText.visible()) return;
-      if (outside) helpText.show();
-      else helpText.hide();
+      if (outside === parent.visible()) return;
+      if (outside) parent.show();
+      else parent.hide();
     },
   };
 }

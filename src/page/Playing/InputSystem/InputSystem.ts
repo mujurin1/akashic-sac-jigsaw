@@ -81,7 +81,7 @@ export function inputSystemControl(clientPlaying: ClientPlaying): InputSystemCon
   // TODO: これの関数名ビミョすぎ
   function createNewUiState(): NewUiState {
     return {
-      nextBgColor: BACKGROUND_COLOR.nextColorMapIcon[clientPlaying.uiGroups.bg.color.cssColor],
+      nextBgColor: BACKGROUND_COLOR.nextColorMapIcon[clientPlaying.uiGroups.playArea.playarea.cssColor],
     };
   }
 }

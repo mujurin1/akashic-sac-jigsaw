@@ -38,7 +38,7 @@ export function MobileInputSystem(
   return result;
 
   function moveCamera(e: g.PointMoveEvent) {
-    if (e.target !== clientPlaying.uiGroups.bg.color) return;
+    if (e.target != null) return;
 
     const playArea = clientPlaying.uiGroups.playArea;
     playArea.moveBy(-e.prevDelta.x, -e.prevDelta.y);
@@ -162,7 +162,7 @@ function createMobileUi(
     .addIcon("ico_ranking", () => clientPlaying.uiGroups.ranking.toggle())
     .addIcon("ico_device", () => clientPlaying.inputSystem.toggleInputSystem())
     .addIcon_Rect("color", "blue", e => {
-      pieMenu.icons.color.cssColor = clientPlaying.uiGroups.bg.toggleColor();
+      pieMenu.icons.color.cssColor = clientPlaying.uiGroups.playArea.toggleBackColor();
       pieMenu.icons.color.modified();
     })
     .build({

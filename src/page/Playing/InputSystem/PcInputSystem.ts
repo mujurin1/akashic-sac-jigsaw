@@ -53,7 +53,7 @@ export function PcInputSystem(
   function moveCamera({ target, prevDelta }: g.PointMoveEvent) {
     if (
       clientPlaying.playState.holdState != null ||
-      target !== clientPlaying.uiGroups.bg.color
+      target != null
     ) return;
 
     const playArea = clientPlaying.uiGroups.playArea;
@@ -61,7 +61,7 @@ export function PcInputSystem(
   }
 
   function pieceTouch(e: g.PointDownEvent) {
-    if (e.target !== clientPlaying.uiGroups.bg.color) return;
+    if (e.target != null) return;
     clientPlaying.playState.hold(e.point.x, e.point.y);
   }
 
@@ -162,7 +162,7 @@ function createIcons(clientPlaying: ClientPlaying, inputUiParent: g.E) {
   icons.infoIcon.onPointDown.add(() => clientPlaying.uiGroups.info.toggle());
   icons.previewIcon.onPointDown.add(() => clientPlaying.uiGroups.preview.toggle());
   icons.colorIcon.onPointDown.add(() => {
-    icons.colorIcon.cssColor = clientPlaying.uiGroups.bg.toggleColor();
+    icons.colorIcon.cssColor = clientPlaying.uiGroups.playArea.toggleBackColor();
     icons.colorIcon.modified();
   });
   icons.zoomIn.onPointDown.add(() => {
