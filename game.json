@@ -167,65 +167,11 @@
 			"width": 380,
 			"height": 80
 		},
-		"assets/zunda.jpg": {
+		"assets/cave.png": {
 			"type": "image",
-			"path": "assets/zunda.jpg",
-			"width": 1288,
-			"height": 812
-		},
-		"assets/roulette.jpg": {
-			"type": "image",
-			"path": "assets/roulette.jpg",
-			"width": 1248,
-			"height": 936
-		},
-		"assets/okonomi.jpg": {
-			"type": "image",
-			"path": "assets/okonomi.jpg",
-			"width": 1224,
-			"height": 922
-		},
-		"assets/tibi.jpg": {
-			"type": "image",
-			"path": "assets/tibi.jpg",
-			"width": 1248,
-			"height": 936
-		},
-		"assets/galaxy.jpg": {
-			"type": "image",
-			"path": "assets/galaxy.jpg",
-			"width": 1920,
-			"height": 1080
-		},
-		"assets/moon.jpg": {
-			"type": "image",
-			"path": "assets/moon.jpg",
-			"width": 1119,
-			"height": 1077
-		},
-		"assets/tree.jpg": {
-			"type": "image",
-			"path": "assets/tree.jpg",
-			"width": 1094,
-			"height": 1641
-		},
-		"assets/plum.jpg": {
-			"type": "image",
-			"path": "assets/plum.jpg",
-			"width": 1734,
-			"height": 1153
-		},
-		"assets/horse.jpg": {
-			"type": "image",
-			"path": "assets/horse.jpg",
-			"width": 1129,
-			"height": 836
-		},
-		"assets/city.jpg": {
-			"type": "image",
-			"path": "assets/city.jpg",
-			"width": 1256,
-			"height": 1640
+			"path": "assets/cave.png",
+			"width": 985,
+			"height": 1440
 		},
 		"assets/christmas-dog.jpg": {
 			"type": "image",
@@ -233,11 +179,23 @@
 			"width": 1342,
 			"height": 2021
 		},
+		"assets/city.jpg": {
+			"type": "image",
+			"path": "assets/city.jpg",
+			"width": 1256,
+			"height": 1640
+		},
 		"assets/cookie-doll.jpg": {
 			"type": "image",
 			"path": "assets/cookie-doll.jpg",
 			"width": 1200,
 			"height": 800
+		},
+		"assets/daiseidou.png": {
+			"type": "image",
+			"path": "assets/daiseidou.png",
+			"width": 1500,
+			"height": 975
 		},
 		"assets/duck.jpg": {
 			"type": "image",
@@ -245,50 +203,101 @@
 			"width": 1557,
 			"height": 999
 		},
-		"Events": {
-			"type": "script",
-			"path": "script/event/Events.js",
-			"global": true
+		"assets/e.jpg": {
+			"type": "image",
+			"path": "assets/e.jpg",
+			"width": 973,
+			"height": 1536
 		},
-		"func": {
-			"type": "script",
-			"path": "script/common/func.js",
-			"global": true
+		"assets/fog.jpg": {
+			"type": "image",
+			"path": "assets/fog.jpg",
+			"width": 1001,
+			"height": 1501
 		},
-		"PlayingEvent": {
-			"type": "script",
-			"path": "script/event/PlayingEvent.js",
-			"global": true
+		"assets/galaxy.jpg": {
+			"type": "image",
+			"path": "assets/galaxy.jpg",
+			"width": 1920,
+			"height": 1080
 		},
-		"FitAndConnectCalc": {
-			"type": "script",
-			"path": "script/event/server/FitAndConnectCalc.js",
-			"global": true
+		"assets/horse.jpg": {
+			"type": "image",
+			"path": "assets/horse.jpg",
+			"width": 1129,
+			"height": 836
 		},
-		"ServerState": {
-			"type": "script",
-			"path": "script/event/server/ServerState.js",
-			"global": true
+		"assets/inko.jpg": {
+			"type": "image",
+			"path": "assets/inko.jpg",
+			"width": 800,
+			"height": 1200
 		},
-		"GameState": {
-			"type": "script",
-			"path": "script/share/GameState.js",
-			"global": true
+		"assets/komadori.png": {
+			"type": "image",
+			"path": "assets/komadori.png",
+			"width": 950,
+			"height": 950
 		},
-		"PlayerManager": {
-			"type": "script",
-			"path": "script/util/PlayerManager.js",
-			"global": true
+		"assets/kotoyomi-nia.png": {
+			"type": "image",
+			"path": "assets/kotoyomi-nia.png",
+			"width": 1024,
+			"height": 1024
 		},
-		"readAssets": {
-			"type": "script",
-			"path": "script/util/readAssets.js",
-			"global": true
+		"assets/landscape-painting.png": {
+			"type": "image",
+			"path": "assets/landscape-painting.png",
+			"width": 1459,
+			"height": 1095
 		},
-		"TitleEvent": {
-			"type": "script",
-			"path": "script/event/TitleEvent.js",
-			"global": true
+		"assets/moon.jpg": {
+			"type": "image",
+			"path": "assets/moon.jpg",
+			"width": 1119,
+			"height": 1077
+		},
+		"assets/okonomi.jpg": {
+			"type": "image",
+			"path": "assets/okonomi.jpg",
+			"width": 1224,
+			"height": 922
+		},
+		"assets/plum.jpg": {
+			"type": "image",
+			"path": "assets/plum.jpg",
+			"width": 1734,
+			"height": 1153
+		},
+		"assets/simaenaga.jpg": {
+			"type": "image",
+			"path": "assets/simaenaga.jpg",
+			"width": 1024,
+			"height": 1024
+		},
+		"assets/steel-bridge.png": {
+			"type": "image",
+			"path": "assets/steel-bridge.png",
+			"width": 1642,
+			"height": 924
+		},
+		"assets/tibi.jpg": {
+			"type": "image",
+			"path": "assets/tibi.jpg",
+			"width": 1248,
+			"height": 936
+		},
+		"assets/tree.png": {
+			"type": "image",
+			"path": "assets/tree.png",
+			"width": 1535,
+			"height": 1706
+		},
+		"assets/world-tree.jpg": {
+			"type": "image",
+			"path": "assets/world-tree.jpg",
+			"width": 1094,
+			"height": 1641
 		},
 		"createButton": {
 			"type": "script",
@@ -298,6 +307,11 @@
 		"CustomSprite": {
 			"type": "script",
 			"path": "script/common/CustomSprite.js",
+			"global": true
+		},
+		"func": {
+			"type": "script",
+			"path": "script/common/func.js",
 			"global": true
 		},
 		"Pad": {
@@ -333,6 +347,31 @@
 		"Waku": {
 			"type": "script",
 			"path": "script/common/Waku.js",
+			"global": true
+		},
+		"Events": {
+			"type": "script",
+			"path": "script/event/Events.js",
+			"global": true
+		},
+		"PlayingEvent": {
+			"type": "script",
+			"path": "script/event/PlayingEvent.js",
+			"global": true
+		},
+		"FitAndConnectCalc": {
+			"type": "script",
+			"path": "script/event/server/FitAndConnectCalc.js",
+			"global": true
+		},
+		"ServerState": {
+			"type": "script",
+			"path": "script/event/server/ServerState.js",
+			"global": true
+		},
+		"TitleEvent": {
+			"type": "script",
+			"path": "script/event/TitleEvent.js",
 			"global": true
 		},
 		"main": {
@@ -425,6 +464,11 @@
 			"path": "script/server_client.js",
 			"global": true
 		},
+		"GameState": {
+			"type": "script",
+			"path": "script/share/GameState.js",
+			"global": true
+		},
 		"createPieces": {
 			"type": "script",
 			"path": "script/util/createPieces.js",
@@ -438,6 +482,16 @@
 		"kamihubukiEffect": {
 			"type": "script",
 			"path": "script/util/kamihubukiEffect.js",
+			"global": true
+		},
+		"PlayerManager": {
+			"type": "script",
+			"path": "script/util/PlayerManager.js",
+			"global": true
+		},
+		"readAssets": {
+			"type": "script",
+			"path": "script/util/readAssets.js",
 			"global": true
 		}
 	}
