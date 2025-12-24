@@ -49,6 +49,19 @@ export class FitPiece extends SacEvent() {
   ) { super(); }
 }
 
+//#region Options
+export class BoardPreview extends SacEvent() {
+  constructor(
+    readonly visible: boolean,
+  ) { super(); }
+}
+export class BoardPieceFrame extends SacEvent() {
+  constructor(
+    readonly visible: boolean,
+  ) { super(); }
+}
+//#endregion Options
+
 /** ゲームクリア */
 export class GameClear extends SacEvent() {
   constructor(
@@ -143,7 +156,9 @@ export function serverPlaying(server: SacServer, gameStart: GameStart): void {
         !playerManager.has(pId) ||
         holders.has(pId)
       ) return;
-    })
+    }),
+    BoardPreview.receive(server, server.broadcast_bind),
+    BoardPieceFrame.receive(server, server.broadcast_bind),
   ];
 
   // ピースを一定時間で放す

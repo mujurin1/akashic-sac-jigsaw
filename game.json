@@ -421,11 +421,6 @@
 			"path": "script/page/Playing/PlayingClientConst.js",
 			"global": true
 		},
-		"BgGroup": {
-			"type": "script",
-			"path": "script/page/Playing/State/BgGroup.js",
-			"global": true
-		},
 		"ClientPlaying": {
 			"type": "script",
 			"path": "script/page/Playing/State/ClientPlaying.js",
@@ -504,6 +499,16 @@
 		"readAssets": {
 			"type": "script",
 			"path": "script/util/readAssets.js",
+			"global": true
+		},
+		"createButton copy": {
+			"type": "script",
+			"path": "script/common/createButton copy.js",
+			"global": true
+		},
+		"createSwitchButton": {
+			"type": "script",
+			"path": "script/common/createSwitchButton.js",
 			"global": true
 		}
 	}

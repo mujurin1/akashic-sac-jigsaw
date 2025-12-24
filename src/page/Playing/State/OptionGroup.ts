@@ -1,5 +1,7 @@
 import { createFont } from "akashic-sac";
 import { createButton } from "../../../common/createButton";
+import { ButtonSwitchParam, createSwitchButton, SwitchButton } from "../../../common/createSwitchButton";
+import { BoardPieceFrame, BoardPreview } from "../../../event/PlayingEvent";
 import { ClientPlaying } from "./ClientPlaying";
 
 export interface OptionGroup {
@@ -8,13 +10,29 @@ export interface OptionGroup {
    * @param visibleTo `true`: 表示, `false`: 非表示, `undefined`: トグル
    */
   toggle(visibleTo?: boolean): void;
+  dispose(): void;
 }
 
 export function createOptionGroup(clientPlaying: ClientPlaying): OptionGroup {
-  const display = createOptionUi(clientPlaying.display);
+  const scene = g.game.env.scene;
+  const client = clientPlaying.client;
+  const playArea = clientPlaying.uiGroups.playArea;
+
+  const display = new g.FilledRect({
+    scene, parent: clientPlaying.display,
+    hidden: true,
+    cssColor: "brown",
+    width: 900, height: 680,
+    x: 20, y: 20,
+    opacity: 0.9,
+  });
+
+
+  const result = createOptionUi(clientPlaying.display);
 
   const optionGroup = {
     toggle,
+    dispose: result.dispose,
   } satisfies OptionGroup;
 
   return optionGroup;
@@ -25,7 +43,6 @@ export function createOptionGroup(clientPlaying: ClientPlaying): OptionGroup {
     if (visibleTo) display.show();
     else display.hide();
 
-    const playArea = clientPlaying.uiGroups.playArea;
     if (visibleTo) {
       clientPlaying.inputSystem.setInputEnabled(false);
 
@@ -49,18 +66,7 @@ export function createOptionGroup(clientPlaying: ClientPlaying): OptionGroup {
   }
 
 
-  function createOptionUi(parent: g.E): g.E {
-    const scene = g.game.env.scene;
-
-    const display = new g.FilledRect({
-      scene, parent,
-      hidden: true,
-      cssColor: "brown",
-      width: 900, height: 680,
-      x: 20, y: 20,
-      opacity: 0.9,
-    });
-
+  function createOptionUi(parent: g.E): { dispose: () => void; } {
     const closeBtn = createButton({
       scene, parent: display,
       text: "閉じる", fontSize: 50,
@@ -69,18 +75,68 @@ export function createOptionGroup(clientPlaying: ClientPlaying): OptionGroup {
       action: () => toggle()
     });
 
-    {
-      const font = createFont({ size: 80, fontColor: "white" });
 
-      // TODO: オプションのUI
-      new g.Label({
-        scene, parent: display,
-        text: "オプションUI（未実装）",
-        font,
-        x: 30, y: 300,
-      });
-    }
+    createOption({
+      display, top: 0,
+      text: "背景プレビュー", hostOnly: true,
+      isEnabled: playArea.boardPreview.visible(),
+      action: (e, toEnable) => client.sendEvent(new BoardPreview(toEnable)),
+    });
+    createOption({
+      display, top: 1,
+      text: "ピース枠線", hostOnly: true,
+      isEnabled: playArea.boardPieceFrame.visible(),
+      action: (e, toEnable) => client.sendEvent(new BoardPieceFrame(toEnable)),
+    });
 
-    return display;
+    const removeKeys = [
+      BoardPreview.receive(client, ({ visible }) => {
+        playArea.toggleBoardPreview(visible);
+      }),
+      BoardPieceFrame.receive(client, ({ visible }) => {
+        playArea.toggleBoardPieceFrame(visible);
+      }),
+    ];
+
+    return {
+      dispose: () => {
+        client.removeEventSets(removeKeys);
+      },
+    };
   }
+}
+
+const font = createFont({ size: 60, fontColor: "white" });
+const labelX = 60;
+const buttonX = 660;
+
+const startY = 30;
+const yLabelOffset = 5;
+const yGap = 100;
+
+function createOption(params: {
+  display: g.E;
+  top: number;
+  text: string;
+  isEnabled?: boolean;
+  hostOnly?: boolean;
+  action?: ButtonSwitchParam["action"];
+}): SwitchButton {
+  const { display, top, text, isEnabled, hostOnly, action } = params;
+  const scene = display.scene;
+  const y = startY + top * yGap;
+
+  new g.Label({
+    scene, parent: display,
+    x: labelX, y: y + yLabelOffset,
+    font, text,
+  });
+
+  return createSwitchButton({
+    scene, parent: display,
+    x: buttonX, y,
+    textEnable: "有効", textDisable: "無効",
+    isEnabled, action, fontSize: 50,
+    touchable: hostOnly ? g.game.env.isHost : true,
+  });
 }

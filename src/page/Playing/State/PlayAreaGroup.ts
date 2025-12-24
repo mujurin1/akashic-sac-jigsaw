@@ -139,10 +139,11 @@ export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup
   board.append(boardPieceFrame);
 
   const pieceParent = new g.E({ scene, parent: camerable });
-
-
   const displayResult = createDisplay(clientPlaying, background);
 
+  // MEMO: プレビュー・枠線は初期状態は非表示
+  boardPreview.hide();
+  boardPieceFrame.hide();
 
   return {
     camerable,
@@ -294,11 +295,11 @@ function createDisplay(clientPlaying: ClientPlaying, background: g.FilledRect): 
   const updates = new Label({
     scene, parent,
     font: createFont({ size: 30 }),
-    x: 10,
+    x: 10, y: 25,
     text: `
-
 ＝＝＝＝　機能など　＝＝＝＝
-・マウスホイールで拡大縮小 (Ctrl を押しながらで高速)
+・マウスホイールで拡大縮小（Ctrl を押しながらで高速）
+・オプションで背景、枠線の表示切替（生主のみ）
 `,
     width: 940,
   });
