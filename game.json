@@ -316,6 +316,11 @@
 			"path": "script/common/createButton.js",
 			"global": true
 		},
+		"createSwitchButton": {
+			"type": "script",
+			"path": "script/common/createSwitchButton.js",
+			"global": true
+		},
 		"CustomSprite": {
 			"type": "script",
 			"path": "script/common/CustomSprite.js",
@@ -499,16 +504,6 @@
 		"readAssets": {
 			"type": "script",
 			"path": "script/util/readAssets.js",
-			"global": true
-		},
-		"createButton copy": {
-			"type": "script",
-			"path": "script/common/createButton copy.js",
-			"global": true
-		},
-		"createSwitchButton": {
-			"type": "script",
-			"path": "script/common/createSwitchButton.js",
 			"global": true
 		}
 	}

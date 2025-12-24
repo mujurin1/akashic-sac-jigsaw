@@ -48,6 +48,11 @@ export function createCheckAndDoFitAndConnect(
     // ピースがハマるかチェックする
     if (checkFitPiece(piece)) {
       piece.fitted = true;
+      if (piece.children != null) {
+        for (const child of piece.children) {
+          child.fitted = true;
+        }
+      }
       server.broadcast(new FitPiece(piece.index), piece.holderId);
       return true;
     }
