@@ -117,12 +117,11 @@ export class Slider extends g.FilledRect {
   }
 
   private gripMoveTo(x: number) {
-    const relativeX = x - this.x + this.grip.width / 2;
-    if (x <= 0) this.per = 0;
-    // else if (!this.overLimit && x >= this.bar.width) this.per = 1;
-    else this.per = relativeX / this.bar.width;
+    this.per = x / this.bar.width;
 
-    if (this.per > this._overLimitPer) {
+    if (this.per < 0) {
+      this.per = 0;
+    } else if (this.per > this._overLimitPer) {
       this.per = this._overLimitPer;
     }
 
