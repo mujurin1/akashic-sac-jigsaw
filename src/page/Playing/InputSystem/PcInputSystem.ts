@@ -269,20 +269,25 @@ function customWheelEvent(clientPlaying: ClientPlaying) {
   }
 }
 
-function createReViewIcon(): g.Sprite {
+function createReViewIcon(): g.E {
   const scene = g.game.env.scene;
 
   const src = scene.asset.getImageById("ico_visible");
 
-  const visibleIcon = new g.Sprite({
+  const visibleBtn = new g.FilledRect({
     scene, parent: scene,
-    src,
     x: g.game.width - src.width,
     y: g.game.height - src.height,
+    width: src.width, height: src.height,
     opacity: 0.3,
+    cssColor: "white",
     touchable: true,
     hidden: true,
   });
+  const visibleIcon = new g.Sprite({
+    scene, parent: visibleBtn,
+    src,
+  });
 
-  return visibleIcon;
+  return visibleBtn;
 }

@@ -50,7 +50,7 @@ export class Slider extends g.FilledRect {
     const param = {
       per: 0, min: 0,
       backgroundCssColor: "white",
-      barCssColor: "#FFA500a0",
+      barCssColor: "#FFC75F",
       gripCssColor: "#000a",
       quadratic: 1,
       gripWidth: 50,

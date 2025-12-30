@@ -1,5 +1,6 @@
 import { Label } from "@akashic-extension/akashic-label";
 import { createFont } from "akashic-sac";
+import { createButton } from "../../../common/createButton";
 import { toggleVisibleTo } from "../../../common/func";
 import { PlayerManager } from "../../../util/PlayerManager";
 import { ClientPlaying } from "./ClientPlaying";
@@ -26,9 +27,10 @@ export function createRankingGroup(clientPlaying: ClientPlaying): RankingGroup {
   const playerManager = client.env.clientDI.get(PlayerManager);
   const playerEntities = new Map<string, PlayerEntity>();
 
-  const { rankingE, nameArea, lastPiecePlayerName } = createRankingPanel(
+  const { rankingPanel, nameArea, lastPiecePlayerName } = createRankingPanel(
     display,
-    () => playerManager.players.length
+    () => playerManager.players.length,
+    toggle,
   );
 
   const onPlayerUpdatedKey = playerManager.onUpdated.on(update);
@@ -36,18 +38,21 @@ export function createRankingGroup(clientPlaying: ClientPlaying): RankingGroup {
   let updateSkipped = true;
 
   return {
-    toggle: value => {
-      toggleVisibleTo(nameArea, value);
-      if (nameArea.visible() && updateSkipped) {
-        update();
-        updateSkipped = false;
-      }
-    },
+    toggle,
     disable,
   };
 
+
+  function toggle(visibleTo?: boolean): void {
+    toggleVisibleTo(rankingPanel, visibleTo);
+    if (rankingPanel.visible() && updateSkipped) {
+      update();
+      updateSkipped = false;
+    }
+  }
+
   function update(): void {
-    if (!nameArea.visible()) {
+    if (!rankingPanel.visible()) {
       updateSkipped = true;
       return;
     }
@@ -113,7 +118,7 @@ export function createRankingGroup(clientPlaying: ClientPlaying): RankingGroup {
     let entity = playerEntities.get(id);
     if (entity) return entity;
 
-    entity = createPlayerEntity(rankingE);
+    entity = createPlayerEntity(nameArea);
     playerEntities.set(id, entity);
     return entity;
   }
@@ -136,16 +141,17 @@ interface PlayerEntity {
 
 function createRankingPanel(
   parent: g.E,
-  playerCount: () => number
+  playerCount: () => number,
+  toggle: (visibleTo?: boolean) => void,
 ): {
-  rankingE: g.E;
+  rankingPanel: g.Sprite;
+  nameArea: g.E;
   lastPiecePlayerName: Label;
-  nameArea: g.Sprite;
 } {
   const scene = parent.scene;
   const src = scene.asset.getImageById("ranking_view");
 
-  const nameArea = new g.Sprite({
+  const rankingPanel = new g.Sprite({
     scene, parent,
     hidden: true,
     src,
@@ -154,7 +160,7 @@ function createRankingPanel(
   });
 
   const lastPiecePlayerName = new Label({
-    scene, parent: nameArea,
+    scene, parent: rankingPanel,
     x: 160, y: 95,
     width: 660, height: 40,
     font,
@@ -164,22 +170,52 @@ function createRankingPanel(
   const marginW = 100;
 
   const namePane = new g.Pane({
-    scene, parent: nameArea,
+    scene, parent: rankingPanel,
     x: marginW / 2, y: 175,
     // スコアがはみ出しても良いように右側を広くする
-    width: nameArea.width - marginW / 2, height: 480,
+    width: rankingPanel.width - marginW / 2, height: 480,
     touchable: true,
   });
-  const rankingE = new g.E({ scene, parent: namePane });
+  const nameArea = new g.E({ scene, parent: namePane });
 
   namePane.onPointMove.add(e => {
     const maxY = playerCount() * C.PlayerEntityHeight;
-    const newY = rankingE.y + e.prevDelta.y;
-    rankingE.y = Math.min(0, Math.max(namePane.height - maxY, newY));
-    rankingE.modified();
+    const newY = nameArea.y + e.prevDelta.y;
+    nameArea.y = Math.min(0, Math.max(namePane.height - maxY, newY));
+    nameArea.modified();
   });
 
-  return { nameArea, lastPiecePlayerName, rankingE };
+
+  //#region 左上のアイコン
+  const iconSrc = scene.asset.getImageById("ico_ranking");
+  const icon = new g.FilledRect({
+    scene, parent: rankingPanel,
+    x: 40, y: 20,
+    width: iconSrc.width, height: iconSrc.height,
+    cssColor: "rgba(255, 255, 255, 0.5)",
+    touchable: true,
+    scaleX: 0.6,
+    scaleY: 0.6,
+  });
+  new g.Sprite({
+    scene, parent: icon,
+    src: iconSrc,
+  });
+  // #endregion 左上のアイコン
+
+  //#region 閉じるボタン
+  const closeBtn = createButton({
+    scene, parent: rankingPanel,
+    text: "閉じる",
+    x: rankingPanel.width - 160, y: 15,
+    width: 140,
+    font: createFont({ size: 30, fontWeight: "bold", fontColor: "white" }),
+  });
+  closeBtn.onPointDown.add(() => toggle(false));
+  //#endregion 閉じるボタン
+
+
+  return { rankingPanel, nameArea, lastPiecePlayerName };
 }
 
 const font = createFont({ size: 40 });

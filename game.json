@@ -346,16 +346,6 @@
 			"path": "script/common/Slider.js",
 			"global": true
 		},
-		"StateMachine": {
-			"type": "script",
-			"path": "script/common/StateMachine/StateMachine.js",
-			"global": true
-		},
-		"types": {
-			"type": "script",
-			"path": "script/common/StateMachine/types.js",
-			"global": true
-		},
 		"timeFlowController": {
 			"type": "script",
 			"path": "script/common/timeFlowController.js",
@@ -504,6 +494,16 @@
 		"readAssets": {
 			"type": "script",
 			"path": "script/util/readAssets.js",
+			"global": true
+		},
+		"StateMachine": {
+			"type": "script",
+			"path": "script/common/StateMachine/StateMachine.js",
+			"global": true
+		},
+		"types": {
+			"type": "script",
+			"path": "script/common/StateMachine/types.js",
 			"global": true
 		}
 	}

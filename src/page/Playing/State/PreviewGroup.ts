@@ -60,10 +60,10 @@ export function createPreviewGroup(clientPlaying: ClientPlaying): PreviewGroup {
 
   const slider = new Slider({
     scene, parent: display,
-    // x: previewArea.x + 100, y: previewArea.y + previewArea.height + 50,
     x: 100,
     y: pane.y + previewArea.height + 50,
     height: 80, width: PREVIEW.W - 200,
+    backgroundCssColor: "#FFF8",
     quadratic: 2,
     min: 1, max: 10,
   });

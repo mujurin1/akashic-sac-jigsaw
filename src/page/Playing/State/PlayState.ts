@@ -120,6 +120,8 @@ export async function createPlayState(
 
     // スコアの再計算イベントを発火させるため
     playerManager.addScore(finishPlayerId, 0);
+
+    clientPlaying.uiGroups.ranking.toggle(true);
   }
 
   function hold(x: number, y: number): boolean {

@@ -100,10 +100,25 @@ export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup
     cssColor: "rgba(255, 255, 255, 0.8)",
     width: g.game.width, height: g.game.height,
   });
-  new g.Label({
+  new Label({
     scene, parent: background,
     font: createFont({ size: 30 }),
-    text: "パズルの領域から遠く離れると説明を読めます",
+    x: 10, y: 25,
+    text: `
+＝＝＝＝　説明など　＝＝＝＝
+・マウスホイールで拡大縮小（Ctrl を押しながらで高速）
+・右下の「歯車」で背景、枠線の表示切替（生主のみ）
+`,
+    width: 940,
+  });
+  new g.Label({
+    scene, parent: background,
+    x: 0, y: 650,
+    width: 900,
+    widthAutoAdjust: false,
+    textAlign: "right",
+    text: "「歯車」で画面位置をリセットできます↗",
+    font: createFont({ size: 40 }),
   });
   //#endregion
 
@@ -211,13 +226,17 @@ export function createPlayAreaGroup(clientPlaying: ClientPlaying): PlayAreaGroup
     cameraMoved();
   }
 
+  // MEMO: カメラを初期位置にリセットする
   function reset() {
+    // 大体の拡大率
+    const SCALE = 5;
+
     // ボードの中央が画面中央に来るように移動
     const pieceAreaLimit = clientPlaying.playState.gameState.pieceAreaLimit;
     moveTo(pieceAreaLimit.width / 2, pieceAreaLimit.height / 2);
 
     // ボード全体が画面に収まるように拡大縮小
-    scaleTo(((board.width + board.height) * 2.5) / (g.game.width + g.game.height));
+    scaleTo(((board.width + board.height) * SCALE) / (g.game.width + g.game.height));
 
     // 画面右上の Info パネルを避けて、大体中央になるように移動
     // > 0.257 = 「右上の Info パネル」が画面の横幅に占める割合 (横幅)
@@ -292,27 +311,10 @@ function createDisplay(clientPlaying: ClientPlaying, background: g.FilledRect): 
   const scene = g.game.env.scene;
   const parent = new g.E({ scene, parent: background, hidden: true });
 
-  const updates = new Label({
-    scene, parent,
-    font: createFont({ size: 30 }),
-    x: 10, y: 25,
-    text: `
-＝＝＝＝　機能など　＝＝＝＝
-・マウスホイールで拡大縮小（Ctrl を押しながらで高速）
-・オプションで背景、枠線の表示切替（生主のみ）
-`,
-    width: 940,
-  });
-
-  const helpText = new g.Label({
-    scene, parent,
-    x: 0, y: 650,
-    width: 900,
-    widthAutoAdjust: false,
-    textAlign: "right",
-    text: "歯車で画面位置をリセットできます↗",
-    font: createFont({ size: 40 }),
-  });
+  // MEMO: parent に対して追加した要素は
+  //       ジグソーの領域から離れた時だけ見える
+  // 
+  //       元々はゲームの説明用。何かしら追加出来れば良いなと
 
   return {
     switchJigsawViewOut(outside: boolean) {
