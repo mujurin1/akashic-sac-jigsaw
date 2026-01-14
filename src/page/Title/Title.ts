@@ -22,11 +22,15 @@ interface TitleState {
   pieceWH: g.CommonSize;
 }
 
+const MaxLevel = 120;
+const DefaultLevel = 50;
+const MinPixel = 20;
+
 export function Title(client: SacClient) {
   const state: TitleState = {
     client,
     puzzleIndex: 0,
-    level: 50,
+    level: DefaultLevel,
     origin: { x: 0, y: 0 },
     pieceSize: null!,
     pieceWH: null!,
@@ -245,8 +249,8 @@ function createUi(state: TitleState) {
       scene, parent: scene,
       width: 770, height: 80,
       x: levelTextBack.x, y: levelTextBack.y + 90,
-      per: 0.5,
-      min: 0, max: 100,
+      per: DefaultLevel / MaxLevel,
+      min: 0, max: MaxLevel,
     });
     const sendChangeLevel = timeFlowController(500, (newLevel: number) => {
       client.sendEvent(new ChangeLevel(newLevel));
@@ -332,7 +336,7 @@ function createUi(state: TitleState) {
         : previewsInfo[state.puzzleIndex].imageAsset;
 
     if (surface) {
-      const pixel = (100 - state.level) + 40;
+      const pixel = (MaxLevel - state.level) + MinPixel;
 
       state.pieceSize = { width: pixel, height: pixel };
       state.pieceWH = {
